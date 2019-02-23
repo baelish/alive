@@ -1,0 +1,18 @@
+div.green {
+    background-color:#33cc33;
+}
+
+div.medium {
+    width:245px;
+    height:245px;
+}
+
+div.small {
+    width:120px;
+    height:120px;
+}
+
+div.box {
+    margin-right:5px;
+    margin-bottom:5px;
+}
