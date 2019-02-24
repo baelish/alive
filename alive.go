@@ -65,9 +65,7 @@ func loadJsonFromFile(jsonFile string) []Box {
         log.Fatal(err)
     }
     var boxes []Box
-    fmt.Println(boxes)
     json.Unmarshal(byteValue, &boxes)
-    fmt.Println(boxes)
 
     Size := func(p1, p2 *Box) bool {
         if p1.Size == p2.Size { return false }
@@ -87,7 +85,6 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<head><meta http-equiv='refresh' content='5'><link rel='stylesheet' type='text/css' href='css/standard.css'/></head>")
 	fmt.Fprintf(w, "<div class='big-box'>")
     for i := 0; i < len(boxes); i++ {
-        fmt.Println(boxes[i])
 	    fmt.Fprintf(w, "<div class='%s %s box'>%s</div>", boxes[i].Color, boxes[i].Size, boxes[i].Name)
     }
 	fmt.Fprintf(w, "</div>")
