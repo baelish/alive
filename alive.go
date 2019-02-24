@@ -6,6 +6,7 @@ import (
     "io/ioutil"
 	"log"
 	"net/http"
+    "sort"
 )
 
 type Box struct {
@@ -14,17 +15,69 @@ type Box struct {
     Color string `json:"color"`
 }
 
-type Boxes struct {
-    Boxes []Box `json:"boxes"`
+type By func(p1, p2 *Box) bool
+
+func (by By) Sort(boxes []Box) {
+    bs := &boxSorter{
+        boxes: boxes,
+        by: by,
+    }
+    sort.Sort(bs)
 }
 
-func loadJsonFromFile(jsonFile string) Boxes {
+type boxSorter struct {
+    boxes []Box
+    by func(p1, p2 *Box) bool
+}
+
+func (s *boxSorter) Len() int {
+    return len(s.boxes)
+}
+
+func (s *boxSorter) Swap(i, j int) {
+    s.boxes[i], s.boxes[j] = s.boxes[j], s.boxes[i]
+}
+
+func (s *boxSorter) Less(i, j int) bool {
+    return s.by(&s.boxes[i], &s.boxes[j])
+}
+
+func sizeToNumber(size string) int {
+    switch size {
+        case "micro": return 10
+        case "dmicro": return 20
+        case "small": return 30
+        case "dsmall": return 40
+        case "medium": return 50
+        case "dmedium": return 60
+        case "large": return 70
+        case "dlarge": return 80
+        case "xlarge": return 90
+        case "dxlarge": return 100
+        default: return 0
+    }
+}
+
+// Loads Json from a file and returns Boxes sorted by size (Largest first)
+func loadJsonFromFile(jsonFile string) []Box {
     byteValue, err := ioutil.ReadFile(jsonFile)
     if err != nil {
         log.Fatal(err)
     }
-    var boxes Boxes
+    var boxes []Box
+    fmt.Println(boxes)
     json.Unmarshal(byteValue, &boxes)
+    fmt.Println(boxes)
+
+    Size := func(p1, p2 *Box) bool {
+        if p1.Size == p2.Size { return false }
+        size1 := sizeToNumber(p1.Size)
+        size2 := sizeToNumber(p2.Size)
+        return size1 > size2
+    }
+
+    By(Size).Sort(boxes)
+
     return boxes
 }
 
@@ -33,8 +86,9 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
     boxes := loadJsonFromFile("/home/drosth/go/src/github.com/baelish/alive/test.json")
 	fmt.Fprintf(w, "<head><meta http-equiv='refresh' content='5'><link rel='stylesheet' type='text/css' href='css/standard.css'/></head>")
 	fmt.Fprintf(w, "<div class='big-box'>")
-    for i := 0; i < len(boxes.Boxes); i++ {
-	    fmt.Fprintf(w, "<div class='%s %s box'>%s</div>", boxes.Boxes[i].Color, boxes.Boxes[i].Size, boxes.Boxes[i].Name)
+    for i := 0; i < len(boxes); i++ {
+        fmt.Println(boxes[i])
+	    fmt.Fprintf(w, "<div class='%s %s box'>%s</div>", boxes[i].Color, boxes[i].Size, boxes[i].Name)
     }
 	fmt.Fprintf(w, "</div>")
 }
