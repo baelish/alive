@@ -72,8 +72,10 @@ div.box {
     margin-right:2px;
     margin-bottom:2px;
     float:left;
+    text-align: center;
 }
 
 div.big-box {
     width: 1536px;
+    margin: auto;
 }
