@@ -2,17 +2,78 @@ div.green {
     background-color:#33cc33;
 }
 
+div.red {
+    background-color:#cc0000;
+}
+
+div.amber {
+    background-color:#ff8000;
+}
+
+div.grey {
+    background-color:#a19e9c;
+}
+
+div.xlarge {
+    width:510px;
+    height:510px;
+    font-size:32px;
+}
+
+div.dlarge {
+    width:510px;
+    height:254px;
+    font-size:24px;
+}
+
+div.large {
+    width:254px;
+    height:254px;
+    font-size:24px;
+}
+
+div.dmedium {
+    width:254px;
+    height:126px;
+    font-size:18px;
+}
+
 div.medium {
-    width:245px;
-    height:245px;
+    width:126px;
+    height:126px;
+    font-size:18px;
+}
+
+div.dsmall {
+    width:126px;
+    height:62px;
+    font-size:12px;
 }
 
 div.small {
-    width:120px;
-    height:120px;
+    width:62px;
+    height:62px;
+    font-size:12px;
+}
+
+div.dmicro {
+    width:62px;
+    height:30px;
+    font-size:9px;
+}
+
+div.micro {
+    width:30px;
+    height:30px;
+    font-size:9px;
 }
 
 div.box {
-    margin-right:5px;
-    margin-bottom:5px;
+    margin-right:2px;
+    margin-bottom:2px;
+    float:left;
+}
+
+div.big-box {
+    width: 1536px;
 }
