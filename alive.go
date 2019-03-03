@@ -13,7 +13,6 @@ type Box struct {
 	Name   string `json:"name"`
 	Size   string `json:"size"`
 	Color  string `json:"color"`
-	TimeBU int    `json:TimeBU"`
 }
 
 type By func(p1, p2 *Box) bool
@@ -100,13 +99,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<div id='big-box' class='big-box'>")
 
 	for i := 0; i < len(boxes); i++ {
-		if boxes[i].TimeBU < 1 {
-			boxes[i].TimeBU = 5
-		}
-
 		fmt.Fprintf(w, "<div onclick='boxClick(this.id)' id='%d' class='%s %s box'>", i, boxes[i].Color, boxes[i].Size)
-		fmt.Fprintf(w, "<var hidden name='timeBU'>%d</var>", boxes[i].TimeBU)
-		fmt.Fprintf(w, "<var hidden id='lastUpdated'></var>")
 		fmt.Fprintf(w, "<p class='title'>%s</p>", boxes[i].Name)
 		fmt.Fprintf(w, "<p class='message'></p>")
 		fmt.Fprintf(w, "</div>")
