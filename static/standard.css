@@ -17,55 +17,55 @@ div.grey {
 div.xlarge {
     width:510px;
     height:510px;
-    font-size:32px;
+    font-size:2em;
 }
 
 div.dlarge {
     width:510px;
     height:254px;
-    font-size:24px;
+    font-size:1.5em;
 }
 
 div.large {
     width:254px;
     height:254px;
-    font-size:24px;
+    font-size:1.5em;
 }
 
 div.dmedium {
     width:254px;
     height:126px;
-    font-size:18px;
+    font-size:1.125em;
 }
 
 div.medium {
     width:126px;
     height:126px;
-    font-size:18px;
+    font-size:1.125em;
 }
 
 div.dsmall {
     width:126px;
     height:62px;
-    font-size:12px;
+    font-size:0.75em;
 }
 
 div.small {
     width:62px;
     height:62px;
-    font-size:12px;
+    font-size:0.75em;
 }
 
 div.dmicro {
     width:62px;
     height:30px;
-    font-size:9px;
+    font-size:0.5em;
 }
 
 div.micro {
     width:30px;
     height:30px;
-    font-size:9px;
+    font-size:0.5em;
 }
 
 div.box {
@@ -77,6 +77,16 @@ div.box {
 }
 
 div.big-box {
-    width: 1536px;
     margin: auto;
+}
+
+p.title {
+    margin-block-start: 5%;
+    margin-block-end: auto;
+}
+
+p.message {
+    font-size:60%;
+    margin-block-start: auto;
+    margin-block-end: auto;
 }
