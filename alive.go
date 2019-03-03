@@ -96,7 +96,8 @@ func loadJsonFromFile(jsonFile string) []Box {
 func handleRoot(w http.ResponseWriter, r *http.Request) {
 	boxes := loadJsonFromFile("/home/drosth/go/src/github.com/baelish/alive/test.json")
 	fmt.Fprintf(w, "<head><link rel='stylesheet' type='text/css' href='static/standard.css'/><script src='static/scripts.js'></script></head>")
-	fmt.Fprintf(w, "<div class='big-box'>")
+    fmt.Fprintf(w, "<body onresize='rightSizeBigBox()' onload='rightSizeBigBox()'>")
+	fmt.Fprintf(w, "<div id='big-box' class='big-box'>")
 
 	for i := 0; i < len(boxes); i++ {
 		if boxes[i].TimeBU < 1 {
@@ -112,6 +113,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "</div>")
+    fmt.Fprintf(w, "</body>")
 }
 
 func main() {

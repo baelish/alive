@@ -2,7 +2,8 @@ function boxClick(id) {
     var t = Date.now()
     var pt = myTime(t)
     var target = document.getElementById(id)
-    target.getElementsByClassName("message")[0].innerHTML = "Changed " + pt
+    var width = window.innerWidth
+    target.getElementsByClassName("message")[0].innerHTML = "Changed " + width
     changeAlertLevel(target, "amber")
 }
 
@@ -28,3 +29,8 @@ function changeAlertLevel(target, level) {
     target.classList.add(level)
 }
 
+function rightSizeBigBox() {
+    var availableWidth = Math.floor(window.innerWidth / 512) * 512
+    widthBox = (availableWidth >= 1024) ? availableWidth:1024
+    document.getElementById('big-box').style.width = widthBox + "px"
+}
