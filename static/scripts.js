@@ -1,5 +1,13 @@
 var timeouts = []
 
+var source = new EventSource("http://localhost:3000/");
+source.onmessage = function(event) {
+    var eventDetails = event.data.split(',')
+    var targetBox = document.getElementById(eventDetails[0]);
+    changeAlertLevel(targetBox, eventDetails[1], eventDetails[2]);
+};
+
+
 function boxClick(id) {
     var t = Date.now()
     var pt = myTime(t)
