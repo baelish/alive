@@ -10,9 +10,10 @@ import (
 )
 
 type Box struct {
-	Name  string `json:"name"`
-	Size  string `json:"size"`
-	Color string `json:"color"`
+	Name   string `json:"name"`
+	Size   string `json:"size"`
+	Color  string `json:"color"`
+	TimeBU int    `json:TimeBU"`
 }
 
 type By func(p1, p2 *Box) bool
@@ -96,9 +97,20 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	boxes := loadJsonFromFile("/home/drosth/go/src/github.com/baelish/alive/test.json")
 	fmt.Fprintf(w, "<head><link rel='stylesheet' type='text/css' href='static/standard.css'/><script src='static/scripts.js'></script></head>")
 	fmt.Fprintf(w, "<div class='big-box'>")
+
 	for i := 0; i < len(boxes); i++ {
-		fmt.Fprintf(w, "<div onclick='boxClick(this.id)' id='%d' class='%s %s box'>%s</div>", i, boxes[i].Color, boxes[i].Size, boxes[i].Name)
+		if boxes[i].TimeBU < 1 {
+			boxes[i].TimeBU = 5
+		}
+
+		fmt.Fprintf(w, "<div onclick='boxClick(this.id)' id='%d' class='%s %s box'>", i, boxes[i].Color, boxes[i].Size)
+		fmt.Fprintf(w, "<var hidden name='timeBU'>%d</var>", boxes[i].TimeBU)
+		fmt.Fprintf(w, "<var hidden id='lastUpdated'></var>")
+		fmt.Fprintf(w, "<p class='title'>%s</p>", boxes[i].Name)
+		fmt.Fprintf(w, "<p class='message'></p>")
+		fmt.Fprintf(w, "</div>")
 	}
+
 	fmt.Fprintf(w, "</div>")
 }
 

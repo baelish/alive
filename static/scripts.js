@@ -1,8 +1,8 @@
-function boxClick(target) {
+function boxClick(id) {
     var t = Date.now()
-    t += 1000000
     var pt = myTime(t)
-    document.getElementById(target).innerHTML = "Changed " + pt +" (" + t + ")"
+    var target = document.getElementById(id)
+    target.getElementsByClassName("message")[0].innerHTML = "Changed " + pt
     changeAlertLevel(target, "amber")
 }
 
@@ -24,7 +24,7 @@ function pad(n, width, z) {
 
 function changeAlertLevel(target, level) {
     if ( level.indexOf(["amber", "green", "grey", "red"]) !== -1) { level = "grey" }
-    document.getElementById(target).classList.remove("amber", "green", "grey", "red")
-    document.getElementById(target).classList.add(level)
+    target.classList.remove("amber", "green", "grey", "red")
+    target.classList.add(level)
 }
 
