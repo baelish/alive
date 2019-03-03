@@ -28,7 +28,7 @@ function pad(n, width, z) {
 
 
 function changeAlertLevel(target, level, message) {
-    if ( level.indexOf(["amber", "green", "grey", "red"]) !== -1) { level = "grey" }
+    if ( ["amber","green","grey","red"].indexOf(level) == -1) { level = "grey" }
     target.classList.remove("amber", "green", "grey", "red")
     target.classList.add(level)
     target.getElementsByClassName("message")[0].innerHTML = message
