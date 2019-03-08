@@ -187,7 +187,7 @@ func runSse() {
             b.messages <- fmt.Sprintf("%d,green, the time is %v", i, time.Now())
             if rand.Intn(30) == 1 {
                 t = rand.Intn(55)
-                switch rand.Intn(2) {
+                switch rand.Intn(3) {
                 case 0:
                     c = "red"
                     m = "PANIC! Red Alert"
@@ -196,7 +196,7 @@ func runSse() {
                     m = "OH NOES! Something's not quite right"
                 case 2:
                     c = "grey"
-                    m = "Meh, not sure what to do now...."
+                    m = "Meh not sure what to do now...."
                 }
                 b.messages <- fmt.Sprintf("%d,%s,%s",t ,c ,m )
             }
@@ -204,7 +204,7 @@ func runSse() {
 
             // Print a nice log message and sleep for 5s.
             log.Printf("Sent message")
-            time.Sleep(1e9)
+            time.Sleep(1 * time.Second)
 
         }
     }()
