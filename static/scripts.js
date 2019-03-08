@@ -1,6 +1,6 @@
 var timeouts = []
 
-var source = new EventSource("http://localhost:3000/");
+var source = new EventSource("/events/");
 source.onmessage = function(event) {
     var eventDetails = event.data.split(',')
     var targetBox = document.getElementById(eventDetails[0]);
