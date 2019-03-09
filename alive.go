@@ -9,6 +9,7 @@ import (
 func main() {
     createStaticContent("./static")
     runFrontPage()
-    runSse()
+    events := runSse()
+    runUpdater(events)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
