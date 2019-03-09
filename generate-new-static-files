@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+cd "${0%/*}"
+
+if ! command -v go-bindata; then
+    echo "go-bindata needs to be install. Maybe run: " \
+        "`go get -u github.com/go-bindata/go-bindata/...`."
+
+    exit 1
+fi
+
+go-bindata -o static-files.go -prefix static-source static-source/...
+
