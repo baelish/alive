@@ -8,10 +8,16 @@ import (
 )
 
 type Box struct {
+    Id     string `json:"id"`
     Name   string `json:"name"`
     Size   string `json:"size"`
     Color  string `json:"color"`
+    MaxTBU string `json:maxTBU`
+    LastUpdate string `json:lastUpdate`
+    LastMessage string `json:lastMessage`
 }
+
+var boxes []Box
 
 type By func(p1, p2 *Box) bool
 
@@ -68,12 +74,12 @@ func sizeToNumber(size string) int {
 }
 
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
-func getBoxes(jsonFile string) []Box {
+func getBoxes(jsonFile string) {
     byteValue, err := ioutil.ReadFile(jsonFile)
     if err != nil {
         log.Fatal(err)
     }
-    var boxes []Box
+
     json.Unmarshal(byteValue, &boxes)
 
     Size := func(p1, p2 *Box) bool {
@@ -87,5 +93,4 @@ func getBoxes(jsonFile string) []Box {
 
     By(Size).Sort(boxes)
 
-    return boxes
 }
