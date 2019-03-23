@@ -13,7 +13,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(boxes); i++ {
 		fmt.Fprintf(w, "<div onclick='boxClick(this.id)' id='%d' class='%s %s box'>", i, boxes[i].Color, boxes[i].Size)
 		fmt.Fprintf(w, "<p class='title'>%s</p>", boxes[i].Name)
-		fmt.Fprintf(w, "<p class='message'></p>")
+		fmt.Fprintf(w, "<p class='message'>%s</p>", boxes[i].LastMessage)
 		fmt.Fprintf(w, "</div>")
 	}
 
