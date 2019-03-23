@@ -13,6 +13,6 @@ func main() {
 	runFrontPage(config.staticFilePath)
 	events := runSse()
 	runUpdater(events)
-	go runApi()
+	go runAPI()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

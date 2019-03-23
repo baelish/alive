@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// Config struct contains configuration to be used throughout the program
 type Config struct {
 	baseDir        string
 	staticFilePath string

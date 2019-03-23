@@ -7,21 +7,22 @@ import (
 	"sort"
 )
 
+// Box represents a single item on our monitoring screen.
 type Box struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Size        string `json:"size"`
 	Color       string `json:"color"`
-	MaxTBU      string `json:maxTBU`
-	LastUpdate  string `json:lastUpdate`
-	LastMessage string `json:lastMessage`
+	MaxTBU      string `json:"maxTBU"`
+	LastUpdate  string `json:"lastUpdate"`
+	LastMessage string `json:"lastMessage"`
 }
 
 var boxes []Box
 
-type By func(p1, p2 *Box) bool
+type by func(p1, p2 *Box) bool
 
-func (by By) Sort(boxes []Box) {
+func (by by) Sort(boxes []Box) {
 	bs := &boxSorter{
 		boxes: boxes,
 		by:    by,
@@ -91,6 +92,6 @@ func getBoxes(jsonFile string) {
 		return size1 > size2
 	}
 
-	By(Size).Sort(boxes)
+	by(Size).Sort(boxes)
 
 }

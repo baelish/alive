@@ -14,44 +14,36 @@ import (
 	"net/http"
 )
 
-// A single Broker will be created in this program. It is responsible
+// Broker which will be created in this program. It is responsible
 // for keeping a list of which clients (browsers) are currently attached
 // and broadcasting events (messages) to those clients.
-//
 type Broker struct {
 
 	// Create a map of clients, the keys of the map are the channels
 	// over which we can push messages to attached clients.  (The values
 	// are just booleans and are meaningless.)
-	//
 	clients map[chan string]bool
 
 	// Channel into which new clients can be pushed
-	//
 	newClients chan chan string
 
 	// Channel into which disconnected clients should be pushed
-	//
 	defunctClients chan chan string
 
 	// Channel into which messages are pushed to be broadcast out
 	// to attahed clients.
-	//
 	messages chan string
 }
 
-// This Broker method starts a new goroutine.  It handles
+// Start method, this Broker method starts a new goroutine.  It handles
 // the addition & removal of clients, as well as the broadcasting
 // of messages out to clients that are currently attached.
-//
 func (b *Broker) Start() {
 
 	// Start a goroutine
-	//
 	go func() {
 
 		// Loop endlessly
-		//
 		for {
 
 			// Block until we receive from one of the
@@ -72,7 +64,7 @@ func (b *Broker) Start() {
 				delete(b.clients, s)
 				close(s)
 
-				log.Println("Removed client t:%d", len(b.clients))
+				log.Printf("Removed client t:%d", len(b.clients))
 
 			case msg := <-b.messages:
 
@@ -88,11 +80,9 @@ func (b *Broker) Start() {
 }
 
 // This Broker method handles and HTTP request at the "/events/" URL.
-//
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure that the writer supports flushing.
-	//
 	f, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
@@ -148,8 +138,6 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Main routine
-//
-
 func runSse() (b *Broker) {
 
 	// Make a new Broker instance

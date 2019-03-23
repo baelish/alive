@@ -7,10 +7,11 @@ import (
 	"net/http"
 )
 
+// Event struct is used to stream events to dashboard.
 type Event struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Color       string `json:"color"`
-	Message 		string `json:lastMessage`
+	Message 		string `json:"lastMessage"`
 }
 
 
@@ -20,7 +21,7 @@ func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	for _, box := range boxes {
-		if box.Id == params["id"] {
+		if box.ID == params["id"] {
 			json.NewEncoder(w).Encode(box)
 			return
 		}
@@ -32,12 +33,12 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var event Event
 	_ = json.NewDecoder(r.Body).Decode(&event)
-	event.Id = params["id"]
+	event.ID = params["id"]
 	json.NewEncoder(w).Encode(event)
 }
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {}
 
-func runApi() {
+func runAPI() {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/v1/", apiGetBoxes).Methods("GET")
 	router.HandleFunc("/api/v1/{id}", apiGetBox).Methods("GET")
