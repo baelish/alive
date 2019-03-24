@@ -9,11 +9,6 @@ source.onmessage = function(event) {
 
 
 function boxClick(id) {
-    var t = Date.now()
-    var pt = myTime(t)
-    var target = document.getElementById(id)
-    alertNoUpdate(id, 60)
-    changeAlertLevel(target, "green", "Testing only")
 }
 
 
