@@ -18,6 +18,8 @@ type Event struct {
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(boxes)
 }
+
+
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	for _, box := range boxes {
@@ -29,14 +31,19 @@ func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&Box{})
 }
 
+
 func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var event Event
 	_ = json.NewDecoder(r.Body).Decode(&event)
 	event.ID = params["id"]
+	update(event.ID, event.Color, event.Message)
 	json.NewEncoder(w).Encode(event)
 }
+
+
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {}
+
 
 func runAPI() {
 	router := mux.NewRouter()

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func runUpdater(events *Broker) {
+func runUpdater() {
 
 	// Generate a constant stream of events that get pushed
 	// into the Broker's messages channel and are then broadcast
@@ -23,10 +23,7 @@ func runUpdater(events *Broker) {
 			// including the current time.
 			t := time.Now()
 			ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
-			events.messages <- fmt.Sprintf("%d,green, the time is %s", x, ft)
-			boxes[x].LastMessage = fmt.Sprintf( "the time is %s", ft)
-			boxes[x].LastUpdate = ft
-			boxes[x].Color = "green"
+			update(boxes[x].ID, "green", fmt.Sprintf( "the time is %s", ft))
 
 			if rand.Intn(30) == 1 {
 				y := rand.Intn( len(boxes) - 1 )
@@ -41,10 +38,7 @@ func runUpdater(events *Broker) {
 					c = "grey"
 					m = "Meh not sure what to do now...."
 				}
-				events.messages <- fmt.Sprintf("%d,%s,%s", y, c, m)
-				boxes[y].LastMessage = m
-				boxes[y].LastUpdate = ft
-				boxes[y].Color = c
+				update(boxes[y].ID, c, m)
 			}
 
 			// Print a nice log message and sleep for 5s.
@@ -52,4 +46,20 @@ func runUpdater(events *Broker) {
 
 		}
 	}()
+}
+
+func update(id string, color string, message string) {
+	t := time.Now()
+	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
+	events.messages <- fmt.Sprintf("%s,%s,%s", id, color, message)
+	// Find box based on id
+	for i := range boxes {
+		if boxes[i].ID == id {
+			// Update boxes
+			boxes[i].LastMessage = message
+			boxes[i].LastUpdate = ft
+			boxes[i].Color = color
+			// Write json
+		}
+	}
 }
