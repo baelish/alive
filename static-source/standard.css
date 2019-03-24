@@ -90,3 +90,17 @@ p.message {
     margin-block-start: auto;
     margin-block-end: auto;
 }
+
+p.maxTBU {
+    font-size:60%;
+    margin-block-start: auto;
+    margin-block-end: auto;
+    visibility: hidden;
+}
+
+p.lastUpdated {
+    font-size:60%;
+    margin-block-start: auto;
+    margin-block-end: auto;
+    visibility: hidden;
+}

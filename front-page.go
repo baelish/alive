@@ -14,6 +14,8 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "<div onclick='boxClick(this.id)' id='%s' class='%s %s box'>", boxes[i].ID, boxes[i].Color, boxes[i].Size)
 		fmt.Fprintf(w, "<p class='title'>%s</p>", boxes[i].Name)
 		fmt.Fprintf(w, "<p class='message'>%s</p>", boxes[i].LastMessage)
+		fmt.Fprintf(w, "<p class='lastUpdated'>%s</p>", boxes[i].LastUpdate)
+		fmt.Fprintf(w, "<p class='maxTBU'>%s</p>", boxes[i].MaxTBU)
 		fmt.Fprintf(w, "</div>")
 	}
 
