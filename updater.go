@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// runUpdater is just for testing some events. This is only run to generate some
+// random events.
 func runUpdater() {
 
 	// Generate a constant stream of events that get pushed
@@ -47,6 +49,7 @@ func runUpdater() {
 		}
 	}()
 }
+
 
 func update(id string, color string, message string) {
 	t := time.Now()

@@ -6,15 +6,16 @@ import (
 )
 
 var events *Broker
+var config *Config
 
 func main() {
-	config := getConfiguration()
+	config = getConfiguration()
 	log.Printf("%+v\n", config)
 	createStaticContent(config.staticFilePath)
 	getBoxes("/home/drosth/go/src/github.com/baelish/alive/test.json")
 	runFrontPage(config.staticFilePath)
 	events = runSse()
-	runUpdater()
+	if config.updater { runUpdater() }
 	go runAPI()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

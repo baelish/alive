@@ -11,6 +11,7 @@ import (
 type Config struct {
 	baseDir        string
 	staticFilePath string
+	updater				 bool
 }
 
 func (c *Config) processArguments() {
@@ -22,6 +23,8 @@ func (c *Config) processArguments() {
 				i++
 				c.baseDir = os.Args[i]
 			}
+		case "--updater":
+				c.updater = true
 		default:
 			log.Printf("Ignoring unknown option %s", os.Args[i])
 		}
@@ -31,6 +34,7 @@ func (c *Config) processArguments() {
 
 func getConfiguration() *Config {
 	c := &Config{}
+	c.updater = false
 	c.processArguments()
 	if c.baseDir == "" {
 		c.baseDir = fmt.Sprintf("%s/.alive", os.Getenv("HOME"))
