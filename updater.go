@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -63,6 +66,14 @@ func update(id string, color string, message string) {
 			boxes[i].LastUpdate = ft
 			boxes[i].Color = color
 			// Write json
+			byteValue, err := json.Marshal(&boxes)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err2 := ioutil.WriteFile(config.dataFile, byteValue, 0644)
+			if err2 != nil {
+				log.Fatal(err2)
+			}
 		}
 	}
 }

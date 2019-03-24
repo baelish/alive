@@ -12,7 +12,7 @@ func main() {
 	config = getConfiguration()
 	log.Printf("%+v\n", config)
 	createStaticContent(config.staticFilePath)
-	getBoxes("/home/drosth/go/src/github.com/baelish/alive/test.json")
+	getBoxes(config.dataFile)
 	runFrontPage(config.staticFilePath)
 	events = runSse()
 	if config.updater { runUpdater() }

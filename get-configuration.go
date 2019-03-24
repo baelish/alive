@@ -10,6 +10,7 @@ import (
 // Config struct contains configuration to be used throughout the program
 type Config struct {
 	baseDir        string
+	dataFile			 string
 	staticFilePath string
 	updater				 bool
 }
@@ -41,5 +42,6 @@ func getConfiguration() *Config {
 	}
 	c.baseDir = filepath.Clean(c.baseDir)
 	c.staticFilePath = filepath.Clean(fmt.Sprintf("%s/static", c.baseDir))
+	c.dataFile = filepath.Clean(fmt.Sprintf("%s/data.json", c.baseDir))
 	return c
 }
