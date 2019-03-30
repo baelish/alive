@@ -69,11 +69,12 @@ div.micro {
 }
 
 div.box {
-    margin-right:2px;
-    margin-bottom:2px;
-    float:left;
-    text-align: center;
     color: white;
+    float:left;
+    margin-bottom:2px;
+    margin-right:2px;
+    position: relative;
+    text-align: center;
 }
 
 div.big-box {
@@ -87,20 +88,22 @@ p.title {
 
 p.message {
     font-size:60%;
-    margin-block-start: auto;
+    margin-block-start: 0.5em;
     margin-block-end: auto;
 }
 
 p.maxTBU {
-    font-size:60%;
+    font-size:40%;
     margin-block-start: auto;
     margin-block-end: auto;
     visibility: hidden;
 }
 
 p.lastUpdated {
-    font-size:60%;
+    font-size:40%;
     margin-block-start: auto;
     margin-block-end: auto;
-    visibility: hidden;
+    position: absolute;
+    bottom: 1;
+    right: 3;
 }

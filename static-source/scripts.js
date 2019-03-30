@@ -18,8 +18,9 @@ function myTime(t) {
     } else {
         r = new Date()
     }
-    return r.getFullYear() + pad(r.getMonth() + 1,2) + pad(r.getDay(),2) + "T" + pad(r.getHours(),2) +
-        r.getMinutes() + pad(r.getSeconds(),2)
+    return r.getFullYear() + "-" + pad(r.getMonth() + 1,2) + "-" +
+        pad(r.getDay(),2) + "T" + pad(r.getHours(),2) + ":" + r.getMinutes() +
+        ":" + pad(r.getSeconds(),2)
 }
 
 
@@ -35,6 +36,7 @@ function changeAlertLevel(target, level, message) {
     target.classList.remove("amber", "green", "grey", "red")
     target.classList.add(level)
     target.getElementsByClassName("message")[0].innerHTML = message
+    target.getElementsByClassName("lastUpdated")[0].innerHTML = myTime()
 }
 
 
