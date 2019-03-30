@@ -3,8 +3,14 @@ var timeouts = []
 var source = new EventSource("/events/");
 source.onmessage = function(event) {
     var eventDetails = event.data.split(',')
-    var targetBox = document.getElementById(eventDetails[0]);
-    changeAlertLevel(targetBox, eventDetails[1], eventDetails[2]);
+    switch(eventDetails[0]) {
+      case "updateBox":
+        var targetBox = document.getElementById(eventDetails[1]);
+        changeAlertLevel(targetBox, eventDetails[2], eventDetails[3]);
+        break;
+      case "reloadPage":
+        location.reload()
+    }
 };
 
 

@@ -57,7 +57,7 @@ func runUpdater() {
 func update(id string, color string, message string) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
-	events.messages <- fmt.Sprintf("%s,%s,%s", id, color, message)
+	events.messages <- fmt.Sprintf("updateBox,%s,%s,%s", id, color, message)
 	// Find box based on id
 	for i := range boxes {
 		if boxes[i].ID == id {
