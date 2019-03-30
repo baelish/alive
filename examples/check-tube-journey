@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+apiUrl="http://10.66.11.5:8081"
+id=2
+
+lines=(
+    metropolitan
+    central
+    northern
+)
+
+
+getDisruptionData() {
+    curl -Ss -X GET "https://api.tfl.gov.uk/Line/${1:-}/Disruption?app_id=$TFL_APP_ID&app_key=$TFL_APP_KEY" 2>/dev/null || return $?
+}
+
+getStatusDescription() {
+    description="$(jq -rc '.[0].description //empty' <<<"${1:-}")" 2> /dev/null
+    description="${description//Tickets valid on London Buses and London Overground./}"
+    echo "${description//Tickets valid on local buses./}"
+}
+
+
+getLineStatus() {
+    jq -rc '.[0].closureText //empty' <<<"${1:-}" 2> /dev/null
+}
+
+# Test severe
+#getLineStatus '[{"$type":"Tfl.Api.Presentation.Entities.Disruption, Tfl.Api.Presentation.Entities","category":"RealTime","type":"lineInfo","categoryDescription":"RealTime","description":"Bakerloo Line: Severe delays due to an earlier customer incident. Tickets valid on London Buses and London Overground. ","affectedRoutes":[],"affectedStops":[],"closureText":"severeDelays"}]'
+# Test minor
+#getLineStatus '[{"$type":"Tfl.Api.Presentation.Entities.Disruption, Tfl.Api.Presentation.Entities","category":"RealTime","type":"lineInfo","categoryDescription":"RealTime","description":"Bakerloo Line: Minor delays due to an earlier customer incident. Tickets valid on London Buses and London Overground. ","affectedRoutes":[],"affectedStops":[],"closureText":"minorDelays"}]'
+# Test none
+#getLineStatus '[]'
+# Get data for reals
+
+badness=0
+rawMessage=()
+
+for line in "${lines[@]}"; do
+      rawJson="$(getDisruptionData "$line")"
+      case "$(getLineStatus "$rawJson")" in
+          severeDelays)
+              badness="$((${#lines[@]} + 1 ))"
+              rawMessage+=( "$(getStatusDescription "$rawJson")<br />" )
+              ;;
+          minorDelays)
+              badness="$((badness + 1))"
+              rawMessage+=( "$(getStatusDescription "$rawJson")<br />" )
+              ;;
+      esac
+done
+
+if [[ "$badness" -eq "0" ]]; then
+    color="green"
+    rawMessage=( "No issues.<br />" )
+elif [[ "$badness" -lt "${#lines[@]}" ]]; then
+    color="amber"
+else
+    color="red"
+fi
+
+rawMessage+=( "lines checked: (${lines[*]})" )
+
+message="${rawMessage[*]}"
+message="${message//$'\n'/ }"
+
+curl -X POST -H "Content-Type: application/json" \
+    -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+    "$apiUrl/api/v1/events/$id"

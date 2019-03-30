@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+apiUrl="http://10.66.11.5:8081"
+id=1
+
+wellKnownIps=(
+    1.1.1.1
+    8.8.4.4
+    8.8.8.8
+)
+
+
+pingTest() {
+    if [[ -z "${1:-}" ]]; then
+        return 2
+    fi
+
+    if ! ping -w5 -c1 "$1" &>/dev/null; then
+        return 1
+    fi
+}
+
+good=0
+message=""
+
+for wellKnownIp in "${wellKnownIps[@]}"; do
+    if pingTest "$wellKnownIp"; then
+        good=$((good + 1))
+    else
+        message+="No response from $wellKnownIp<br />"
+    fi
+done
+
+if [[ "$good" == "${#wellKnownIps[@]}" ]]; then
+    color="green"
+    message="All tested well known IPs responded."
+elif [[ "$good" == "0" ]]; then
+    color="red"
+else
+    color="amber"
+    message+="$good good responses."
+fi
+
+curl -X POST -H "Content-Type: application/json" \
+    -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+    "$apiUrl/api/v1/events/$id"
