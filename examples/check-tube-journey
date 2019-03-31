@@ -12,7 +12,7 @@ lines=(
 
 
 getDisruptionData() {
-    curl -Ss -X GET "https://api.tfl.gov.uk/Line/${1:-}/Disruption?app_id=$TFL_APP_ID&app_key=$TFL_APP_KEY" 2>/dev/null || return $?
+    curl -Ss -X GET "https://api.tfl.gov.uk/Line/${1:-}/Disruption?app_id=${TFL_APP_ID:-}&app_key=${TFL_APP_KEY:-}" 2>/dev/null || return $?
 }
 
 getStatusDescription() {
