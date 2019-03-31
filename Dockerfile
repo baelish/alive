@@ -1,4 +1,9 @@
 FROM golang:alpine as builder
+RUN env
+RUN pwd
+RUN ls
+RUN ls /
+RUN find / -name alive.go
 RUN go install .
 
 FROM alpine:latest
