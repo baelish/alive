@@ -83,6 +83,11 @@ func getBoxes(jsonFile string) {
 
 	json.Unmarshal(byteValue, &boxes)
 
+	sortBoxes()
+
+}
+
+func sortBoxes() {
 	Size := func(p1, p2 *Box) bool {
 		if p1.Size == p2.Size {
 			return false
@@ -91,7 +96,14 @@ func getBoxes(jsonFile string) {
 		size2 := sizeToNumber(p2.Size)
 		return size1 > size2
 	}
-
 	by(Size).Sort(boxes)
+}
 
+func testBoxID(id string) bool {
+	for _, box := range boxes {
+		if box.ID == id {
+			return true
+		}
+	}
+	return false
 }

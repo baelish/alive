@@ -3,23 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // Event struct is used to stream events to dashboard.
 type Event struct {
-	ID          string `json:"id"`
-	Color       string `json:"color"`
-	Message 		string `json:"lastMessage"`
+	ID      string `json:"id"`
+	Color   string `json:"color"`
+	Message string `json:"lastMessage"`
 }
-
 
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(boxes)
 }
-
 
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -32,7 +31,6 @@ func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&Box{})
 }
 
-
 func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var event Event
@@ -42,6 +40,27 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(event)
 }
 
+func apiCreateBox(w http.ResponseWriter, r *http.Request) {
+	var newBox Box
+	_ = json.NewDecoder(r.Body).Decode(&newBox)
+	if newBox.ID != "" {
+		if testBoxID(newBox.ID) {
+			json.NewEncoder(w).Encode("Cannot create box, the ID requested already exists.")
+			return
+		}
+	} else {
+		for newBox.ID == "" || testBoxID(newBox.ID) {
+			newBox.ID = randStringBytes(10)
+		}
+
+	}
+	boxes = append(boxes, newBox)
+	sortBoxes()
+	newBoxPrint, _ := json.Marshal(newBox)
+	log.Printf(string(newBoxPrint))
+	json.NewEncoder(w).Encode(newBox)
+	events.messages <- fmt.Sprintf("reloadPage")
+}
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -57,17 +76,17 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	}
 	boxes = newBoxes
 	if found == true {
-		json.NewEncoder(w).Encode("deleted" + params["id"])
+		json.NewEncoder(w).Encode("deleted " + params["id"])
 	} else {
 		json.NewEncoder(w).Encode("not found")
 	}
 	events.messages <- fmt.Sprintf("reloadPage")
 }
 
-
 func runAPI() {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/v1/", apiGetBoxes).Methods("GET")
+	router.HandleFunc("/api/v1/new", apiCreateBox).Methods("POST")
 	router.HandleFunc("/api/v1/{id}", apiGetBox).Methods("GET")
 	router.HandleFunc("/api/v1/{id}", apiDeleteBox).Methods("DELETE")
 	router.HandleFunc("/api/v1/events/{id}", apiCreateEvent).Methods("POST")
