@@ -1,10 +1,6 @@
 FROM golang:alpine as builder
 COPY * /go/src/github.com/baelish/alive/
-RUN env
-RUN pwd
-RUN ls
-RUN ls /
-RUN find / -name alive.go
+RUN go get github.com/gorilla/mux
 RUN cd /go/src/github.com/baelish/alive/ && go install .
 
 FROM alpine:latest
