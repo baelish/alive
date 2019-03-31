@@ -25,7 +25,7 @@ function myTime(t) {
         r = new Date()
     }
     return r.getFullYear() + "-" + pad(r.getMonth() + 1,2) + "-" +
-        pad(r.getDay(),2) + "T" + pad(r.getHours(),2) + ":" + r.getMinutes() +
+        pad(r.getDate(),2) + "T" + pad(r.getHours(),2) + ":" + r.getMinutes() +
         ":" + pad(r.getSeconds(),2)
 }
 
