@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+apiUrl="http://10.66.11.5:8081"
+id="eN2ulzOBgZ"
+internalDomain="bluecell.net"
+externalDomain="google.com"
+
+publicDns=(
+    8.8.4.4
+    8.8.8.8
+)
+
+cachingDns=(
+    10.66.11.1
+    10.66.11.2
+)
+
+primaryDns=(
+    10.66.11.3
+)
+
+
+dnsTest() {
+    server="${1:-}"
+    query="${2:-}"
+
+    : "${query:=google.com}"
+
+    if ! host -W 1 "$query"  "${server}" &>/dev/null; then
+        return 1
+    fi
+}
+
+message=""
+color="green"
+
+
+# Test primaries
+primaryCount=0
+primaryGood=0
+
+for primary in "${primaryDns[@]}"; do
+    primaryCount=$((primaryCount + 1))
+    if dnsTest "$primary" "$internalDomain"; then
+        primaryGood=$((primaryGood + 1))
+    else
+        message+="Primary DNS $primary not resolving $internalDomain.<br />"
+    fi
+done
+
+if [[ "$primaryGood" -eq "0" ]]; then
+    color="red"
+elif [[ "$primaryGood" -lt "$primaryCount" ]]; then
+    color="amber"
+fi
+
+# Test public
+publicCount=0
+publicGood=0
+
+for public in "${publicDns[@]}"; do
+    publicCount=$((publicCount + 1))
+    if dnsTest "$public" "$externalDomain"; then
+        publicGood=$((publicGood + 1))
+    else
+        message+="Public DNS $public not resolving $externalDomain.<br />"
+    fi
+done
+
+
+
+# Test caching
+cachingIntCount=0
+cachingIntGood=0
+cachingExtCount=0
+cachingExtGood=0
+
+for caching in "${cachingDns[@]}"; do
+    if [[ "$primaryGood" -gt "0" ]]; then
+        cachingIntCount=$((cachingIntCount + 1))
+
+        if dnsTest "$caching" "$internalDomain"; then
+            cachingIntGood=$((cachingIntGood + 1))
+        else
+            message+="Caching DNS $caching not resolving $internalDomain.<br />"
+        fi
+    fi
+
+    if [[ "$publicGood" -gt "0" ]]; then
+        cachingExtCount=$((cachingExtCount + 1))
+
+        if dnsTest "$caching" "$externalDomain"; then
+            cachingExtGood=$((cachingExtGood + 1))
+        else
+            message+="Caching DNS $caching not resolving $externalDomain.<br />"
+        fi
+    fi
+done
+
+if [[ "$color" != "red" ]]; then
+    if [[ "$cachingIntCount" -gt "0" ]]; then
+        if [[ "$cachingIntGood" -eq "0" ]]; then
+            color="red"
+        elif [[ "$cachingIntGood" -lt "$cachingIntCount" ]]; then
+            color="amber"
+        fi
+    fi
+fi
+
+if [[ "$color" != "red" ]]; then
+    if [[ "$cachingExtCount" -gt "0" ]]; then
+        if [[ "$cachingExtGood" -eq "0" ]]; then
+            color="red"
+        elif [[ "$cachingExtGood" -lt "$cachingExtCount" ]]; then
+            color="amber"
+        fi
+    fi
+fi
+
+if [[ "$color" == "green" && -z "$message" ]]; then
+    message="All tested DNS servers resolving."
+fi
+
+curl -X POST -H "Content-Type: application/json" \
+    -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+    "$apiUrl/api/v1/events/$id"
