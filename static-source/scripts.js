@@ -47,8 +47,8 @@ function changeAlertLevel(target, level, message) {
 
 
 function rightSizeBigBox() {
-    var availableWidth = Math.floor(window.innerWidth / 512) * 512
-    widthBox = (availableWidth >= 1024) ? availableWidth:1024
+    var availableWidth = Math.floor((window.innerWidth -30) / 512) * 512
+    widthBox = (availableWidth >= 512) ? availableWidth:512
     document.getElementById('big-box').style.width = widthBox + "px"
 }
 
