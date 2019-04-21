@@ -9,10 +9,11 @@ import (
 
 // Config struct contains configuration to be used throughout the program
 type Config struct {
-	baseDir        string
-	dataFile			 string
-	staticFilePath string
-	updater				 bool
+	baseDir          string
+	dataFile         string
+	staticFilePath   string
+	updater          bool
+	useDefaultStatic bool
 }
 
 func (c *Config) processArguments() {
@@ -25,7 +26,9 @@ func (c *Config) processArguments() {
 				c.baseDir = os.Args[i]
 			}
 		case "--updater":
-				c.updater = true
+			c.updater = true
+		case "--default-static":
+			c.useDefaultStatic = true
 		default:
 			log.Printf("Ignoring unknown option %s", os.Args[i])
 		}
