@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+apiUrl="http://10.66.11.5:8081"
+id="spDdryEuGz"
+
+hosts=(
+    alive.bluecell.net
+    google.com:443
+)
+
+convertDateToEpoch() {
+    local date
+    date="$1"
+    date -d "$date" +%s
+}
+
+getCertDates() {
+
+    host="${1%%:*}"
+    port="${1##*:}"
+
+    if [[ "$port" == "$host" ]]; then
+        port=443
+    fi
+
+    openssl s_client -connect "$host:$port" <<< "" 2>/dev/null \
+        | openssl x509 -noout -dates
+}
+
+
+main() {
+    rawMessage=()
+    bad=0
+    now="$(date +%s)"
+
+    for host in "${hosts[@]}"; do
+        mapfile -t lines < <(getCertDates "$host")
+        start="${lines[0]}"
+        start="${start#*=}"
+        start="$(convertDateToEpoch "$start")"
+        end="${lines[1]}"
+        end="${end#*=}"
+        end="$(convertDateToEpoch "$end")"
+
+        if [[ "$start" -gt "$now" ]]; then
+            rawMessage+=(
+                "The cert for ${host} isn't yet valid."
+            )
+            bad=$((bad + ${#hosts[@]} + 1 ))
+            continue
+        fi
+
+        if [[ "$now" -gt "$end" ]]; then
+            rawMessage+=(
+                "The cert for ${host} isn't valid anymore."
+            )
+            bad=$((bad + ${#hosts[@]} + 1 ))
+            continue
+        elif [[ "$now" -gt "$((end - 1468800))" ]]; then
+            rawMessage+=(
+                "The cert for ${host} will expire in the next 2 weeks."
+            )
+            bad=$((bad + 1 ))
+        fi
+    done
+
+    if [[ "$bad" -le "0" ]]; then
+        color="green"
+    elif [[ "$bad" -gt "${#hosts[@]}" ]]; then
+        color="red"
+    else
+        color="amber"
+    fi
+
+    if [[ "$color" == "green" && -z "${rawMessage[*]}" ]]; then
+        rawMessage[0]="All certifates are valid for at least two more weeks."
+    fi
+
+    checkedString="Checked: $(printf '%s, ' "${hosts[@]}")"
+    checkedString="${checkedString: : -2}"
+
+    rawMessage+=(
+        "$checkedString"
+    )
+
+    message="${rawMessage[*]}"
+    message="${message//$'\n'/<br />}"
+    message="${message//,/&#44;}"
+
+    curl -X POST -H "Content-Type: application/json" \
+        -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+        "$apiUrl/api/v1/events/$id"
+}
+
+main
