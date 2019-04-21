@@ -28,22 +28,27 @@ func runUpdater() {
 			// including the current time.
 			t := time.Now()
 			ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
-			update(boxes[x].ID, "green", fmt.Sprintf( "the time is %s", ft))
+			if boxes[x].ID != statusBarID {
+				update(boxes[x].ID, "green", fmt.Sprintf("the time is %s", ft))
+			}
 
 			if rand.Intn(30) == 1 {
-				y := rand.Intn( len(boxes) - 1 )
-				switch rand.Intn(3) {
-				case 0:
-					c = "red"
-					m = "PANIC! Red Alert"
-				case 1:
-					c = "amber"
-					m = "OH NOES! Something's not quite right"
-				case 2:
-					c = "grey"
-					m = "Meh not sure what to do now...."
+				y := rand.Intn(len(boxes) - 1)
+				if boxes[x].ID != statusBarID {
+					switch rand.Intn(3) {
+					case 0:
+						c = "red"
+						m = "PANIC! Red Alert"
+					case 1:
+						c = "amber"
+						m = "OH NOES! Something's not quite right"
+					case 2:
+						c = "grey"
+						m = "Meh not sure what to do now...."
+					}
+
+					update(boxes[y].ID, c, m)
 				}
-				update(boxes[y].ID, c, m)
 			}
 
 			// Print a nice log message and sleep for 5s.
@@ -52,7 +57,6 @@ func runUpdater() {
 		}
 	}()
 }
-
 
 func update(id string, color string, message string) {
 	t := time.Now()

@@ -69,6 +69,8 @@ func sizeToNumber(size string) int {
 		return 90
 	case "dxlarge":
 		return 100
+	case "status":
+		return 110
 	default:
 		return 0
 	}
@@ -82,6 +84,16 @@ func getBoxes(jsonFile string) {
 	}
 
 	json.Unmarshal(byteValue, &boxes)
+
+	if !testBoxID(statusBarID) {
+		var statusBox Box
+		statusBox.ID = statusBarID
+		statusBox.Color = "grey"
+		statusBox.MaxTBU = "60"
+		statusBox.Name = "Status"
+		statusBox.Size = "status"
+		boxes = append(boxes, statusBox)
+	}
 
 	sortBoxes()
 

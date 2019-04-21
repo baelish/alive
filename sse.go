@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 // Broker which will be created in this program. It is responsible
@@ -135,6 +136,27 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Done.
 	log.Println("Finished HTTP request at ", r.URL.Path)
+}
+
+// Send keepalives to the status bar.
+func runKeepalives() {
+	// Generate a regular keepalive message that gets pushed
+	// into the Broker's messages channel and are then broadcast
+	// out to any clients that are attached.
+	go func() {
+		for x := 0; ; x++ {
+			// Set x back to 0 approxumatily every 24h
+			if x > 4548 {
+				x = 0
+			}
+
+			// Set the status bar to green
+			update(statusBarID, "green", "")
+
+			// Sleep for 19s.
+			time.Sleep(19 * time.Second)
+		}
+	}()
 }
 
 // Main routine

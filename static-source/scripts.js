@@ -50,6 +50,7 @@ function rightSizeBigBox() {
     var availableWidth = Math.floor((window.innerWidth -30) / 512) * 512
     widthBox = (availableWidth >= 512) ? availableWidth:512
     document.getElementById('big-box').style.width = widthBox + "px"
+    document.getElementById('status-bar').style.width =( widthBox -2 ) + "px"
 }
 
 

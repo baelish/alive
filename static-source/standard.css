@@ -70,6 +70,25 @@ div.micro {
     font-size:0.5em;
 }
 
+div.status {
+    height: 30px;
+    font-size:1em;
+}
+
+div#status-bar p.title {
+    font-size: 100%;
+    position: absolute;
+    left: 3;
+    bottom: 1;
+}
+
+div#status-bar p.lastUpdated {
+    font-size: 75%;
+    position: absolute;
+    right: 3;
+    bottom: 1;
+}
+
 div.box {
     color: white;
     float:left;
