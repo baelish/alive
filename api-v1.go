@@ -22,13 +22,12 @@ func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
 
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	for _, box := range boxes {
-		if box.ID == params["id"] {
-			json.NewEncoder(w).Encode(box)
-			return
-		}
+	i, err := findBoxByID(params["id"])
+	if err != nil {
+		json.NewEncoder(w).Encode(json.RawMessage(`{"error": "id not found"}`))
+		return
 	}
-	json.NewEncoder(w).Encode(&Box{})
+	json.NewEncoder(w).Encode(boxes[i])
 }
 
 func apiCreateEvent(w http.ResponseWriter, r *http.Request) {

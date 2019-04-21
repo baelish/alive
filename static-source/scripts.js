@@ -6,7 +6,12 @@ source.onmessage = function(event) {
     switch(eventDetails[0]) {
       case "updateBox":
         var targetBox = document.getElementById(eventDetails[1]);
-        changeAlertLevel(targetBox, eventDetails[2], eventDetails[3]);
+        changeAlertLevel(targetBox, eventDetails[2], eventDetails[4]);
+
+        if ( eventDetails[3] > 0 ) {
+          alertNoUpdate(eventDetails[1], eventDetails[3])
+        }
+
         break;
       case "reloadPage":
         location.reload()

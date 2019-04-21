@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"sort"
@@ -74,6 +75,16 @@ func sizeToNumber(size string) int {
 	default:
 		return 0
 	}
+}
+
+// Find a box in the boxes array, supply the box ID, will return the array id
+func findBoxByID(id string) (int, error) {
+	for i, box := range boxes {
+		if box.ID == id {
+			return i, nil
+		}
+	}
+	return -1, fmt.Errorf("could not find %s", id)
 }
 
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
