@@ -7,10 +7,7 @@ source.onmessage = function(event) {
       case "updateBox":
         var targetBox = document.getElementById(eventDetails[1]);
         changeAlertLevel(targetBox, eventDetails[2], eventDetails[4]);
-
-        if ( eventDetails[3] > 0 ) {
-          alertNoUpdate(eventDetails[1], eventDetails[3])
-        }
+        alertNoUpdate(eventDetails[1], eventDetails[3])
 
         break;
       case "reloadPage":
@@ -60,7 +57,8 @@ function rightSizeBigBox() {
 
 
 function alertNoUpdate(id, time) {
-    if(typeof timeouts[id] !== "undefined") { clearTimeout(timeouts[id])};
+    if(typeof timeouts[id] !== "undefined") { clearTimeout(timeouts[id]) }
+    if(time == 0) { return }
     var target = document.getElementById(id)
     timeouts[id] = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No updates for " + time + "s.")}, time * 1000)
 }
