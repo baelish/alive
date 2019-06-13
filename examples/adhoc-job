@@ -31,7 +31,7 @@ curl -X POST -H "Content-Type: application/json" \
   -d "{ \"color\": \"grey\", \"lastMessage\": \"My staging deployment is 50% completed\", \"MaxTBU\": \"16\"}" \
   "$apiUrl/api/v1/events/$id"
 
-sleep 7
+sleep 17
 
 # Give final status
 # Make box appropriate colour green, amber or red, set MaxTBU to 0
