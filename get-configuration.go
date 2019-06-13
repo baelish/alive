@@ -46,5 +46,16 @@ func getConfiguration() *Config {
 	c.baseDir = filepath.Clean(c.baseDir)
 	c.staticFilePath = filepath.Clean(fmt.Sprintf("%s/static", c.baseDir))
 	c.dataFile = filepath.Clean(fmt.Sprintf("%s/data.json", c.baseDir))
+
+	var _, err = os.Stat(c.dataFile)
+	if os.IsNotExist(err) {
+		var file, err = os.Create(c.dataFile)
+		if err != nil {
+			log.Printf("Data file did not exist and could not create an empty one.")
+			log.Fatal(err)
+		}
+		defer file.Close()
+		log.Printf("Created empty data file %s", c.dataFile)
+	}
 	return c
 }
