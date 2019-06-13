@@ -58,22 +58,26 @@ func runUpdater() {
 	}()
 }
 
-func update(id string, color string, message string) {
-	var maxTBU string
+func update(params ...string) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 
-	i, err := findBoxByID(id)
+	i, err := findBoxByID(params[0])
 	if err != nil {
 		log.Print(err)
 
 		return
 	}
 
-	boxes[i].LastMessage = message
+	boxes[i].LastMessage = params[2]
 	boxes[i].LastUpdate = ft
-	boxes[i].Color = color
-	maxTBU = boxes[i].MaxTBU
+	boxes[i].Color = params[1]
+	log.Printf("params: %d", len(params))
+
+	if len(params) > 3 {
+		log.Printf("params[3]: %s", params[3])
+		boxes[i].MaxTBU = params[3]
+	}
 	// Write json
 	byteValue, err := json.Marshal(&boxes)
 	if err != nil {
@@ -84,5 +88,5 @@ func update(id string, color string, message string) {
 		log.Fatal(err2)
 	}
 
-	events.messages <- fmt.Sprintf("updateBox,%s,%s,%s,%s", id, color, maxTBU, message)
+	events.messages <- fmt.Sprintf("updateBox,%s,%s,%s,%s", params[0], boxes[i].Color, boxes[i].MaxTBU, boxes[i].LastMessage)
 }

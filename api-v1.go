@@ -14,6 +14,7 @@ type Event struct {
 	ID      string `json:"id"`
 	Color   string `json:"color"`
 	Message string `json:"lastMessage"`
+	MaxTBU  string `json:"maxTBU"`
 }
 
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	var event Event
 	_ = json.NewDecoder(r.Body).Decode(&event)
 	event.ID = params["id"]
-	update(event.ID, event.Color, event.Message)
+	update(event.ID, event.Color, event.Message, event.MaxTBU)
 	json.NewEncoder(w).Encode(event)
 }
 

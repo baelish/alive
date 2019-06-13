@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+apiUrl="http://127.0.0.1:8081"
+
+
+
+# Create the Box, take the ID.
+# Make box grey, include MaxTBU (Maximum time in seconds until the next update
+# is expected)
+response="$(curl -X POST "$apiUrl/api/v1/new" -H "Content-Type: application/json" -d '
+  {
+    "name": "My staging deployment",
+    "size": "dmedium",
+    "color": "grey"
+  }')"
+
+id="$(jq -r '.id' <<<"$response")"
+echo $id
+
+curl -X POST -H "Content-Type: application/json" \
+  -d "{ \"color\": \"grey\", \"lastMessage\": \"Starting my staging deployment\", \"MaxTBU\": \"6\"}" \
+  "$apiUrl/api/v1/events/$id"
+
+sleep 5
+
+
+# Give progress update (optional)
+# Keep box grey, change MaxTBU if appropriate.
+curl -X POST -H "Content-Type: application/json" \
+  -d "{ \"color\": \"grey\", \"lastMessage\": \"My staging deployment is 50% completed\", \"MaxTBU\": \"16\"}" \
+  "$apiUrl/api/v1/events/$id"
+
+sleep 7
+
+# Give final status
+# Make box appropriate colour green, amber or red, set MaxTBU to 0
+
+curl -X POST -H "Content-Type: application/json" \
+  -d "{ \"color\": \"green\", \"lastMessage\": \"My staging deployment was completed successfully.\", \"MaxTBU\": \"0\"}" \
+  "$apiUrl/api/v1/events/$id"
