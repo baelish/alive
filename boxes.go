@@ -14,6 +14,7 @@ type Box struct {
 	Name        string `json:"name"`
 	Size        string `json:"size"`
 	Color       string `json:"color"`
+	ExpireAfter string `json:"expireAfter"`
 	MaxTBU      string `json:"maxTBU"`
 	LastUpdate  string `json:"lastUpdate"`
 	LastMessage string `json:"lastMessage"`
@@ -100,6 +101,7 @@ func getBoxes(jsonFile string) {
 		var statusBox Box
 		statusBox.ID = statusBarID
 		statusBox.Color = "grey"
+		statusBox.ExpireAfter = "0"
 		statusBox.MaxTBU = "60"
 		statusBox.Name = "Status"
 		statusBox.Size = "status"

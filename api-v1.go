@@ -11,10 +11,11 @@ import (
 
 // Event struct is used to stream events to dashboard.
 type Event struct {
-	ID      string `json:"id"`
-	Color   string `json:"color"`
-	Message string `json:"lastMessage"`
-	MaxTBU  string `json:"maxTBU"`
+	ID          string `json:"id"`
+	Color       string `json:"color"`
+	ExpireAfter string `json:"expireAfter"`
+	Message     string `json:"lastMessage"`
+	MaxTBU      string `json:"maxTBU"`
 }
 
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +37,7 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	var event Event
 	_ = json.NewDecoder(r.Body).Decode(&event)
 	event.ID = params["id"]
-	update(event.ID, event.Color, event.Message, event.MaxTBU)
+	update(event.ID, event.Color, event.Message, event.MaxTBU, event.ExpireAfter)
 	json.NewEncoder(w).Encode(event)
 }
 

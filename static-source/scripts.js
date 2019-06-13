@@ -1,4 +1,5 @@
 var timeouts = []
+var expiry = []
 
 var source = new EventSource("/events/");
 source.onmessage = function(event) {
@@ -8,8 +9,10 @@ source.onmessage = function(event) {
         var targetBox = document.getElementById(eventDetails[1]);
         changeAlertLevel(targetBox, eventDetails[2], eventDetails[4]);
         alertNoUpdate(eventDetails[1], eventDetails[3])
+        expireJob(eventDetails[1], eventDetails[5])
 
         break;
+
       case "reloadPage":
         location.reload()
     }
@@ -61,4 +64,11 @@ function alertNoUpdate(id, time) {
     if(time == 0) { return }
     var target = document.getElementById(id)
     timeouts[id] = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No updates for " + time + "s.")}, time * 1000)
+}
+
+function expireJob(id, time) {
+    if(typeof expiry[id] !== "undefined") { clearTimeout(expiry[id]) }
+    if(time == 0) { return }
+    var target = document.getElementById(id)
+    expiry[id] = setTimeout(function(){target.parentNode.removeChild(target)}, time * 1000)
 }

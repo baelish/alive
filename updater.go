@@ -72,12 +72,15 @@ func update(params ...string) {
 	boxes[i].LastMessage = params[2]
 	boxes[i].LastUpdate = ft
 	boxes[i].Color = params[1]
-	log.Printf("params: %d", len(params))
 
-	if len(params) > 3 {
-		log.Printf("params[3]: %s", params[3])
+	if len(params) > 3 && params[3] != "" {
 		boxes[i].MaxTBU = params[3]
 	}
+
+	if len(params) > 4 && params[4] != "" {
+		boxes[i].ExpireAfter = params[4]
+	}
+
 	// Write json
 	byteValue, err := json.Marshal(&boxes)
 	if err != nil {
@@ -88,5 +91,5 @@ func update(params ...string) {
 		log.Fatal(err2)
 	}
 
-	events.messages <- fmt.Sprintf("updateBox,%s,%s,%s,%s", params[0], boxes[i].Color, boxes[i].MaxTBU, boxes[i].LastMessage)
+	events.messages <- fmt.Sprintf("updateBox,%s,%s,%s,%s,%s", params[0], boxes[i].Color, boxes[i].MaxTBU, boxes[i].LastMessage, boxes[i].ExpireAfter)
 }
