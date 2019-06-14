@@ -90,6 +90,6 @@ func update(params ...string) {
 	if err2 != nil {
 		log.Fatal(err2)
 	}
-
+	
 	events.messages <- fmt.Sprintf("updateBox,%s,%s,%s,%s,%s", params[0], boxes[i].Color, boxes[i].MaxTBU, boxes[i].LastMessage, boxes[i].ExpireAfter)
 }

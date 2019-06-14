@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"sort"
+	"strconv"
+	"time"
 )
 
 // Box represents a single item on our monitoring screen.
@@ -78,6 +80,46 @@ func sizeToNumber(size string) int {
 	}
 }
 
+func deleteBox(id string) (bool) {
+	var newBoxes []Box
+	var found bool
+	for _, box := range boxes {
+		if box.ID != id {
+			newBoxes = append(newBoxes, box)
+		} else {
+			log.Printf("Deleting box %s", id)
+			found = true
+		}
+	}
+	boxes = newBoxes
+	return found
+}
+
+// Find any boxes that have expired and delete them
+func expireBoxes() {
+	for _, box := range boxes {
+		log.Println(box.ExpireAfter)
+		if (box.ExpireAfter == "0" || box.ExpireAfter == "") { continue }
+		if (box.LastUpdate == "") { continue }
+		lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
+  	if err != nil {
+      log.Println(err)
+			continue
+    }
+
+		expireAfter, err := strconv.Atoi(box.ExpireAfter)
+  	if err != nil {
+      log.Println(err)
+			continue
+    }
+
+		if ( lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) ) {
+			log.Printf("deleting expired box %s", box.ID)
+			_ = deleteBox(box.ID)
+		}
+	}
+}
+
 // Find a box in the boxes array, supply the box ID, will return the array id
 func findBoxByID(id string) (int, error) {
 	for i, box := range boxes {
@@ -108,6 +150,7 @@ func getBoxes(jsonFile string) {
 		boxes = append(boxes, statusBox)
 	}
 
+	expireBoxes()
 	sortBoxes()
 
 }
