@@ -65,18 +65,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	found := false
-	var newBoxes []Box
-	for _, box := range boxes {
-		if box.ID != params["id"] {
-			newBoxes = append(newBoxes, box)
-		} else {
-			log.Printf("Deleting box %s as requested by %s", params["id"], r.RemoteAddr)
-			found = true
-		}
-	}
-	boxes = newBoxes
-	if found == true {
+	if deleteBox(params["id"]) {
 		json.NewEncoder(w).Encode("deleted " + params["id"])
 	} else {
 		json.NewEncoder(w).Encode("not found")
