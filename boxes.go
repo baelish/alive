@@ -144,7 +144,7 @@ func getBoxes(jsonFile string) {
 		statusBox.ID = statusBarID
 		statusBox.Color = "grey"
 		statusBox.ExpireAfter = "0"
-		statusBox.MaxTBU = "60"
+		statusBox.MaxTBU = "20"
 		statusBox.Name = "Status"
 		statusBox.Size = "status"
 		boxes = append(boxes, statusBox)

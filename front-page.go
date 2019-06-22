@@ -8,7 +8,7 @@ import (
 func handleRoot(w http.ResponseWriter, r *http.Request) {
 	expireBoxes()
 	fmt.Fprintf(w, "<head><link rel='stylesheet' type='text/css' href='static/standard.css'/><script src='static/scripts.js'></script></head>")
-	fmt.Fprintf(w, "<body onresize='rightSizeBigBox()' onload='rightSizeBigBox()'>")
+	fmt.Fprintf(w, "<body onresize='rightSizeBigBox()' onload='rightSizeBigBox(); alertNoUpdate(\"status-bar\",20)'>")
 	fmt.Fprintf(w, "<div id='big-box' class='big-box'>")
 
 	for i := 0; i < len(boxes); i++ {
