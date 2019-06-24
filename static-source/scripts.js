@@ -3,13 +3,13 @@ var expiry = []
 
 var source = new EventSource("/events/");
 source.onmessage = function(event) {
-    var eventDetails = event.data.split(',')
-    switch(eventDetails[0]) {
+    var event = JSON.parse(event.data)
+    switch(event.type) {
       case "updateBox":
-        var targetBox = document.getElementById(eventDetails[1]);
-        changeAlertLevel(targetBox, eventDetails[2], eventDetails[4]);
-        alertNoUpdate(eventDetails[1], eventDetails[3])
-        expireJob(eventDetails[1], eventDetails[5])
+        var targetBox = document.getElementById(event.id);
+        changeAlertLevel(targetBox, event.color, event.lastMessage);
+        alertNoUpdate(event.id, event.maxTBU)
+        expireJob(event.id, event.expireAfter)
 
         break;
 

@@ -140,6 +140,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Send keepalives to the status bar.
 func runKeepalives() {
+	var event Event
 	// Generate a regular keepalive message that gets pushed
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
@@ -151,7 +152,9 @@ func runKeepalives() {
 			}
 
 			// Set the status bar to green
-			update(statusBarID, "green", "")
+			event.ID = statusBarID
+			event.Color = "green"
+			update(event)
 
 			// Sleep for 19s.
 			time.Sleep(19 * time.Second)

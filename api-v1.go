@@ -16,6 +16,7 @@ type Event struct {
 	ExpireAfter string `json:"expireAfter"`
 	Message     string `json:"lastMessage"`
 	MaxTBU      string `json:"maxTBU"`
+	Type        string `json:"type"`
 }
 
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +38,8 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	var event Event
 	_ = json.NewDecoder(r.Body).Decode(&event)
 	event.ID = params["id"]
-	update(event.ID, event.Color, event.Message, event.MaxTBU, event.ExpireAfter)
+	event.Type = "updateBox"
+	update(event)
 	json.NewEncoder(w).Encode(event)
 }
 
@@ -60,7 +62,10 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	newBoxPrint, _ := json.Marshal(newBox)
 	log.Printf(string(newBoxPrint))
 	json.NewEncoder(w).Encode(newBox)
-	events.messages <- fmt.Sprintf("reloadPage")
+	var event Event
+	event.Type = "reloadPage"
+	stringData, _ := json.Marshal(event)
+	events.messages <- fmt.Sprintf(string(stringData))
 }
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +75,10 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	} else {
 		json.NewEncoder(w).Encode("not found")
 	}
-	events.messages <- fmt.Sprintf("reloadPage")
+	var event Event
+	event.Type = "reloadPage"
+	stringData, _ := json.Marshal(event)
+	events.messages <- fmt.Sprintf(string(stringData))
 }
 
 func runAPI() {

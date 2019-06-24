@@ -80,7 +80,7 @@ func sizeToNumber(size string) int {
 	}
 }
 
-func deleteBox(id string) (bool) {
+func deleteBox(id string) bool {
 	var newBoxes []Box
 	var found bool
 	for _, box := range boxes {
@@ -98,22 +98,25 @@ func deleteBox(id string) (bool) {
 // Find any boxes that have expired and delete them
 func expireBoxes() {
 	for _, box := range boxes {
-		log.Println(box.ExpireAfter)
-		if (box.ExpireAfter == "0" || box.ExpireAfter == "") { continue }
-		if (box.LastUpdate == "") { continue }
-		lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
-  	if err != nil {
-      log.Println(err)
+		if box.ExpireAfter == "0" || box.ExpireAfter == "" {
 			continue
-    }
+		}
+		if box.LastUpdate == "" {
+			continue
+		}
+		lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
 
 		expireAfter, err := strconv.Atoi(box.ExpireAfter)
-  	if err != nil {
-      log.Println(err)
+		if err != nil {
+			log.Println(err)
 			continue
-    }
+		}
 
-		if ( lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) ) {
+		if lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) {
 			log.Printf("deleting expired box %s", box.ID)
 			_ = deleteBox(box.ID)
 		}
