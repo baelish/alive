@@ -13,14 +13,12 @@ response="$(curl -sS -X POST "$apiUrl/api/v1/new" -H "Content-Type: application/
     "name": "My staging deployment",
     "size": "dmedium",
     "color": "grey",
-    "expireAfter": "15"
+    "expireAfter": "15",
+    "lastMessage": "Starting my staging deployment"
   }')"
 
 id="$(jq -r '.id' <<<"$response")"
 
-curl -sS -X POST -H "Content-Type: application/json" \
-  -d "{ \"color\": \"grey\", \"lastMessage\": \"Starting my staging deployment\", \"maxTBU\": \"10\"}" \
-  "$apiUrl/api/v1/events/$id"
 
 sleep 9
 

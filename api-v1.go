@@ -76,7 +76,8 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode("not found")
 	}
 	var event Event
-	event.Type = "reloadPage"
+	event.Type = "deleteBox"
+	event.ID = params["id"]
 	stringData, _ := json.Marshal(event)
 	events.messages <- fmt.Sprintf(string(stringData))
 }

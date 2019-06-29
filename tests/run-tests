@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+apiUrl="http://127.0.0.1:8081"
+
+
+test-createBox() {
+  local expectedResponse response
+  expectedResponse='{"id":"testingCreateBox","name":"Test create box","size":"dmedium","color":"grey","expireAfter":"","maxTBU":"","lastUpdate":"","lastMessage":"created test box"}'
+
+  response="$(curl -sS -X POST "$apiUrl/api/v1/new" -H "Content-Type: application/json" -d '
+    {
+      "id": "testingCreateBox",
+      "name": "Test create box",
+      "size": "dmedium",
+      "color": "grey",
+      "lastMessage": "created test box"
+    }')"
+
+  if [[ "$response" != "$expectedResponse" ]]; then
+    return 1
+  fi
+
+  response="$(curl -sS -X GET "$apiUrl/api/v1/testingCreateBox")"
+
+  if [[ "$response" != "$expectedResponse" ]]; then
+
+    return 1
+  fi
+
+  return 0
+}
+
+if test-createBox; then
+    echo "PASS"
+else
+    echo "FAIL"
+fi
