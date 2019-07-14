@@ -1,15 +1,15 @@
-var timeouts = []
-var expiry = []
-
 var source = new EventSource("/events/");
 source.onmessage = function(event) {
     var event = JSON.parse(event.data)
     switch(event.type) {
+      case "keepalive":
+        keepalive()
+
+        break;
+
       case "updateBox":
         var targetBox = document.getElementById(event.id);
         changeAlertLevel(targetBox, event.color, event.lastMessage);
-        alertNoUpdate(event.id, event.maxTBU)
-        expireJob(event.id, event.expireAfter)
 
         break;
 
@@ -31,6 +31,14 @@ function deleteBox(id) {
   var target = document.getElementById(id)
   target.parentNode.removeChild(target)
 }
+
+function keepalive() {
+  var target = document.getElementById("status-bar")
+  changeAlertLevel(target, "green", "")
+  if(typeof ka !== "undefined") { clearTimeout(ka) }
+  ka = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No keepalives for 5s.")}, 5 * 1000)
+}
+
 
 function myTime(t) {
     if ( t != null ) {
@@ -65,19 +73,4 @@ function rightSizeBigBox() {
     widthBox = (availableWidth >= 512) ? availableWidth:512
     document.getElementById('big-box').style.width = widthBox + "px"
     document.getElementById('status-bar').style.width =( widthBox -2 ) + "px"
-}
-
-
-function alertNoUpdate(id, time) {
-    if(typeof timeouts[id] !== "undefined") { clearTimeout(timeouts[id]) }
-    if(time == 0) { return }
-    var target = document.getElementById(id)
-    timeouts[id] = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No updates for " + time + "s.")}, time * 1000)
-}
-
-function expireJob(id, time) {
-    if(typeof expiry[id] !== "undefined") { clearTimeout(expiry[id]) }
-    if(time == 0) { return }
-    var target = document.getElementById(id)
-    expiry[id] = setTimeout(function(){target.parentNode.removeChild(target)}, time * 1000)
 }

@@ -9,6 +9,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -151,13 +152,13 @@ func runKeepalives() {
 				x = 0
 			}
 
-			// Set the status bar to green
-			event.ID = statusBarID
-			event.Color = "green"
-			update(event)
+			// Send a keepalive
+			event.Type = "keepalive"
+			dataString, _ := json.Marshal(event)
+			events.messages <- fmt.Sprint(string(dataString))
 
-			// Sleep for 19s.
-			time.Sleep(19 * time.Second)
+			// Sleep for 3s.
+			time.Sleep(3 * time.Second)
 		}
 	}()
 }
