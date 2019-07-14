@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -24,5 +25,6 @@ func main() {
 		runUpdater()
 	}
 	go runAPI()
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	listenOn := fmt.Sprintf(":%s", config.sitePort)
+	log.Fatal(http.ListenAndServe(listenOn, nil))
 }

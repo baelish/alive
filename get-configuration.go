@@ -9,8 +9,10 @@ import (
 
 // Config struct contains configuration to be used throughout the program
 type Config struct {
+	apiPort          string
 	baseDir          string
 	dataFile         string
+	sitePort         string
 	staticFilePath   string
 	updater          bool
 	useDefaultStatic bool
@@ -20,6 +22,16 @@ func (c *Config) processArguments() {
 
 	for i := 1; i < len(os.Args); i++ {
 		switch os.Args[i] {
+		case "--api-port":
+			if len(os.Args) > i+1 {
+				i++
+				c.apiPort = os.Args[i]
+			}
+		case "-p", "--port":
+			if len(os.Args) > i+1 {
+				i++
+				c.sitePort = os.Args[i]
+			}
 		case "-b", "--base-dir":
 			if len(os.Args) > i+1 {
 				i++
@@ -40,6 +52,15 @@ func getConfiguration() *Config {
 	c := &Config{}
 	c.updater = false
 	c.processArguments()
+
+	if c.apiPort == "" {
+		c.apiPort = "8081"
+	}
+
+	if c.sitePort == "" {
+		c.sitePort = "8080"
+	}
+
 	if c.baseDir == "" {
 		c.baseDir = fmt.Sprintf("%s/.alive", os.Getenv("HOME"))
 	}
