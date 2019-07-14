@@ -13,6 +13,11 @@ source.onmessage = function(event) {
 
         break;
 
+      case "deleteBox":
+        deleteBox(event.id)
+
+        break;
+
       case "reloadPage":
         location.reload()
     }
@@ -22,6 +27,10 @@ source.onmessage = function(event) {
 function boxClick(id) {
 }
 
+function deleteBox(id) {
+  var target = document.getElementById(id)
+  target.parentNode.removeChild(target)
+}
 
 function myTime(t) {
     if ( t != null ) {
