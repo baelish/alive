@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"time"
@@ -83,16 +82,6 @@ func update(event Event) {
 
 	if event.ExpireAfter != "" {
 		boxes[i].ExpireAfter = event.ExpireAfter
-	}
-
-	// Write json
-	byteValue, err := json.Marshal(&boxes)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err2 := ioutil.WriteFile(config.dataFile, byteValue, 0644)
-	if err2 != nil {
-		log.Fatal(err2)
 	}
 
 	event.Type = "updateBox"

@@ -146,11 +146,7 @@ func runKeepalives() {
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
 	go func() {
-		for x := 0; ; x++ {
-			// Set x back to 0 approxumatily every 24h
-			if x > 4548 {
-				x = 0
-			}
+		for {
 
 			// Send a keepalive
 			event.Type = "keepalive"

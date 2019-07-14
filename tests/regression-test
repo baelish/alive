@@ -141,5 +141,5 @@ if [[ -n "${VISUAL:-}" ]]; then
     echo "Press a key to finish visual inspection"
     read -r
 fi
-
+sleep 60
 exit $failedTests

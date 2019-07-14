@@ -20,6 +20,7 @@ func main() {
 	runFrontPage(config.staticFilePath)
 	events = runSse()
 	runKeepalives()
+	maintainBoxes()
 
 	if config.updater {
 		runUpdater()

@@ -13,27 +13,28 @@ response="$(curl -sS -X POST "$apiUrl/api/v1/new" -H "Content-Type: application/
     "name": "My staging deployment",
     "size": "dmedium",
     "color": "grey",
-    "expireAfter": "15",
+    "expireAfter": "5",
+    "maxTBU": "2",
     "lastMessage": "Starting my staging deployment"
   }')"
 
 id="$(jq -r '.id' <<<"$response")"
 
 
-sleep 9
+sleep 5
 
 
 # Give progress update (optional)
 # Keep box grey, change MaxTBU if appropriate.
 curl -X POST -H "Content-Type: application/json" \
-  -d "{ \"color\": \"grey\", \"lastMessage\": \"My staging deployment is 50% completed\", \"MaxTBU\": \"10\"}" \
+  -d "{ \"color\": \"grey\", \"lastMessage\": \"My staging deployment is 50% completed\", \"maxTBU\": \"10\"}" \
   "$apiUrl/api/v1/events/$id"
 
-sleep 9
+sleep 3
 
 # Give final status
 # Make box appropriate colour green, amber or red, set MaxTBU to 0
 
 curl -sS -X POST -H "Content-Type: application/json" \
-  -d "{ \"color\": \"green\", \"lastMessage\": \"My staging deployment was completed successfully.\", \"MaxTBU\": \"0\"}" \
+  -d "{ \"color\": \"green\", \"lastMessage\": \"My staging deployment was completed successfully.\", \"maxTBU\": \"0\"}" \
   "$apiUrl/api/v1/events/$id"
