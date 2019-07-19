@@ -29,7 +29,7 @@ func runUpdater() {
 			ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 			if boxes[x].ID != statusBarID {
 				event.ID = boxes[x].ID
-				event.Color = "green"
+				event.Status = "green"
 				event.Message = fmt.Sprintf("the time is %s", ft)
 				update(event)
 			}
@@ -39,13 +39,13 @@ func runUpdater() {
 				if boxes[x].ID != statusBarID {
 					switch rand.Intn(3) {
 					case 0:
-						event.Color = "red"
+						event.Status = "red"
 						event.Message = "PANIC! Red Alert"
 					case 1:
-						event.Color = "amber"
+						event.Status = "amber"
 						event.Message = "OH NOES! Something's not quite right"
 					case 2:
-						event.Color = "grey"
+						event.Status = "grey"
 						event.Message = "Meh not sure what to do now...."
 					}
 
@@ -73,8 +73,12 @@ func update(event Event) {
 	}
 
 	boxes[i].LastMessage = event.Message
-	boxes[i].LastUpdate = ft
-	boxes[i].Color = event.Color
+
+	if event.Type != missedStatusUpdate {
+		boxes[i].LastUpdate = ft
+	}
+
+	boxes[i].Status = event.Status
 
 	if event.MaxTBU != "" {
 		boxes[i].MaxTBU = event.MaxTBU

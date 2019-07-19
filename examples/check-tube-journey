@@ -52,12 +52,12 @@ for line in "${lines[@]}"; do
 done
 
 if [[ "$badness" -eq "0" ]]; then
-    color="green"
+    status="green"
     rawMessage=( "No issues.<br />" )
 elif [[ "$badness" -lt "${#lines[@]}" ]]; then
-    color="amber"
+    status="amber"
 else
-    color="red"
+    status="red"
 fi
 
 rawMessage+=( "lines checked: (${lines[*]})" )
@@ -66,5 +66,5 @@ message="${rawMessage[*]}"
 message="${message//$'\n'/ }"
 
 curl -X POST -H "Content-Type: application/json" \
-    -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+    -d "{ \"status\": \"$status\", \"lastMessage\": \"$message\"}" \
     "$apiUrl/api/v1/events/$id"

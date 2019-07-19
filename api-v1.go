@@ -13,7 +13,7 @@ import (
 // Event struct is used to stream events to dashboard.
 type Event struct {
 	ID          string `json:"id"`
-	Color       string `json:"color"`
+	Status      string `json:"status"`
 	ExpireAfter string `json:"expireAfter"`
 	Message     string `json:"lastMessage"`
 	MaxTBU      string `json:"maxTBU"`

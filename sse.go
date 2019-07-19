@@ -9,12 +9,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 )
+
+const missedStatusUpdate = "noUpdate"
 
 // Broker which will be created in this program. It is responsible
 // for keeping a list of which clients (browsers) are currently attached
@@ -141,7 +142,6 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Send keepalives to the status bar.
 func runKeepalives() {
-	var event Event
 	// Generate a regular keepalive message that gets pushed
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
@@ -149,9 +149,7 @@ func runKeepalives() {
 		for {
 
 			// Send a keepalive
-			event.Type = "keepalive"
-			dataString, _ := json.Marshal(event)
-			events.messages <- fmt.Sprint(string(dataString))
+			events.messages <- fmt.Sprint(`{"type": "keepalive"}`)
 
 			// Sleep for 3s.
 			time.Sleep(3 * time.Second)

@@ -65,22 +65,22 @@ start-server() {
 
 test-createBox() {
   local expectedResponse response
-  expectedResponse='{"id":"testingCreateBox","name":"Test create box","size":"dmedium","color":"grey","expireAfter":"","maxTBU":"","lastUpdate":"","lastMessage":"created test box"}'
+  expectedResponse='{"id":"testingCreateBox","name":"Test create box","size":"dmedium","status":"grey","expireAfter":"","maxTBU":"","lastUpdate":"","lastMessage":"created test box"}'
 
   response="$(curl -sS -X POST "$apiUrl/api/v1/new" -H "Content-Type: application/json" -d '
     {
       "id": "testingCreateBox",
       "name": "Test create box",
       "size": "dmedium",
-      "color": "grey",
+      "status": "grey",
       "lastMessage": "created test box"
     }')"
 
-  if [[ "$response" != "$expectedResponse" ]]; then
+  if [[ "$(jq -Mc '.lastUpdate=""' <<<"$response")" != "$expectedResponse" ]]; then
     return 1
   fi
 
-  response="$(curl -sS -X GET "$apiUrl/api/v1/testingCreateBox")"
+  response="$(curl -sS -X GET "$apiUrl/api/v1/testingCreateBox" | jq -Mc '.lastUpdate=""' )"
 
   if [[ "$response" != "$expectedResponse" ]]; then
 
@@ -141,5 +141,5 @@ if [[ -n "${VISUAL:-}" ]]; then
     echo "Press a key to finish visual inspection"
     read -r
 fi
-sleep 60
+
 exit $failedTests

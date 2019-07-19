@@ -15,7 +15,7 @@ type Box struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Size        string `json:"size"`
-	Color       string `json:"color"`
+	Status      string `json:"status"`
 	ExpireAfter string `json:"expireAfter"`
 	MaxTBU      string `json:"maxTBU"`
 	LastUpdate  string `json:"lastUpdate"`
@@ -134,12 +134,13 @@ func maintainBoxes() {
 					log.Printf("%s", box.MaxTBU)
 					if err != nil {
 						log.Println(err)
-					} else if lastUpdate.Add(time.Second * time.Duration(alertAfter)).Before(time.Now()) {
+					} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != missedStatusUpdate {
 						log.Printf("no events for box %s", box.ID)
 						var event Event
 						event.ID = box.ID
-						event.Color = "red"
-						event.Message = fmt.Sprintf("No new message for %ss. <br /> Last message: %s on %s", box.MaxTBU, box.LastMessage, box.LastUpdate)
+						event.Status = missedStatusUpdate
+						event.Message = fmt.Sprintf("No new updates for %ss. <br /> Last message: %s on %s", box.MaxTBU, box.LastMessage, box.LastUpdate)
+						event.Type = missedStatusUpdate
 						update(event)
 
 						continue
@@ -186,7 +187,7 @@ func getBoxes(jsonFile string) {
 	if !testBoxID(statusBarID) {
 		var statusBox Box
 		statusBox.ID = statusBarID
-		statusBox.Color = "grey"
+		statusBox.Status = "grey"
 		statusBox.ExpireAfter = "0"
 		statusBox.MaxTBU = "20"
 		statusBox.Name = "Status"

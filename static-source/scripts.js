@@ -9,7 +9,7 @@ source.onmessage = function(event) {
 
       case "updateBox":
         var targetBox = document.getElementById(event.id);
-        changeAlertLevel(targetBox, event.color, event.lastMessage);
+        changeAlertLevel(targetBox, event.status, event.lastMessage);
 
         break;
 
@@ -59,10 +59,10 @@ function pad(n, width, z) {
 }
 
 
-function changeAlertLevel(target, level, message) {
-    if ( ["amber","green","grey","red"].indexOf(level) == -1) { level = "grey" }
-    target.classList.remove("amber", "green", "grey", "red")
-    target.classList.add(level)
+function changeAlertLevel(target, status, message) {
+    if ( ["amber","green","grey","noUpdate","red"].indexOf(status) == -1) { status = "grey" }
+    target.classList.remove("amber", "green", "grey", "noUpdate", "red")
+    target.classList.add(status)
     target.getElementsByClassName("message")[0].innerHTML = message
     target.getElementsByClassName("lastUpdated")[0].innerHTML = myTime()
 }
