@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -44,6 +45,8 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiCreateBox(w http.ResponseWriter, r *http.Request) {
+	t := time.Now()
+	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 	var newBox Box
 	_ = json.NewDecoder(r.Body).Decode(&newBox)
 	if newBox.ID != "" {
@@ -57,6 +60,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+	newBox.LastUpdate = ft
 	boxes = append(boxes, newBox)
 	sortBoxes()
 	newBoxPrint, _ := json.Marshal(newBox)
