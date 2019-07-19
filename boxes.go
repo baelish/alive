@@ -15,7 +15,7 @@ type Box struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Size        string `json:"size"`
-	Color       string `json:"color"`
+	Status      string `json:"status"`
 	ExpireAfter string `json:"expireAfter"`
 	MaxTBU      string `json:"maxTBU"`
 	LastUpdate  string `json:"lastUpdate"`
@@ -80,7 +80,7 @@ func sizeToNumber(size string) int {
 	}
 }
 
-func deleteBox(id string) (bool) {
+func deleteBox(id string) bool {
 	var newBoxes []Box
 	var found bool
 	for _, box := range boxes {
@@ -95,29 +95,74 @@ func deleteBox(id string) (bool) {
 	return found
 }
 
-// Find any boxes that have expired and delete them
-func expireBoxes() {
-	for _, box := range boxes {
-		log.Println(box.ExpireAfter)
-		if (box.ExpireAfter == "0" || box.ExpireAfter == "") { continue }
-		if (box.LastUpdate == "") { continue }
-		lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
-  	if err != nil {
-      log.Println(err)
-			continue
-    }
+// Find any boxes that have expired and delete them. Also find any boxes which
+// have not had timely updates and update their status.
+func maintainBoxes() {
+	go func() {
+		for {
+			for _, box := range boxes {
+				if box.LastUpdate == "" {
+					continue
+				}
 
-		expireAfter, err := strconv.Atoi(box.ExpireAfter)
-  	if err != nil {
-      log.Println(err)
-			continue
-    }
+				lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
 
-		if ( lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) ) {
-			log.Printf("deleting expired box %s", box.ID)
-			_ = deleteBox(box.ID)
+				if box.ExpireAfter != "0" && box.ExpireAfter != "" {
+					expireAfter, err := strconv.Atoi(box.ExpireAfter)
+					if err != nil {
+						log.Println(err)
+					} else if lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) {
+						log.Printf("deleting expired box %s", box.ID)
+						_ = deleteBox(box.ID)
+						var event Event
+						event.ID = box.ID
+						event.Type = "deleteBox"
+						stringData, _ := json.Marshal(event)
+						events.messages <- fmt.Sprintf(string(stringData))
+
+						continue
+					}
+
+				}
+
+				if box.MaxTBU != "0" && box.MaxTBU != "" {
+					alertAfter, err := strconv.Atoi(box.MaxTBU)
+					log.Printf("%s", box.MaxTBU)
+					if err != nil {
+						log.Println(err)
+					} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != missedStatusUpdate {
+						log.Printf("no events for box %s", box.ID)
+						var event Event
+						event.ID = box.ID
+						event.Status = missedStatusUpdate
+						event.Message = fmt.Sprintf("No new updates for %ss. <br /> Last message: %s on %s", box.MaxTBU, box.LastMessage, box.LastUpdate)
+						event.Type = missedStatusUpdate
+						update(event)
+
+						continue
+					}
+
+				}
+			}
+
+			// Write json
+			byteValue, err := json.Marshal(&boxes)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = ioutil.WriteFile(config.dataFile, byteValue, 0644)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Sleep for 1s.
+			time.Sleep(1 * time.Second)
 		}
-	}
+	}()
 }
 
 // Find a box in the boxes array, supply the box ID, will return the array id
@@ -142,15 +187,14 @@ func getBoxes(jsonFile string) {
 	if !testBoxID(statusBarID) {
 		var statusBox Box
 		statusBox.ID = statusBarID
-		statusBox.Color = "grey"
+		statusBox.Status = "grey"
 		statusBox.ExpireAfter = "0"
-		statusBox.MaxTBU = "60"
+		statusBox.MaxTBU = "20"
 		statusBox.Name = "Status"
 		statusBox.Size = "status"
 		boxes = append(boxes, statusBox)
 	}
 
-	expireBoxes()
 	sortBoxes()
 
 }

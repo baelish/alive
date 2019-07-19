@@ -1,15 +1,20 @@
-var timeouts = []
-var expiry = []
-
 var source = new EventSource("/events/");
 source.onmessage = function(event) {
-    var eventDetails = event.data.split(',')
-    switch(eventDetails[0]) {
+    var event = JSON.parse(event.data)
+    switch(event.type) {
+      case "keepalive":
+        keepalive()
+
+        break;
+
       case "updateBox":
-        var targetBox = document.getElementById(eventDetails[1]);
-        changeAlertLevel(targetBox, eventDetails[2], eventDetails[4]);
-        alertNoUpdate(eventDetails[1], eventDetails[3])
-        expireJob(eventDetails[1], eventDetails[5])
+        var targetBox = document.getElementById(event.id);
+        changeAlertLevel(targetBox, event.status, event.lastMessage);
+
+        break;
+
+      case "deleteBox":
+        deleteBox(event.id)
 
         break;
 
@@ -20,6 +25,18 @@ source.onmessage = function(event) {
 
 
 function boxClick(id) {
+}
+
+function deleteBox(id) {
+  var target = document.getElementById(id)
+  target.parentNode.removeChild(target)
+}
+
+function keepalive() {
+  var target = document.getElementById("status-bar")
+  changeAlertLevel(target, "green", "")
+  if(typeof ka !== "undefined") { clearTimeout(ka) }
+  ka = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No keepalives for 5s.")}, 5 * 1000)
 }
 
 
@@ -42,10 +59,10 @@ function pad(n, width, z) {
 }
 
 
-function changeAlertLevel(target, level, message) {
-    if ( ["amber","green","grey","red"].indexOf(level) == -1) { level = "grey" }
-    target.classList.remove("amber", "green", "grey", "red")
-    target.classList.add(level)
+function changeAlertLevel(target, status, message) {
+    if ( ["amber","green","grey","noUpdate","red"].indexOf(status) == -1) { status = "grey" }
+    target.classList.remove("amber", "green", "grey", "noUpdate", "red")
+    target.classList.add(status)
     target.getElementsByClassName("message")[0].innerHTML = message
     target.getElementsByClassName("lastUpdated")[0].innerHTML = myTime()
 }
@@ -56,19 +73,4 @@ function rightSizeBigBox() {
     widthBox = (availableWidth >= 512) ? availableWidth:512
     document.getElementById('big-box').style.width = widthBox + "px"
     document.getElementById('status-bar').style.width =( widthBox -2 ) + "px"
-}
-
-
-function alertNoUpdate(id, time) {
-    if(typeof timeouts[id] !== "undefined") { clearTimeout(timeouts[id]) }
-    if(time == 0) { return }
-    var target = document.getElementById(id)
-    timeouts[id] = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No updates for " + time + "s.")}, time * 1000)
-}
-
-function expireJob(id, time) {
-    if(typeof expiry[id] !== "undefined") { clearTimeout(expiry[id]) }
-    if(time == 0) { return }
-    var target = document.getElementById(id)
-    expiry[id] = setTimeout(function(){target.parentNode.removeChild(target)}, time * 1000)
 }

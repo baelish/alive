@@ -33,15 +33,15 @@ for wellKnownIp in "${wellKnownIps[@]}"; do
 done
 
 if [[ "$good" == "${#wellKnownIps[@]}" ]]; then
-    color="green"
+    status="green"
     message="All tested well known IPs responded."
 elif [[ "$good" == "0" ]]; then
-    color="red"
+    status="red"
 else
-    color="amber"
+    status="amber"
     message+="$good good responses."
 fi
 
 curl -X POST -H "Content-Type: application/json" \
-    -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+    -d "{ \"status\": \"$status\", \"lastMessage\": \"$message\"}" \
     "$apiUrl/api/v1/events/$id"

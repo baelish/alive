@@ -67,14 +67,14 @@ main() {
     done
 
     if [[ "$bad" -le "0" ]]; then
-        color="green"
+        status="green"
     elif [[ "$bad" -gt "${#hosts[@]}" ]]; then
-        color="red"
+        status="red"
     else
-        color="amber"
+        status="amber"
     fi
 
-    if [[ "$color" == "green" && -z "${rawMessage[*]}" ]]; then
+    if [[ "$status" == "green" && -z "${rawMessage[*]}" ]]; then
         rawMessage[0]="All certifates are valid for at least two more weeks."
     fi
 
@@ -90,7 +90,7 @@ main() {
     message="${message//,/&#44;}"
 
     curl -X POST -H "Content-Type: application/json" \
-        -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+        -d "{ \"status\": \"$status\", \"lastMessage\": \"$message\"}" \
         "$apiUrl/api/v1/events/$id"
 }
 

@@ -33,7 +33,7 @@ dnsTest() {
 }
 
 message=""
-color="green"
+status="green"
 
 
 # Test primaries
@@ -50,9 +50,9 @@ for primary in "${primaryDns[@]}"; do
 done
 
 if [[ "$primaryGood" -eq "0" ]]; then
-    color="red"
+    status="red"
 elif [[ "$primaryGood" -lt "$primaryCount" ]]; then
-    color="amber"
+    status="amber"
 fi
 
 # Test public
@@ -98,30 +98,30 @@ for caching in "${cachingDns[@]}"; do
     fi
 done
 
-if [[ "$color" != "red" ]]; then
+if [[ "$status" != "red" ]]; then
     if [[ "$cachingIntCount" -gt "0" ]]; then
         if [[ "$cachingIntGood" -eq "0" ]]; then
-            color="red"
+            status="red"
         elif [[ "$cachingIntGood" -lt "$cachingIntCount" ]]; then
-            color="amber"
+            status="amber"
         fi
     fi
 fi
 
-if [[ "$color" != "red" ]]; then
+if [[ "$status" != "red" ]]; then
     if [[ "$cachingExtCount" -gt "0" ]]; then
         if [[ "$cachingExtGood" -eq "0" ]]; then
-            color="red"
+            status="red"
         elif [[ "$cachingExtGood" -lt "$cachingExtCount" ]]; then
-            color="amber"
+            status="amber"
         fi
     fi
 fi
 
-if [[ "$color" == "green" && -z "$message" ]]; then
+if [[ "$status" == "green" && -z "$message" ]]; then
     message="All tested DNS servers resolving."
 fi
 
 curl -X POST -H "Content-Type: application/json" \
-    -d "{ \"color\": \"$color\", \"lastMessage\": \"$message\"}" \
+    -d "{ \"status\": \"$status\", \"lastMessage\": \"$message\"}" \
     "$apiUrl/api/v1/events/$id"

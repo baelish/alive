@@ -4,7 +4,7 @@ div.green {
     background-color:#33cc33;
 }
 
-div.red {
+div.red, div.noUpdate {
     background-color:#cc0000;
 }
 

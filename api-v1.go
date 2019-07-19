@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -12,10 +13,11 @@ import (
 // Event struct is used to stream events to dashboard.
 type Event struct {
 	ID          string `json:"id"`
-	Color       string `json:"color"`
+	Status      string `json:"status"`
 	ExpireAfter string `json:"expireAfter"`
 	Message     string `json:"lastMessage"`
 	MaxTBU      string `json:"maxTBU"`
+	Type        string `json:"type"`
 }
 
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
@@ -37,11 +39,14 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	var event Event
 	_ = json.NewDecoder(r.Body).Decode(&event)
 	event.ID = params["id"]
-	update(event.ID, event.Color, event.Message, event.MaxTBU, event.ExpireAfter)
+	event.Type = "updateBox"
+	update(event)
 	json.NewEncoder(w).Encode(event)
 }
 
 func apiCreateBox(w http.ResponseWriter, r *http.Request) {
+	t := time.Now()
+	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 	var newBox Box
 	_ = json.NewDecoder(r.Body).Decode(&newBox)
 	if newBox.ID != "" {
@@ -55,33 +60,30 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+	newBox.LastUpdate = ft
 	boxes = append(boxes, newBox)
 	sortBoxes()
 	newBoxPrint, _ := json.Marshal(newBox)
 	log.Printf(string(newBoxPrint))
 	json.NewEncoder(w).Encode(newBox)
-	events.messages <- fmt.Sprintf("reloadPage")
+	var event Event
+	event.Type = "reloadPage"
+	stringData, _ := json.Marshal(event)
+	events.messages <- fmt.Sprintf(string(stringData))
 }
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	found := false
-	var newBoxes []Box
-	for _, box := range boxes {
-		if box.ID != params["id"] {
-			newBoxes = append(newBoxes, box)
-		} else {
-			log.Printf("Deleting box %s as requested by %s", params["id"], r.RemoteAddr)
-			found = true
-		}
-	}
-	boxes = newBoxes
-	if found == true {
+	if deleteBox(params["id"]) {
 		json.NewEncoder(w).Encode("deleted " + params["id"])
 	} else {
 		json.NewEncoder(w).Encode("not found")
 	}
-	events.messages <- fmt.Sprintf("reloadPage")
+	var event Event
+	event.Type = "deleteBox"
+	event.ID = params["id"]
+	stringData, _ := json.Marshal(event)
+	events.messages <- fmt.Sprintf(string(stringData))
 }
 
 func runAPI() {
@@ -91,5 +93,6 @@ func runAPI() {
 	router.HandleFunc("/api/v1/{id}", apiGetBox).Methods("GET")
 	router.HandleFunc("/api/v1/{id}", apiDeleteBox).Methods("DELETE")
 	router.HandleFunc("/api/v1/events/{id}", apiCreateEvent).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8081", router))
+	listenOn := fmt.Sprintf(":%s", config.apiPort)
+	log.Fatal(http.ListenAndServe(listenOn, router))
 }

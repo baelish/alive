@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+const missedStatusUpdate = "noUpdate"
+
 // Broker which will be created in this program. It is responsible
 // for keeping a list of which clients (browsers) are currently attached
 // and broadcasting events (messages) to those clients.
@@ -144,17 +146,13 @@ func runKeepalives() {
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
 	go func() {
-		for x := 0; ; x++ {
-			// Set x back to 0 approxumatily every 24h
-			if x > 4548 {
-				x = 0
-			}
+		for {
 
-			// Set the status bar to green
-			update(statusBarID, "green", "")
+			// Send a keepalive
+			events.messages <- fmt.Sprint(`{"type": "keepalive"}`)
 
-			// Sleep for 19s.
-			time.Sleep(19 * time.Second)
+			// Sleep for 3s.
+			time.Sleep(3 * time.Second)
 		}
 	}()
 }

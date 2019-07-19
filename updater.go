@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"time"
@@ -18,7 +17,7 @@ func runUpdater() {
 	// out to any clients that are attached. This will be replaced
 	// with something else Kafka?
 	go func() {
-		var c, m string
+		var event Event
 		for x := 0; ; x++ {
 			if x >= len(boxes) {
 				x = 0
@@ -29,7 +28,10 @@ func runUpdater() {
 			t := time.Now()
 			ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 			if boxes[x].ID != statusBarID {
-				update(boxes[x].ID, "green", fmt.Sprintf("the time is %s", ft))
+				event.ID = boxes[x].ID
+				event.Status = "green"
+				event.Message = fmt.Sprintf("the time is %s", ft)
+				update(event)
 			}
 
 			if rand.Intn(30) == 1 {
@@ -37,17 +39,18 @@ func runUpdater() {
 				if boxes[x].ID != statusBarID {
 					switch rand.Intn(3) {
 					case 0:
-						c = "red"
-						m = "PANIC! Red Alert"
+						event.Status = "red"
+						event.Message = "PANIC! Red Alert"
 					case 1:
-						c = "amber"
-						m = "OH NOES! Something's not quite right"
+						event.Status = "amber"
+						event.Message = "OH NOES! Something's not quite right"
 					case 2:
-						c = "grey"
-						m = "Meh not sure what to do now...."
+						event.Status = "grey"
+						event.Message = "Meh not sure what to do now...."
 					}
 
-					update(boxes[y].ID, c, m)
+					event.ID = boxes[y].ID
+					update(event)
 				}
 			}
 
@@ -58,38 +61,34 @@ func runUpdater() {
 	}()
 }
 
-func update(params ...string) {
+func update(event Event) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 
-	i, err := findBoxByID(params[0])
+	i, err := findBoxByID(event.ID)
 	if err != nil {
 		log.Print(err)
 
 		return
 	}
 
-	boxes[i].LastMessage = params[2]
-	boxes[i].LastUpdate = ft
-	boxes[i].Color = params[1]
+	boxes[i].LastMessage = event.Message
 
-	if len(params) > 3 && params[3] != "" {
-		boxes[i].MaxTBU = params[3]
+	if event.Type != missedStatusUpdate {
+		boxes[i].LastUpdate = ft
 	}
 
-	if len(params) > 4 && params[4] != "" {
-		boxes[i].ExpireAfter = params[4]
+	boxes[i].Status = event.Status
+
+	if event.MaxTBU != "" {
+		boxes[i].MaxTBU = event.MaxTBU
 	}
 
-	// Write json
-	byteValue, err := json.Marshal(&boxes)
-	if err != nil {
-		log.Fatal(err)
+	if event.ExpireAfter != "" {
+		boxes[i].ExpireAfter = event.ExpireAfter
 	}
-	err2 := ioutil.WriteFile(config.dataFile, byteValue, 0644)
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-	
-	events.messages <- fmt.Sprintf("updateBox,%s,%s,%s,%s,%s", params[0], boxes[i].Color, boxes[i].MaxTBU, boxes[i].LastMessage, boxes[i].ExpireAfter)
+
+	event.Type = "updateBox"
+	dataString, _ := json.Marshal(event)
+	events.messages <- fmt.Sprint(string(dataString))
 }
