@@ -131,7 +131,6 @@ func maintainBoxes() {
 
 				if box.MaxTBU != "0" && box.MaxTBU != "" {
 					alertAfter, err := strconv.Atoi(box.MaxTBU)
-					log.Printf("%s", box.MaxTBU)
 					if err != nil {
 						log.Println(err)
 					} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != missedStatusUpdate {
@@ -202,7 +201,7 @@ func getBoxes(jsonFile string) {
 func sortBoxes() {
 	Size := func(p1, p2 *Box) bool {
 		if p1.Size == p2.Size {
-			return false
+			return p1.Name < p2.Name
 		}
 		size1 := sizeToNumber(p1.Size)
 		size2 := sizeToNumber(p2.Size)
