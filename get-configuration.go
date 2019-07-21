@@ -18,40 +18,39 @@ type Config struct {
 	useDefaultStatic bool
 }
 
-func (c *Config) processArguments() {
+func (c *Config) processArguments(args []string) {
 
-	for i := 1; i < len(os.Args); i++ {
-		switch os.Args[i] {
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
 		case "--api-port":
-			if len(os.Args) > i+1 {
+			if len(args) > i+1 {
 				i++
-				c.apiPort = os.Args[i]
+				c.apiPort = args[i]
 			}
 		case "-p", "--port":
-			if len(os.Args) > i+1 {
+			if len(args) > i+1 {
 				i++
-				c.sitePort = os.Args[i]
+				c.sitePort = args[i]
 			}
 		case "-b", "--base-dir":
-			if len(os.Args) > i+1 {
+			if len(args) > i+1 {
 				i++
-				c.baseDir = os.Args[i]
+				c.baseDir = args[i]
 			}
 		case "--updater":
 			c.updater = true
 		case "--default-static":
 			c.useDefaultStatic = true
 		default:
-			log.Printf("Ignoring unknown option %s", os.Args[i])
+			log.Printf("Ignoring unknown option %s", args[i])
 		}
 
 	}
 }
 
-func getConfiguration() *Config {
+func getConfiguration(args []string) *Config {
 	c := &Config{}
-	c.updater = false
-	c.processArguments()
+	c.processArguments(args)
 
 	if c.apiPort == "" {
 		c.apiPort = "8081"
@@ -68,15 +67,5 @@ func getConfiguration() *Config {
 	c.staticFilePath = filepath.Clean(fmt.Sprintf("%s/static", c.baseDir))
 	c.dataFile = filepath.Clean(fmt.Sprintf("%s/data.json", c.baseDir))
 
-	var _, err = os.Stat(c.dataFile)
-	if os.IsNotExist(err) {
-		var file, err = os.Create(c.dataFile)
-		if err != nil {
-			log.Printf("Data file did not exist and could not create an empty one.")
-			log.Fatal(err)
-		}
-		defer file.Close()
-		log.Printf("Created empty data file %s", c.dataFile)
-	}
 	return c
 }

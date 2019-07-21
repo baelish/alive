@@ -29,7 +29,7 @@ start-server() {
   mkdir "$dataDir"
   cp test-data.json "$dataDir/data.json"
 
-  go run ../*.go -b "$dataDir/" --default-static --api-port "$apiPort" --port "$sitePort" &> "$dataDir/go-process.log" &
+  go run ../ -b "$dataDir/" --default-static --api-port "$apiPort" --port "$sitePort" &> "$dataDir/go-process.log" &
   serverPgid="$(ps o pgid= $!)"
   serverPgid="${serverPgid// /}"
   logEntry "DEBUG" "Server started with pgid '$serverPgid'"
