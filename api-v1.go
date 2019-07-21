@@ -20,6 +20,11 @@ type Event struct {
 	Type        string `json:"type"`
 }
 
+// ErrorMessage allows returning a json error message.
+type ErrorMessage struct {
+	Error string `json:"error"`
+}
+
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(boxes)
 }
@@ -51,7 +56,9 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewDecoder(r.Body).Decode(&newBox)
 	if newBox.ID != "" {
 		if testBoxID(newBox.ID) {
-			json.NewEncoder(w).Encode("Cannot create box, the ID requested already exists.")
+			var error ErrorMessage
+			error.Error = "Cannot create box, the ID requested already exists."
+			json.NewEncoder(w).Encode(error)
 			return
 		}
 	} else {

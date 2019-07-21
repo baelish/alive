@@ -15,14 +15,13 @@ var sizes = []string{"micro", "dmicro", "small", "dsmall", "medium", "dmedium", 
 
 func init() {
 	config = getConfiguration(os.Args)
-	createDataFile(config.dataFile)
 }
 
 func main() {
 	log.Printf("%+v\n", config)
-	createStaticContent(config.staticFilePath)
-	getBoxes(config.dataFile)
-	runFrontPage(config.staticFilePath)
+	createStaticContent()
+	getBoxes()
+	runFrontPage()
 	events = runSse()
 	runKeepalives()
 	maintainBoxes()

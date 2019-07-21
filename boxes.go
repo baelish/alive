@@ -175,8 +175,8 @@ func findBoxByID(id string) (int, error) {
 }
 
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
-func getBoxes(jsonFile string) {
-	byteValue, err := ioutil.ReadFile(jsonFile)
+func getBoxes() {
+	byteValue, err := ioutil.ReadFile(config.dataFile)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -23,7 +23,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "</body>")
 }
 
-func runFrontPage(staticFilePath string) {
+func runFrontPage() {
 	http.HandleFunc("/", handleRoot)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticFilePath))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config.staticFilePath))))
 }
