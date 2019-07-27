@@ -6,7 +6,6 @@ import (
 )
 
 func createStaticContent() {
-
 	for _, file := range AssetNames() {
 		if _, err := os.Stat(config.staticFilePath + file); os.IsNotExist(err) {
 			log.Printf("'%s/%s' doesn't exist, creating default file.", config.staticFilePath, file)
@@ -16,12 +15,15 @@ func createStaticContent() {
 			RestoreAsset(config.staticFilePath, file)
 		}
 	}
+
 	if _, err := os.Stat(config.dataFile); os.IsNotExist(err) {
 		var file, err = os.Create(config.dataFile)
+
 		if err != nil {
 			log.Printf("Data file did not exist and could not create an empty one.")
 			log.Fatal(err)
 		}
+
 		log.Printf("Created empty data file %s", config.dataFile)
 		defer file.Close()
 	}

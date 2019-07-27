@@ -20,7 +20,6 @@ type Config struct {
 }
 
 func (c *Config) processArguments(args []string) {
-
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
 		case "--api-port":
@@ -47,7 +46,6 @@ func (c *Config) processArguments(args []string) {
 				log.Printf("Ignoring unknown option %s", args[i])
 			}
 		}
-
 	}
 }
 
@@ -66,6 +64,7 @@ func getConfiguration(args []string) *Config {
 	if c.baseDir == "" {
 		c.baseDir = fmt.Sprintf("%s/.alive", os.Getenv("HOME"))
 	}
+
 	c.baseDir = filepath.Clean(c.baseDir)
 	c.staticFilePath = filepath.Clean(fmt.Sprintf("%s/static", c.baseDir))
 	c.dataFile = filepath.Clean(fmt.Sprintf("%s/data.json", c.baseDir))

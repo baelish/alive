@@ -18,6 +18,7 @@ func runUpdater() {
 	// with something else Kafka?
 	go func() {
 		var event Event
+
 		for x := 0; ; x++ {
 			if x >= len(boxes) {
 				x = 0
@@ -27,6 +28,7 @@ func runUpdater() {
 			// including the current time.
 			t := time.Now()
 			ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
+
 			if boxes[x].ID != statusBarID {
 				event.ID = boxes[x].ID
 				event.Status = "green"
@@ -36,8 +38,10 @@ func runUpdater() {
 
 			if rand.Intn(2) == 1 {
 				max := len(boxes) - 1
+
 				if max > 0 {
 					y := rand.Intn(max)
+
 					if boxes[y].ID != statusBarID {
 						switch rand.Intn(3) {
 						case 0:
@@ -57,7 +61,6 @@ func runUpdater() {
 				}
 			}
 			time.Sleep(10 * time.Millisecond)
-
 		}
 	}()
 }
@@ -65,8 +68,8 @@ func runUpdater() {
 func update(event Event) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
-
 	i, err := findBoxByID(event.ID)
+
 	if err != nil {
 		log.Print(err)
 

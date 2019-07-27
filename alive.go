@@ -11,7 +11,7 @@ const statusBarID = "status-bar"
 
 var events *Broker
 var config *Config
-var sizes = []string{"micro", "dmicro", "small", "dsmall", "medium", "dmedium", "large", "dlarge", "xlarge", "dxlarge", "status"}
+var sizes = []string{"micro", "dmicro", "small", "dsmall", "medium", "dmedium", "large", "dlarge", "xlarge", "status"}
 
 func init() {
 	config = getConfiguration(os.Args)
@@ -29,7 +29,9 @@ func main() {
 	if config.updater {
 		runUpdater()
 	}
+
 	go runAPI()
+
 	listenOn := fmt.Sprintf(":%s", config.sitePort)
 	log.Fatal(http.ListenAndServe(listenOn, nil))
 }

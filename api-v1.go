@@ -27,10 +27,13 @@ func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	i, err := findBoxByID(params["id"])
+
 	if err != nil {
 		json.NewEncoder(w).Encode(json.RawMessage(`{"error": "id not found"}`))
+
 		return
 	}
+
 	json.NewEncoder(w).Encode(boxes[i])
 }
 
@@ -49,9 +52,11 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 	var newBox Box
 	_ = json.NewDecoder(r.Body).Decode(&newBox)
+
 	if newBox.ID != "" {
 		if testBoxID(newBox.ID) {
 			json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot create box, the ID requested already exists."}`))
+
 			return
 		}
 	} else {
@@ -60,6 +65,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+
 	newBox.LastUpdate = ft
 	boxes = append(boxes, newBox)
 	sortBoxes()
@@ -75,6 +81,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var message json.RawMessage
+
 	if deleteBox(params["id"]) {
 		message = json.RawMessage(fmt.Sprintf(`{"info": "deleted box %s"}`, params["id"]))
 		var event Event
@@ -85,6 +92,7 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	} else {
 		message = json.RawMessage(`{"error": "box not found"}`)
 	}
+
 	json.NewEncoder(w).Encode(message)
 
 }
