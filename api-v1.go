@@ -20,11 +20,6 @@ type Event struct {
 	Type        string `json:"type"`
 }
 
-// ErrorMessage allows returning a json error message.
-type ErrorMessage struct {
-	Error string `json:"error"`
-}
-
 func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(boxes)
 }
@@ -56,9 +51,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewDecoder(r.Body).Decode(&newBox)
 	if newBox.ID != "" {
 		if testBoxID(newBox.ID) {
-			var error ErrorMessage
-			error.Error = "Cannot create box, the ID requested already exists."
-			json.NewEncoder(w).Encode(error)
+			json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot create box, the ID requested already exists."}`))
 			return
 		}
 	} else {
@@ -81,16 +74,19 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
+	var message json.RawMessage
 	if deleteBox(params["id"]) {
-		json.NewEncoder(w).Encode("deleted " + params["id"])
+		message = json.RawMessage(fmt.Sprintf(`{"info": "deleted box %s"}`, params["id"]))
+		var event Event
+		event.Type = "deleteBox"
+		event.ID = params["id"]
+		stringData, _ := json.Marshal(event)
+		events.messages <- fmt.Sprintf(string(stringData))
 	} else {
-		json.NewEncoder(w).Encode("not found")
+		message = json.RawMessage(`{"error": "box not found"}`)
 	}
-	var event Event
-	event.Type = "deleteBox"
-	event.ID = params["id"]
-	stringData, _ := json.Marshal(event)
-	events.messages <- fmt.Sprintf(string(stringData))
+	json.NewEncoder(w).Encode(message)
+
 }
 
 func runAPI() {

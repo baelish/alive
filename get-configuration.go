@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Config struct contains configuration to be used throughout the program
@@ -42,7 +43,9 @@ func (c *Config) processArguments(args []string) {
 		case "--default-static":
 			c.useDefaultStatic = true
 		default:
-			log.Printf("Ignoring unknown option %s", args[i])
+			if !strings.HasPrefix(args[i], "-test.") {
+				log.Printf("Ignoring unknown option %s", args[i])
+			}
 		}
 
 	}

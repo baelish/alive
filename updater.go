@@ -34,28 +34,29 @@ func runUpdater() {
 				update(event)
 			}
 
-			if rand.Intn(30) == 1 {
-				y := rand.Intn(len(boxes) - 1)
-				if boxes[x].ID != statusBarID {
-					switch rand.Intn(3) {
-					case 0:
-						event.Status = "red"
-						event.Message = "PANIC! Red Alert"
-					case 1:
-						event.Status = "amber"
-						event.Message = "OH NOES! Something's not quite right"
-					case 2:
-						event.Status = "grey"
-						event.Message = "Meh not sure what to do now...."
-					}
+			if rand.Intn(2) == 1 {
+				max := len(boxes) - 1
+				if max > 0 {
+					y := rand.Intn(max)
+					if boxes[y].ID != statusBarID {
+						switch rand.Intn(3) {
+						case 0:
+							event.Status = "red"
+							event.Message = "PANIC! Red Alert"
+						case 1:
+							event.Status = "amber"
+							event.Message = "OH NOES! Something's not quite right"
+						case 2:
+							event.Status = "grey"
+							event.Message = "Meh not sure what to do now...."
+						}
 
-					event.ID = boxes[y].ID
-					update(event)
+						event.ID = boxes[y].ID
+						update(event)
+					}
 				}
 			}
-
-			// Print a nice log message and sleep for 5s.
-			time.Sleep(1 * time.Second)
+			time.Sleep(10 * time.Millisecond)
 
 		}
 	}()
