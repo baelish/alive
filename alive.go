@@ -4,20 +4,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 const statusBarID = "status-bar"
 
 var events *Broker
 var config *Config
-var sizes = []string{"micro", "dmicro", "small", "dsmall", "medium", "dmedium", "large", "dlarge", "xlarge", "dxlarge", "status"}
+var sizes = []string{"micro", "dmicro", "small", "dsmall", "medium", "dmedium", "large", "dlarge", "xlarge", "status"}
+
+func init() {
+	config = getConfiguration(os.Args)
+}
 
 func main() {
-	config = getConfiguration()
 	log.Printf("%+v\n", config)
-	createStaticContent(config.staticFilePath)
-	getBoxes(config.dataFile)
-	runFrontPage(config.staticFilePath)
+	createStaticContent()
+	getBoxes()
+	runFrontPage()
 	events = runSse()
 	runKeepalives()
 	maintainBoxes()
@@ -25,7 +29,9 @@ func main() {
 	if config.updater {
 		runUpdater()
 	}
+
 	go runAPI()
+
 	listenOn := fmt.Sprintf(":%s", config.sitePort)
 	log.Fatal(http.ListenAndServe(listenOn, nil))
 }

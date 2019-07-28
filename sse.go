@@ -62,7 +62,7 @@ func (b *Broker) Start() {
 
 			case s := <-b.defunctClients:
 
-				// A client has dettached and we want to
+				// A client has detached and we want to
 				// stop sending them messages.
 				delete(b.clients, s)
 				close(s)

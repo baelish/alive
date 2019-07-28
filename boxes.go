@@ -31,6 +31,7 @@ func (by by) Sort(boxes []Box) {
 		boxes: boxes,
 		by:    by,
 	}
+
 	sort.Sort(bs)
 }
 
@@ -71,8 +72,6 @@ func sizeToNumber(size string) int {
 		return 80
 	case "xlarge":
 		return 90
-	case "dxlarge":
-		return 100
 	case "status":
 		return 110
 	default:
@@ -83,6 +82,7 @@ func sizeToNumber(size string) int {
 func deleteBox(id string) bool {
 	var newBoxes []Box
 	var found bool
+
 	for _, box := range boxes {
 		if box.ID != id {
 			newBoxes = append(newBoxes, box)
@@ -91,7 +91,9 @@ func deleteBox(id string) bool {
 			found = true
 		}
 	}
+
 	boxes = newBoxes
+
 	return found
 }
 
@@ -106,13 +108,16 @@ func maintainBoxes() {
 				}
 
 				lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
+
 				if err != nil {
 					log.Println(err)
+
 					continue
 				}
 
 				if box.ExpireAfter != "0" && box.ExpireAfter != "" {
 					expireAfter, err := strconv.Atoi(box.ExpireAfter)
+
 					if err != nil {
 						log.Println(err)
 					} else if lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) {
@@ -131,6 +136,7 @@ func maintainBoxes() {
 
 				if box.MaxTBU != "0" && box.MaxTBU != "" {
 					alertAfter, err := strconv.Atoi(box.MaxTBU)
+
 					if err != nil {
 						log.Println(err)
 					} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != missedStatusUpdate {
@@ -153,7 +159,9 @@ func maintainBoxes() {
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			err = ioutil.WriteFile(config.dataFile, byteValue, 0644)
+
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -171,12 +179,14 @@ func findBoxByID(id string) (int, error) {
 			return i, nil
 		}
 	}
+
 	return -1, fmt.Errorf("could not find %s", id)
 }
 
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
-func getBoxes(jsonFile string) {
-	byteValue, err := ioutil.ReadFile(jsonFile)
+func getBoxes() {
+	byteValue, err := ioutil.ReadFile(config.dataFile)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -203,10 +213,13 @@ func sortBoxes() {
 		if p1.Size == p2.Size {
 			return p1.Name < p2.Name
 		}
+
 		size1 := sizeToNumber(p1.Size)
 		size2 := sizeToNumber(p2.Size)
+
 		return size1 > size2
 	}
+
 	by(Size).Sort(boxes)
 }
 
@@ -216,5 +229,6 @@ func testBoxID(id string) bool {
 			return true
 		}
 	}
+
 	return false
 }
