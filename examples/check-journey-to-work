@@ -78,7 +78,6 @@ updateBox() {
 
 _checkPreReq(){
     missingKeys=()
-    API_KEY="$(pass api/google-maps)"
     [[ -n "${ALIVE_API_URL:-}" ]] || missingKeys+=( "ALIVE_API_URL" )
     [[ -n "${CJ_ALIVE_BOX_ID:-}" ]] || missingKeys+=( "CJ_ALIVE_BOX_ID" )
     [[ -n "${CJ_API_KEY:-}" ]] || missingKeys+=( "CJ_API_KEY" )
