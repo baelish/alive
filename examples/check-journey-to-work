@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+getJourneyData() {
+    local start finish
+
+    if [[ $# -lt 2 ]]; then
+        logEntry "ERROR" "getJourneyData() needs source (\$1) and destination (\$2)."
+
+        return 1
+    fi
+
+    start="$1"
+    finish="$2"
+    curl -s "https://maps.googleapis.com/maps/api/distancematrix/json?key=$CJ_API_KEY&origins=$start&destinations=$finish&departure_time=now"
+}
+
+
+logEntry() {
+    local level message
+    level="${1^^}"
+
+    if [[ -z "${DEBUG:-}" ]] && [[ "$level" == "DEBUG" ]]; then
+        return
+    fi
+
+    shift
+    message=("$@")
+
+    echo "$level" "${message[@]}" >&2
+}
+
+updateBox() {
+    local curlData duration durationText status message
+
+    if [[ $# -lt 2 ]]; then
+        logEntry "ERROR" "updateBox() needs a destination (\$1) and valid jsonData (\$2)"
+
+        return 1
+    fi
+
+    if  ! duration="$(jq -r '.rows[].elements[].duration_in_traffic.value' <<<"${2:-}" 2> /dev/null)" ||
+        ! durationText="$(jq -r '.rows[].elements[].duration_in_traffic.text' <<<"${2:-}" 2> /dev/null)"; then
+
+        logEntry "ERROR" "updateBox() needs valid json data"
+        logEntry "DEBUG" $'jsondata:\n'"${2:-}"
+
+        return 1
+    fi
+
+    status="green"
+    [[ "$duration" -lt "$CJ_AMBER" ]] || status="amber"
+    [[ "$duration" -lt "$CJ_RED" ]] || status="red"
+
+    message="Expected journey time to $1 is $durationText"
+    logEntry "DEBUG" "duration: '$duration', durationText: '$durationText', status: '$status', message: '$message'"
+
+    curlData='
+        {
+            "id": "'$CJ_ALIVE_BOX_ID'",
+            "name": "Commute '$1'",
+            "status": "'$status'",
+            "size": "dMedium",
+            "lastMessage": "'$message'",
+            "maxTBU": "0",
+            "expireAfter": "600"
+        }'
+
+    logEntry "DEBUG" $'curlData:\n'"$curlData"
+
+    curl -sS -X POST -H "Content-Type: application/json" \
+        -d "$curlData" \
+        "$ALIVE_API_URL/api/v1/update"
+}
+
+
+_checkPreReq(){
+    missingKeys=()
+    API_KEY="$(pass api/google-maps)"
+    [[ -n "${ALIVE_API_URL:-}" ]] || missingKeys+=( "ALIVE_API_URL" )
+    [[ -n "${CJ_ALIVE_BOX_ID:-}" ]] || missingKeys+=( "CJ_ALIVE_BOX_ID" )
+    [[ -n "${CJ_API_KEY:-}" ]] || missingKeys+=( "CJ_API_KEY" )
+    [[ -n "${CJ_AMBER:-}" ]] || missingKeys+=( "CJ_AMBER" )
+    [[ -n "${CJ_RED:-}" ]] || missingKeys+=( "CJ_RED" )
+    [[ -n "${CJ_HOME:-}" ]] || missingKeys+=( "CJ_HOME" )
+    [[ -n "${CJ_WORK:-}" ]] || missingKeys+=( "CJ_WORK" )
+
+    if [[ "${#missingKeys[@]}" -gt 0 ]]; then
+        logEntry "ERROR" "Missing environment variables ${missingKeys[@]}"
+
+        return 1
+    fi
+}
+
+_main() {
+    local currentDay currentHour
+    # Day mon-fri?
+    currentDay="$(date +%u)"
+    logEntry "DEBUG" "Current day: $currentDay"
+
+    if [[ "$currentDay" -lt "6" ]]; then
+        currentHour="$(date +%H)"
+        logEntry "DEBUG" "Current hour: $currentHour"
+
+        case $currentHour in
+            06|07|08|09)
+                logEntry "DEBUG" "Check journey home -> work."
+                updateBox "work" "$(getJourneyData "$CJ_HOME" "$CJ_WORK")"
+                ;;
+            16|17|18|19)
+                logEntry "DEBUG" "Check journey work -> home."
+                updateBox "home" "$(getJourneyData "$CJ_WORK" "$CJ_HOME")"
+                ;;
+        esac
+    fi
+}
+
+_checkPreReq
+_main
+
+
