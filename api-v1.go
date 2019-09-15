@@ -78,6 +78,32 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	events.messages <- fmt.Sprintf(string(stringData))
 }
 
+func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
+	t := time.Now()
+	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
+	var newBox Box
+	_ = json.NewDecoder(r.Body).Decode(&newBox)
+
+	if newBox.ID == "" {
+			json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot update box without an ID."}`))
+
+			return
+	}
+
+	deleteBox(newBox.ID)
+	newBox.LastUpdate = ft
+	boxes = append(boxes, newBox)
+	sortBoxes()
+	newBoxPrint, _ := json.Marshal(newBox)
+	log.Printf(string(newBoxPrint))
+	json.NewEncoder(w).Encode(newBox)
+	var event Event
+	event.Type = "reloadPage"
+	stringData, _ := json.Marshal(event)
+	events.messages <- fmt.Sprintf(string(stringData))
+}
+
+
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var message json.RawMessage
@@ -101,6 +127,7 @@ func runAPI() {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/v1/", apiGetBoxes).Methods("GET")
 	router.HandleFunc("/api/v1/new", apiCreateBox).Methods("POST")
+	router.HandleFunc("/api/v1/update", apiUpdateBox).Methods("POST")
 	router.HandleFunc("/api/v1/{id}", apiGetBox).Methods("GET")
 	router.HandleFunc("/api/v1/{id}", apiDeleteBox).Methods("DELETE")
 	router.HandleFunc("/api/v1/events/{id}", apiCreateEvent).Methods("POST")

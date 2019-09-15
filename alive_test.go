@@ -65,6 +65,7 @@ func TestMain(t *testing.T) {
 	time.Sleep(2 * time.Millisecond)
 	t.Run("get box", testGetBox())
 	t.Run("create box", testCreateBox())
+	t.Run("update box", testUpdateBox())
 	t.Run("send event", testSendEvent())
 	t.Run("delete box", testDeleteBox())
 	t.Run("load front page", testLoadingFrontPage())
@@ -262,6 +263,83 @@ func testCreateBox() func(t *testing.T) {
 				b.MaxTBU != "60" {
 				stringData, _ := json.Marshal(b)
 				t.Error(fmt.Sprintf("Api didn't return the correct details %s", stringData))
+			}
+		}
+	}
+}
+
+func testUpdateBox() func(t *testing.T) {
+	return func(t *testing.T) {
+		// Test box creation through update
+		jsonData := map[string]string{
+			"id":          "testUpdate",
+			"name":        "testUpdateCreate",
+			"size":        "dLarge",
+			"status":      "grey",
+			"lastMessage": "Box created",
+		}
+
+		jsonValue, _ := json.Marshal(jsonData)
+		response, err := http.Post(apiURL+"update", "application/json", bytes.NewBuffer(jsonValue))
+
+		if err != nil {
+			t.Error("Got error trying to create box through api (update)" + err.Error())
+		} else {
+			data, _ := ioutil.ReadAll(response.Body)
+			var b Box
+			_ = json.Unmarshal(data, &b)
+
+			if b.ID != "testUpdate" || b.Name != "testUpdateCreate" || b.Status != "grey" ||
+				b.LastMessage != "Box created" || b.Size != "dLarge" || b.ExpireAfter != "" ||
+				b.MaxTBU != "" {
+				t.Error("Api didn't return the correct details")
+			}
+		}
+
+		// Test response to updating box that already exists
+		jsonData = map[string]string{
+			"id":          "testUpdate",
+			"name":        "testUpdate",
+			"size":        "dMedium",
+			"status":      "green",
+			"lastMessage": "Box updated",
+		}
+
+		jsonValue, _ = json.Marshal(jsonData)
+		response, err = http.Post(apiURL+"update", "application/json", bytes.NewBuffer(jsonValue))
+
+		if err != nil {
+			t.Error("Got error trying to update box through api" + err.Error())
+		} else {
+			data, _ := ioutil.ReadAll(response.Body)
+			var b Box
+			_ = json.Unmarshal(data, &b)
+
+			if b.ID != "testUpdate" || b.Name != "testUpdate" || b.Status != "green" ||
+				b.LastMessage != "Box updated" || b.Size != "dMedium" || b.ExpireAfter != "" ||
+				b.MaxTBU != "" {
+				t.Error("Api didn't return the correct details")
+			}
+		}
+
+		// Test box update without supplying ID.
+		jsonData = map[string]string{
+			"name":        "testCreate2",
+			"size":        "small",
+			"status":      "red",
+			"lastMessage": "Box2 created",
+			"maxTBU":      "60",
+		}
+
+		jsonValue, _ = json.Marshal(jsonData)
+		response, err = http.Post(apiURL+"update", "application/json", bytes.NewBuffer(jsonValue))
+
+		if err != nil {
+			t.Error("Got error trying to create box without ID through api" + err.Error())
+		} else {
+			data, _ := ioutil.ReadAll(response.Body)
+			if strings.TrimSpace(string(data)) != `{"error":"Cannot update box without an ID."}` {
+				t.Error("Api didn't return the correct details:" + string(data))
 			}
 		}
 	}
