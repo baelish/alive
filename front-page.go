@@ -23,7 +23,12 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "</body>")
 }
 
+func handleStatus(w http.ResponseWriter, _ *http.Request) {
+	fmt.Fprint(w, `{"status":"ok"}`)
+}
+
 func runFrontPage() {
 	http.HandleFunc("/", handleRoot)
+	http.HandleFunc ("/health", handleStatus)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config.staticFilePath))))
 }

@@ -78,6 +78,12 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	events.messages <- fmt.Sprintf(string(stringData))
 }
 
+
+func apiStatus(w http.ResponseWriter, _ *http.Request) {
+	_ = json.NewEncoder(w).Encode(json.RawMessage(`{"status": "ok"}`))
+}
+
+
 func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
@@ -125,6 +131,8 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 
 func runAPI() {
 	router := mux.NewRouter()
+    router.HandleFunc("/health", apiStatus).Methods("GET")
+	router.HandleFunc("/api/v1", apiGetBoxes).Methods("GET")
 	router.HandleFunc("/api/v1/", apiGetBoxes).Methods("GET")
 	router.HandleFunc("/api/v1/new", apiCreateBox).Methods("POST")
 	router.HandleFunc("/api/v1/update", apiUpdateBox).Methods("POST")
