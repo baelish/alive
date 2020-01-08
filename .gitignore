@@ -14,3 +14,7 @@
 /data
 
 /tests/data
+
+# goland config?
+.idea
+.idea/*
