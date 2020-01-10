@@ -72,12 +72,13 @@ func loadTemplates() (err error){
 	if err !=nil {return err}
 
 	infoBoxTemplate := `
-		<div onclick='boxClick(this.id)' id='{{.ID}}' class='{{.Status}} fullwidth info box'>
+		<div id="{{.ID}}" class="{{.Status}} fullwidth info box">
 		  <h2>{{.Name}}</h2>
-		  {{if .Links}}{{range .Links}}<a href='{{.URL}}'>{{.Name}}</a><br />{{end}}{{end}}
+		  {{if .Links}}{{range .Links}}<a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a><br />{{end}}{{end}}
+
 		  <table>
-			<tr><th>Last message :</th><td>{{.LastMessage}}</td></tr>
-			<tr><th>Last updated :</th><td>{{.LastUpdate}}</td></tr>
+			<tr><th>Last message :</th><td class="message">{{.LastMessage}}</td></tr>
+			<tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate}}</td></tr>
 			{{if ne .MaxTBU ""}}<tr><th>Max TBU :</th><td>{{.MaxTBU}}</td></tr>{{end}}
 			{{if ne .ExpireAfter ""}}<tr><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>{{end}}
 		</div>

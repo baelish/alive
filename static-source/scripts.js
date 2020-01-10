@@ -1,20 +1,20 @@
-var source = new EventSource("/events/");
+let source = new EventSource("/events/");
 source.onmessage = function(event) {
-    var event = JSON.parse(event.data)
+    event = JSON.parse(event.data);
     switch(event.type) {
       case "keepalive":
-        keepalive()
+        keepalive();
 
         break;
 
       case "updateBox":
-        var targetBox = document.getElementById(event.id);
-        changeAlertLevel(targetBox, event.status, event.lastMessage);
+        let targetBox = document.getElementById(event.id);
+        if (targetBox !== null) { changeAlertLevel(targetBox, event.status, event.lastMessage); }
 
         break;
 
       case "deleteBox":
-        deleteBox(event.id)
+        deleteBox(event.id);
 
         break;
 
@@ -29,20 +29,21 @@ function boxClick(id) {
 }
 
 function deleteBox(id) {
-  var target = document.getElementById(id)
+  let target = document.getElementById(id);
   target.parentNode.removeChild(target)
 }
 
 function keepalive() {
-  var target = document.getElementById("status-bar")
-  changeAlertLevel(target, "green", "")
+  let target = document.getElementById("status-bar");
+  changeAlertLevel(target, "green", "");
   if(typeof ka !== "undefined") { clearTimeout(ka) }
   ka = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No keepalives for 5s.")}, 5 * 1000)
 }
 
 
 function myTime(t) {
-    if ( t != null ) {
+    let r;
+    if (t != null) {
         r = new Date(t)
     } else {
         r = new Date()
@@ -61,10 +62,10 @@ function pad(n, width, z) {
 
 
 function changeAlertLevel(target, status, message) {
-    if ( ["amber","green","grey","noUpdate","red"].indexOf(status) == -1) { status = "grey" }
-    target.classList.remove("amber", "green", "grey", "noUpdate", "red")
-    target.classList.add(status)
-    target.getElementsByClassName("message")[0].innerHTML = message
+    if ( ["amber","green","grey","noUpdate","red"].indexOf(status) === -1) { status = "grey" }
+    target.classList.remove("amber", "green", "grey", "noUpdate", "red");
+    target.classList.add(status);
+    target.getElementsByClassName("message")[0].innerHTML = message;
     target.getElementsByClassName("lastUpdated")[0].innerHTML = myTime()
 }
 
