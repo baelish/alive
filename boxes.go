@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+type Links struct {
+	Name string `json:"name"`
+	URL string `json:"url"`
+}
+
 // Box represents a single item on our monitoring screen.
 type Box struct {
 	ID          string `json:"id"`
@@ -20,6 +25,7 @@ type Box struct {
 	MaxTBU      string `json:"maxTBU"`
 	LastUpdate  string `json:"lastUpdate"`
 	LastMessage string `json:"lastMessage"`
+	Links []Links `json:"links"`
 }
 
 var boxes []Box
@@ -192,17 +198,6 @@ func getBoxes() {
 	}
 
 	json.Unmarshal(byteValue, &boxes)
-
-	if !testBoxID(statusBarID) {
-		var statusBox Box
-		statusBox.ID = statusBarID
-		statusBox.Status = "grey"
-		statusBox.ExpireAfter = "0"
-		statusBox.MaxTBU = "20"
-		statusBox.Name = "Status"
-		statusBox.Size = "status"
-		boxes = append(boxes, statusBox)
-	}
 
 	sortBoxes()
 

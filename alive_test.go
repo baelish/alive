@@ -155,16 +155,12 @@ func testGetBox() func(t *testing.T) {
 			var b []Box
 			_ = json.Unmarshal(data, &b)
 
-			if len(b) != 35 {
+			if len(b) != 34 {
 				t.Error(fmt.Printf("Did not receive the expected number of boxes: %d", len(b)))
 			}
 
-			if b[0].ID != "status-bar" {
-				t.Error(fmt.Printf("Box 0 is not status-bar: %s", b[0].ID))
-			}
-
-			if b[2].Name != "Baboon" || !(b[2].Name < b[3].Name && b[3].Name < b[4].Name && b[4].Name < b[5].Name) {
-				t.Error(fmt.Printf("Unexepected results, is sorting working correctly? %s %s %s %s", b[2].Name, b[3].Name, b[4].Name, b[5].Name))
+			if b[1].Name != "Baboon" || !(b[1].Name < b[2].Name && b[2].Name < b[3].Name && b[3].Name < b[4].Name) {
+				t.Error(fmt.Printf("Unexepected results, is sorting working correctly? %s %s %s %s", b[1].Name, b[2].Name, b[3].Name, b[4].Name))
 			}
 		}
 
@@ -261,6 +257,42 @@ func testCreateBox() func(t *testing.T) {
 			if b.ID == "" || b.Name != "testCreate2" || b.Status != "red" ||
 				b.LastMessage != "Box2 created" || b.Size != "small" || b.ExpireAfter != "" ||
 				b.MaxTBU != "60" {
+				stringData, _ := json.Marshal(b)
+				t.Error(fmt.Sprintf("Api didn't return the correct details %s", stringData))
+			}
+		}
+
+		// Test box creation with some links
+		links := []Links{
+			{
+				Name: "google",
+				URL: "https://google.com",
+			},
+		}
+
+		jsonData2 := Box{
+			ID:          "testCreate3",
+			Name:        "testCreate3",
+			Size:        "small",
+			Status:      "red",
+			MaxTBU:      "60",
+			LastMessage: "Box3 created",
+			Links:       links,
+		}
+
+		jsonValue, _ = json.Marshal(jsonData2)
+		response, err = http.Post(apiURL+"new", "application/json", bytes.NewBuffer(jsonValue))
+
+		if err != nil {
+			t.Error("Got error trying to create box without ID through api" + err.Error())
+		} else {
+			data, _ := ioutil.ReadAll(response.Body)
+			var b Box
+			_ = json.Unmarshal(data, &b)
+
+			if b.ID == "" || b.Name != "testCreate3" || b.Status != "red" ||
+				b.LastMessage != "Box3 created" || b.Size != "small" || b.ExpireAfter != "" ||
+				b.MaxTBU != "60" || b.Links[0].Name != "google"{
 				stringData, _ := json.Marshal(b)
 				t.Error(fmt.Sprintf("Api didn't return the correct details %s", stringData))
 			}

@@ -117,7 +117,7 @@ p.maxTBU {
     font-size:40%;
     margin-block-start: auto;
     margin-block-end: auto;
-    visibility: hidden;
+    display: none;
 }
 
 p.lastUpdated {
@@ -129,6 +129,13 @@ p.lastUpdated {
     right: 3;
 }
 
+.info table {
+    padding-left: 5px;
+    color: white;
+}
+.info th {
+    text-align: right;
+}
 .micro .message {
     display: none;
 }

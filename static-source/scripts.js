@@ -25,6 +25,7 @@ source.onmessage = function(event) {
 
 
 function boxClick(id) {
+    window.location.href = "/box/" + id
 }
 
 function deleteBox(id) {
@@ -69,8 +70,11 @@ function changeAlertLevel(target, status, message) {
 
 
 function rightSizeBigBox() {
-    var availableWidth = Math.floor((window.innerWidth -30) / 512) * 512
-    widthBox = (availableWidth >= 512) ? availableWidth:512
-    document.getElementById('big-box').style.width = widthBox + "px"
-    document.getElementById('status-bar').style.width =( widthBox -2 ) + "px"
+    let availableWidth = Math.floor((window.innerWidth -30) / 512) * 512;
+    let widthBox = (availableWidth >= 512) ? availableWidth:512;
+    document.getElementById('big-box').style.width = widthBox + "px";
+    let fullWidthBoxes = document.getElementsByClassName('fullwidth');
+    for (let i = 0; i < fullWidthBoxes.length; i++) {
+        fullWidthBoxes[i].style.width = (widthBox - 2) + "px";
+    }
 }
