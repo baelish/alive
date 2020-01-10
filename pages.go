@@ -28,29 +28,35 @@ const footer = `
 
 var templates *template.Template
 
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-    _,_ = fmt.Fprintf(w, header)
+func handleRoot(w http.ResponseWriter, _ *http.Request) {
+  _, err := fmt.Fprintf(w, header)
+	if err != nil {log.Println(err)}
+
 
 	for i := 0; i < len(boxes); i++ {
 		err := templates.ExecuteTemplate(w, "box", boxes[i])
 		if err !=nil {log.Println(err)}
 	}
 
-	_,_ = fmt.Fprintf(w, footer)
+	_, err = fmt.Fprintf(w, footer)
+	if err != nil {log.Print(err)}
 }
 
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprint(w, `{"status":"ok"}`)
+	_, err := fmt.Fprint(w, `{"status":"ok"}`)
+	if err != nil {log.Println(err)}
 }
 
 
 func handleBox(w http.ResponseWriter, r *http.Request) {
-	_,_ = fmt.Fprintf(w, header)
+	_, err := fmt.Fprintf(w, header)
+	if err != nil {log.Print(err)}
 	vars := mux.Vars(r)
 	i, _ := findBoxByID(vars["id"])
-	err := templates.ExecuteTemplate(w, "infoBox", boxes[i])
+	err = templates.ExecuteTemplate(w, "infoBox", boxes[i])
 	if err !=nil {log.Println(err)}
-	_,_ = fmt.Fprintf(w, footer)
+	_, err = fmt.Fprintf(w, footer)
+	if err != nil {log.Println(err)}
 }
 
 func loadTemplates() (err error){
@@ -82,7 +88,7 @@ func loadTemplates() (err error){
 	return nil
 }
 
-func runFrontPage() {
+func runPages() {
 	err := loadTemplates()
 	if err != nil {log.Printf("Unable to load templates: %v", err)}
 	r := mux.NewRouter()

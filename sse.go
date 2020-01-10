@@ -34,7 +34,7 @@ type Broker struct {
 	defunctClients chan chan string
 
 	// Channel into which messages are pushed to be broadcast out
-	// to attahed clients.
+	// to attached clients.
 	messages chan string
 }
 

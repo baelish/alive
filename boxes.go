@@ -197,7 +197,10 @@ func getBoxes() {
 		log.Fatal(err)
 	}
 
-	json.Unmarshal(byteValue, &boxes)
+	err = json.Unmarshal(byteValue, &boxes)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	sortBoxes()
 

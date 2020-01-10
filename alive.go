@@ -11,7 +11,6 @@ const statusBarID = "status-bar"
 
 var events *Broker
 var config *Config
-var sizes = []string{"micro", "dmicro", "small", "dsmall", "medium", "dmedium", "large", "dlarge", "xlarge", "status"}
 
 func init() {
 	config = getConfiguration(os.Args)
@@ -21,7 +20,7 @@ func main() {
 	log.Printf("%+v\n", config)
 	createStaticContent()
 	getBoxes()
-	runFrontPage()
+	runPages()
 	events = runSse()
 	runKeepalives()
 	maintainBoxes()

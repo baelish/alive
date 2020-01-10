@@ -18,7 +18,7 @@ import (
 var apiURL string
 var siteURL string
 
-func TestMain(t *testing.T) {
+func TestAlive(t *testing.T) {
 
   t.Run("default settings", testDefaults())
   t.Run("argument processing",testArgumentProcessing())
@@ -32,10 +32,12 @@ func TestMain(t *testing.T) {
 
   	if err != nil {
 			panic(err)
-		}
-	}
-
-	defer os.RemoveAll(tempDir)
+  	}
+	defer func() {
+		err = os.RemoveAll(tempDir)
+		if err != nil {fmt.Print(err)}
+	}()
+}
 
 	// Copy test data file
 	testDataFile := "testdata/test-data.json"
@@ -76,7 +78,7 @@ func TestMain(t *testing.T) {
 
 func testDefaults() func(t *testing.T) {
   return func(t *testing.T) {
-  	args := []string{}
+    var args []string
   	config := getConfiguration(args)
 
   	if config.apiPort != "8081" {
@@ -200,7 +202,7 @@ func testCreateBox() func(t *testing.T) {
 		jsonData := map[string]string{
 			"id":          "testCreate",
 			"name":        "testCreate",
-			"size":        "dMedium",
+			"size":        "dmedium",
 			"status":      "grey",
 			"lastMessage": "Box created",
 		}
@@ -216,7 +218,7 @@ func testCreateBox() func(t *testing.T) {
 			_ = json.Unmarshal(data, &b)
 
 			if b.ID != "testCreate" || b.Name != "testCreate" || b.Status != "grey" ||
-				b.LastMessage != "Box created" || b.Size != "dMedium" || b.ExpireAfter != "" ||
+				b.LastMessage != "Box created" || b.Size != "dmedium" || b.ExpireAfter != "" ||
 				b.MaxTBU != "" {
 				t.Error("Api didn't return the correct details")
 			}
@@ -306,7 +308,7 @@ func testUpdateBox() func(t *testing.T) {
 		jsonData := map[string]string{
 			"id":          "testUpdate",
 			"name":        "testUpdateCreate",
-			"size":        "dLarge",
+			"size":        "dlarge",
 			"status":      "grey",
 			"lastMessage": "Box created",
 		}
@@ -322,7 +324,7 @@ func testUpdateBox() func(t *testing.T) {
 			_ = json.Unmarshal(data, &b)
 
 			if b.ID != "testUpdate" || b.Name != "testUpdateCreate" || b.Status != "grey" ||
-				b.LastMessage != "Box created" || b.Size != "dLarge" || b.ExpireAfter != "" ||
+				b.LastMessage != "Box created" || b.Size != "dlarge" || b.ExpireAfter != "" ||
 				b.MaxTBU != "" {
 				t.Error("Api didn't return the correct details")
 			}
@@ -332,7 +334,7 @@ func testUpdateBox() func(t *testing.T) {
 		jsonData = map[string]string{
 			"id":          "testUpdate",
 			"name":        "testUpdate",
-			"size":        "dMedium",
+			"size":        "dmedium",
 			"status":      "green",
 			"lastMessage": "Box updated",
 		}
@@ -348,7 +350,7 @@ func testUpdateBox() func(t *testing.T) {
 			_ = json.Unmarshal(data, &b)
 
 			if b.ID != "testUpdate" || b.Name != "testUpdate" || b.Status != "green" ||
-				b.LastMessage != "Box updated" || b.Size != "dMedium" || b.ExpireAfter != "" ||
+				b.LastMessage != "Box updated" || b.Size != "dmedium" || b.ExpireAfter != "" ||
 				b.MaxTBU != "" {
 				t.Error("Api didn't return the correct details")
 			}
@@ -484,7 +486,7 @@ func testSubscribeEvent() func(t *testing.T) {
 		if err != nil {
 			t.Error("Got error connecting to events stream" + err.Error())
 		}
-
+		err = nil
 		req.Header.Set("Accept", "text/event-stream")
 		res, err := Client.Do(req)
 
@@ -498,13 +500,10 @@ func testSubscribeEvent() func(t *testing.T) {
 
     for len(found) > 0 {
 		  br := bufio.NewReader(res.Body)
-		  defer res.Body.Close()
 		  bs, err := br.ReadBytes('\n')
-
   		if err != nil && err != io.EOF {
   			t.Error(err)
   		}
-
       jsonData = strings.TrimLeft(string(bs), "data: ")
       err = json.Unmarshal(json.RawMessage(jsonData), &event)
 
@@ -527,7 +526,9 @@ func testSubscribeEvent() func(t *testing.T) {
         }
       }
   		t.Log(jsonData)
-	  }
-  t.Log(found)
+		}
+		err = res.Body.Close()
+		if err != nil {t.Error(err)}
+		t.Log(found)
   }
 }
