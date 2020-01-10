@@ -20,8 +20,14 @@ type Event struct {
 	Type        string `json:"type"`
 }
 
-func apiGetBoxes(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(boxes)
+func apiGetBoxes(w http.ResponseWriter, _ *http.Request){
+	err := json.NewEncoder(w).Encode(boxes)
+	if err != nil {
+		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not get boxes"}`))
+		if err != nil {
+			log.Print(err)
+		}
+	}
 }
 
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
@@ -29,33 +35,56 @@ func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	i, err := findBoxByID(params["id"])
 
 	if err != nil {
-		json.NewEncoder(w).Encode(json.RawMessage(`{"error": "id not found"}`))
+		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "id not found"}`))
+		if err != nil { log.Print(err)}
 
 		return
 	}
 
-	json.NewEncoder(w).Encode(boxes[i])
+	err = json.NewEncoder(w).Encode(boxes[i])
+	if err != nil { log.Print(err)}
 }
 
 func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var event Event
-	_ = json.NewDecoder(r.Body).Decode(&event)
+	err := json.NewDecoder(r.Body).Decode(&event)
+	if err != nil {
+		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
+		if err != nil { log.Print(err)}
+
+		return
+	}
+
 	event.ID = params["id"]
 	event.Type = "updateBox"
 	update(event)
-	json.NewEncoder(w).Encode(event)
+	err = json.NewEncoder(w).Encode(event)
+	if err != nil { log.Print(err)}
 }
 
 func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 	var newBox Box
-	_ = json.NewDecoder(r.Body).Decode(&newBox)
+	err := json.NewDecoder(r.Body).Decode(&newBox)
+	if err != nil {
+		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
+		if err != nil { log.Print(err)}
+
+		return
+	}
+
+	if ! validateBoxSize(newBox.Size) {
+		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot create box, the ID requested already exists."}`))
+		if err != nil { log.Print(err)}
+			return
+	}
 
 	if newBox.ID != "" {
 		if testBoxID(newBox.ID) {
-			json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot create box, the ID requested already exists."}`))
+			err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot create box, the ID requested already exists."}`))
+			if err != nil { log.Print(err)}
 
 			return
 		}
@@ -69,18 +98,23 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	newBox.LastUpdate = ft
 	boxes = append(boxes, newBox)
 	sortBoxes()
-	newBoxPrint, _ := json.Marshal(newBox)
+	newBoxPrint, err := json.Marshal(newBox)
+	if err != nil { log.Print(err)}
 	log.Printf(string(newBoxPrint))
-	json.NewEncoder(w).Encode(newBox)
+	err = json.NewEncoder(w).Encode(newBox)
+	if err != nil { log.Print(err)}
+
 	var event Event
 	event.Type = "reloadPage"
-	stringData, _ := json.Marshal(event)
+	stringData, err := json.Marshal(event)
+	if err != nil { log.Print(err)}
 	events.messages <- fmt.Sprintf(string(stringData))
 }
 
 
 func apiStatus(w http.ResponseWriter, _ *http.Request) {
-	_ = json.NewEncoder(w).Encode(json.RawMessage(`{"status": "ok"}`))
+	err := json.NewEncoder(w).Encode(json.RawMessage(`{"status": "ok"}`))
+	if err != nil { log.Print(err)}
 }
 
 
@@ -88,12 +122,19 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 	var newBox Box
-	_ = json.NewDecoder(r.Body).Decode(&newBox)
+	err := json.NewDecoder(r.Body).Decode(&newBox)
+	if err != nil {
+		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
+		if err != nil { log.Print(err)}
+
+		return
+	}
 
 	if newBox.ID == "" {
-			json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot update box without an ID."}`))
+		err := json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot update box without an ID."}`))
+		if err != nil { log.Print(err)}
 
-			return
+		return
 	}
 
 	deleteBox(newBox.ID)
@@ -102,7 +143,8 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	sortBoxes()
 	newBoxPrint, _ := json.Marshal(newBox)
 	log.Printf(string(newBoxPrint))
-	json.NewEncoder(w).Encode(newBox)
+	err = json.NewEncoder(w).Encode(newBox)
+	if err != nil { log.Print(err)}
 	var event Event
 	event.Type = "reloadPage"
 	stringData, _ := json.Marshal(event)
@@ -119,13 +161,15 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 		var event Event
 		event.Type = "deleteBox"
 		event.ID = params["id"]
-		stringData, _ := json.Marshal(event)
+		stringData, err := json.Marshal(event)
+		if err != nil { log.Print(err)}
 		events.messages <- fmt.Sprintf(string(stringData))
 	} else {
 		message = json.RawMessage(`{"error": "box not found"}`)
 	}
 
-	json.NewEncoder(w).Encode(message)
+	err := json.NewEncoder(w).Encode(message)
+	if err != nil {log.Print(err)}
 
 }
 

@@ -18,7 +18,7 @@ import (
 var apiURL string
 var siteURL string
 
-func TestMain(t *testing.T) {
+func TestAlive(t *testing.T) {
 
   t.Run("default settings", testDefaults())
   t.Run("argument processing",testArgumentProcessing())
@@ -32,10 +32,12 @@ func TestMain(t *testing.T) {
 
   	if err != nil {
 			panic(err)
-		}
-	}
-
-	defer os.RemoveAll(tempDir)
+  	}
+	defer func() {
+		err = os.RemoveAll(tempDir)
+		if err != nil {fmt.Print(err)}
+	}()
+}
 
 	// Copy test data file
 	testDataFile := "testdata/test-data.json"
@@ -76,7 +78,7 @@ func TestMain(t *testing.T) {
 
 func testDefaults() func(t *testing.T) {
   return func(t *testing.T) {
-  	args := []string{}
+    var args []string
   	config := getConfiguration(args)
 
   	if config.apiPort != "8081" {
@@ -155,16 +157,12 @@ func testGetBox() func(t *testing.T) {
 			var b []Box
 			_ = json.Unmarshal(data, &b)
 
-			if len(b) != 35 {
+			if len(b) != 34 {
 				t.Error(fmt.Printf("Did not receive the expected number of boxes: %d", len(b)))
 			}
 
-			if b[0].ID != "status-bar" {
-				t.Error(fmt.Printf("Box 0 is not status-bar: %s", b[0].ID))
-			}
-
-			if b[2].Name != "Baboon" || !(b[2].Name < b[3].Name && b[3].Name < b[4].Name && b[4].Name < b[5].Name) {
-				t.Error(fmt.Printf("Unexepected results, is sorting working correctly? %s %s %s %s", b[2].Name, b[3].Name, b[4].Name, b[5].Name))
+			if b[1].Name != "Baboon" || !(b[1].Name < b[2].Name && b[2].Name < b[3].Name && b[3].Name < b[4].Name) {
+				t.Error(fmt.Printf("Unexepected results, is sorting working correctly? %s %s %s %s", b[1].Name, b[2].Name, b[3].Name, b[4].Name))
 			}
 		}
 
@@ -204,7 +202,7 @@ func testCreateBox() func(t *testing.T) {
 		jsonData := map[string]string{
 			"id":          "testCreate",
 			"name":        "testCreate",
-			"size":        "dMedium",
+			"size":        "dmedium",
 			"status":      "grey",
 			"lastMessage": "Box created",
 		}
@@ -220,7 +218,7 @@ func testCreateBox() func(t *testing.T) {
 			_ = json.Unmarshal(data, &b)
 
 			if b.ID != "testCreate" || b.Name != "testCreate" || b.Status != "grey" ||
-				b.LastMessage != "Box created" || b.Size != "dMedium" || b.ExpireAfter != "" ||
+				b.LastMessage != "Box created" || b.Size != "dmedium" || b.ExpireAfter != "" ||
 				b.MaxTBU != "" {
 				t.Error("Api didn't return the correct details")
 			}
@@ -265,6 +263,42 @@ func testCreateBox() func(t *testing.T) {
 				t.Error(fmt.Sprintf("Api didn't return the correct details %s", stringData))
 			}
 		}
+
+		// Test box creation with some links
+		links := []Links{
+			{
+				Name: "google",
+				URL: "https://google.com",
+			},
+		}
+
+		jsonData2 := Box{
+			ID:          "testCreate3",
+			Name:        "testCreate3",
+			Size:        "small",
+			Status:      "red",
+			MaxTBU:      "60",
+			LastMessage: "Box3 created",
+			Links:       links,
+		}
+
+		jsonValue, _ = json.Marshal(jsonData2)
+		response, err = http.Post(apiURL+"new", "application/json", bytes.NewBuffer(jsonValue))
+
+		if err != nil {
+			t.Error("Got error trying to create box without ID through api" + err.Error())
+		} else {
+			data, _ := ioutil.ReadAll(response.Body)
+			var b Box
+			_ = json.Unmarshal(data, &b)
+
+			if b.ID == "" || b.Name != "testCreate3" || b.Status != "red" ||
+				b.LastMessage != "Box3 created" || b.Size != "small" || b.ExpireAfter != "" ||
+				b.MaxTBU != "60" || b.Links[0].Name != "google"{
+				stringData, _ := json.Marshal(b)
+				t.Error(fmt.Sprintf("Api didn't return the correct details %s", stringData))
+			}
+		}
 	}
 }
 
@@ -274,7 +308,7 @@ func testUpdateBox() func(t *testing.T) {
 		jsonData := map[string]string{
 			"id":          "testUpdate",
 			"name":        "testUpdateCreate",
-			"size":        "dLarge",
+			"size":        "dlarge",
 			"status":      "grey",
 			"lastMessage": "Box created",
 		}
@@ -290,7 +324,7 @@ func testUpdateBox() func(t *testing.T) {
 			_ = json.Unmarshal(data, &b)
 
 			if b.ID != "testUpdate" || b.Name != "testUpdateCreate" || b.Status != "grey" ||
-				b.LastMessage != "Box created" || b.Size != "dLarge" || b.ExpireAfter != "" ||
+				b.LastMessage != "Box created" || b.Size != "dlarge" || b.ExpireAfter != "" ||
 				b.MaxTBU != "" {
 				t.Error("Api didn't return the correct details")
 			}
@@ -300,7 +334,7 @@ func testUpdateBox() func(t *testing.T) {
 		jsonData = map[string]string{
 			"id":          "testUpdate",
 			"name":        "testUpdate",
-			"size":        "dMedium",
+			"size":        "dmedium",
 			"status":      "green",
 			"lastMessage": "Box updated",
 		}
@@ -316,7 +350,7 @@ func testUpdateBox() func(t *testing.T) {
 			_ = json.Unmarshal(data, &b)
 
 			if b.ID != "testUpdate" || b.Name != "testUpdate" || b.Status != "green" ||
-				b.LastMessage != "Box updated" || b.Size != "dMedium" || b.ExpireAfter != "" ||
+				b.LastMessage != "Box updated" || b.Size != "dmedium" || b.ExpireAfter != "" ||
 				b.MaxTBU != "" {
 				t.Error("Api didn't return the correct details")
 			}
@@ -452,7 +486,7 @@ func testSubscribeEvent() func(t *testing.T) {
 		if err != nil {
 			t.Error("Got error connecting to events stream" + err.Error())
 		}
-
+		err = nil
 		req.Header.Set("Accept", "text/event-stream")
 		res, err := Client.Do(req)
 
@@ -466,13 +500,10 @@ func testSubscribeEvent() func(t *testing.T) {
 
     for len(found) > 0 {
 		  br := bufio.NewReader(res.Body)
-		  defer res.Body.Close()
 		  bs, err := br.ReadBytes('\n')
-
   		if err != nil && err != io.EOF {
   			t.Error(err)
   		}
-
       jsonData = strings.TrimLeft(string(bs), "data: ")
       err = json.Unmarshal(json.RawMessage(jsonData), &event)
 
@@ -495,7 +526,9 @@ func testSubscribeEvent() func(t *testing.T) {
         }
       }
   		t.Log(jsonData)
-	  }
-  t.Log(found)
+		}
+		err = res.Body.Close()
+		if err != nil {t.Error(err)}
+		t.Log(found)
   }
 }

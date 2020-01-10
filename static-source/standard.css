@@ -104,7 +104,7 @@ div.big-box {
 
 p.title {
     margin-block-start: 5%;
-    margin-block-end: auto;
+    margin-block-end: auto
 }
 
 p.message {
@@ -117,7 +117,7 @@ p.maxTBU {
     font-size:40%;
     margin-block-start: auto;
     margin-block-end: auto;
-    visibility: hidden;
+    display: none;
 }
 
 p.lastUpdated {
@@ -127,4 +127,31 @@ p.lastUpdated {
     position: absolute;
     bottom: 1;
     right: 3;
+}
+
+.info table {
+    padding-left: 5px;
+    color: white;
+}
+.info th {
+    text-align: right;
+}
+.micro .message {
+    display: none;
+}
+
+.dmicro .message {
+    display: none;
+}
+
+.micro .lastUpdated {
+    display: none;
+}
+
+.dmicro .lastUpdated {
+    display: none;
+}
+
+.small .lastUpdated {
+    display: none;
 }
