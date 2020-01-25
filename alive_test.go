@@ -20,8 +20,8 @@ var siteURL string
 
 func TestAlive(t *testing.T) {
 
-  t.Run("default settings", testDefaults())
-  t.Run("argument processing",testArgumentProcessing())
+	t.Run("default settings", testDefaults())
+	t.Run("argument processing", testArgumentProcessing())
 
 	// Create temp dir
 	rand.Seed(time.Now().UnixNano())
@@ -30,14 +30,16 @@ func TestAlive(t *testing.T) {
 	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
 		err = os.MkdirAll(tempDir, 0755)
 
-  	if err != nil {
+		if err != nil {
 			panic(err)
-  	}
-	defer func() {
-		err = os.RemoveAll(tempDir)
-		if err != nil {fmt.Print(err)}
-	}()
-}
+		}
+		defer func() {
+			err = os.RemoveAll(tempDir)
+			if err != nil {
+				fmt.Print(err)
+			}
+		}()
+	}
 
 	// Copy test data file
 	testDataFile := "testdata/test-data.json"
@@ -72,78 +74,76 @@ func TestAlive(t *testing.T) {
 	t.Run("delete box", testDeleteBox())
 	t.Run("load front page", testLoadingFrontPage())
 	t.Run("subscribe to events", testSubscribeEvent())
-  time.Sleep(2 * time.Millisecond)
+	time.Sleep(2 * time.Millisecond)
 }
-
 
 func testDefaults() func(t *testing.T) {
-  return func(t *testing.T) {
-    var args []string
-  	config := getConfiguration(args)
+	return func(t *testing.T) {
+		var args []string
+		config := getConfiguration(args)
 
-  	if config.apiPort != "8081" {
-  		t.Error("Expected 8081, got", config.apiPort)
-  	}
+		if config.apiPort != "8081" {
+			t.Error("Expected 8081, got", config.apiPort)
+		}
 
-  	if config.sitePort != "8080" {
-  		t.Error("Expected 8080, got", config.sitePort)
-  	}
+		if config.sitePort != "8080" {
+			t.Error("Expected 8080, got", config.sitePort)
+		}
 
-  	baseDir := fmt.Sprintf("%s/.alive", os.Getenv("HOME"))
+		baseDir := fmt.Sprintf("%s/.alive", os.Getenv("HOME"))
 
-  	if config.baseDir != baseDir {
-  		t.Error("Expected ", baseDir, " got ", config.baseDir)
-  	}
+		if config.baseDir != baseDir {
+			t.Error("Expected ", baseDir, " got ", config.baseDir)
+		}
 
-  	if config.updater != false {
-  		t.Error("Expected false got ", config.updater)
-  	}
+		if config.updater != false {
+			t.Error("Expected false got ", config.updater)
+		}
 
-  	if config.useDefaultStatic != false {
-  		t.Error("Expected false got ", config.useDefaultStatic)
-  	}
-  }
+		if config.useDefaultStatic != false {
+			t.Error("Expected false got ", config.useDefaultStatic)
+		}
+	}
 }
 
-func testArgumentProcessing() func (t *testing.T) {
-  return func(t *testing.T) {
-  	config := &Config{}
-  	args := []string{"", "-b", "/data", "-p", "1234", "--foo"}
-  	config.processArguments(args)
+func testArgumentProcessing() func(t *testing.T) {
+	return func(t *testing.T) {
+		config := &Config{}
+		args := []string{"", "-b", "/data", "-p", "1234", "--foo"}
+		config.processArguments(args)
 
-  	if config.baseDir != "/data" {
-  		t.Error("Expected /data got", config.baseDir)
-  	}
+		if config.baseDir != "/data" {
+			t.Error("Expected /data got", config.baseDir)
+		}
 
-  	if config.sitePort != "1234" {
-  		t.Error("Expected 1234 got", config.sitePort)
-  	}
+		if config.sitePort != "1234" {
+			t.Error("Expected 1234 got", config.sitePort)
+		}
 
-  	args = []string{"", "--api-port", "1233", "--port", "1235", "--base-dir", "/var/data", "--updater", "--default-static"}
-  	config.processArguments(args)
+		args = []string{"", "--api-port", "1233", "--port", "1235", "--base-dir", "/var/data", "--updater", "--default-static"}
+		config.processArguments(args)
 
-  	if config.apiPort != "1233" {
-  		t.Error("Expected 1233 got", config.apiPort)
-  	}
+		if config.apiPort != "1233" {
+			t.Error("Expected 1233 got", config.apiPort)
+		}
 
-  	if config.baseDir != "/var/data" {
-  		t.Error("Expected /var/data got", config.baseDir)
-  	}
+		if config.baseDir != "/var/data" {
+			t.Error("Expected /var/data got", config.baseDir)
+		}
 
-  	if config.sitePort != "1235" {
-  		t.Error("Expected 1235 got", config.sitePort)
-  	}
+		if config.sitePort != "1235" {
+			t.Error("Expected 1235 got", config.sitePort)
+		}
 
-  	if config.updater != true {
-  		t.Error("Expected true got ", config.updater)
-  	}
+		if config.updater != true {
+			t.Error("Expected true got ", config.updater)
+		}
 
-  	if config.useDefaultStatic != true {
-  		t.Error("Expected true got ", config.useDefaultStatic)
-  	}
-  }
+		if config.useDefaultStatic != true {
+			t.Error("Expected true got ", config.useDefaultStatic)
+		}
+	}
 }
-
 
 func testGetBox() func(t *testing.T) {
 	return func(t *testing.T) {
@@ -268,7 +268,7 @@ func testCreateBox() func(t *testing.T) {
 		links := []Links{
 			{
 				Name: "google",
-				URL: "https://google.com",
+				URL:  "https://google.com",
 			},
 		}
 
@@ -294,7 +294,7 @@ func testCreateBox() func(t *testing.T) {
 
 			if b.ID == "" || b.Name != "testCreate3" || b.Status != "red" ||
 				b.LastMessage != "Box3 created" || b.Size != "small" || b.ExpireAfter != "" ||
-				b.MaxTBU != "60" || b.Links[0].Name != "google"{
+				b.MaxTBU != "60" || b.Links[0].Name != "google" {
 				stringData, _ := json.Marshal(b)
 				t.Error(fmt.Sprintf("Api didn't return the correct details %s", stringData))
 			}
@@ -461,23 +461,20 @@ func testLoadingFrontPage() func(t *testing.T) {
 	}
 }
 
-
 func removeStringFromSlice(s []string, r string) []string {
-  for i, v := range s {
-    if v == r {
-        return append(s[:i], s[i+1:]...)
-    }
-  }
-  return s
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
 }
-
-
 
 func testSubscribeEvent() func(t *testing.T) {
 	return func(t *testing.T) {
-    if testing.Short() {
-      t.Skip("Skipping test in short mode.")
-    }
+		if testing.Short() {
+			t.Skip("Skipping test in short mode.")
+		}
 
 		var Client = &http.Client{}
 		uri := siteURL + "/events/"
@@ -494,41 +491,43 @@ func testSubscribeEvent() func(t *testing.T) {
 			t.Errorf("error performing request for %s: %v", uri, err)
 		}
 
-    var event *Event
-    var jsonData string
-    found := []string{ "status", "red" ,"amber", "green", "grey" }
+		var event *Event
+		var jsonData string
+		found := []string{"status", "red", "amber", "green", "grey"}
 
-    for len(found) > 0 {
-		  br := bufio.NewReader(res.Body)
-		  bs, err := br.ReadBytes('\n')
-  		if err != nil && err != io.EOF {
-  			t.Error(err)
-  		}
-      jsonData = strings.TrimLeft(string(bs), "data: ")
-      err = json.Unmarshal(json.RawMessage(jsonData), &event)
+		for len(found) > 0 {
+			br := bufio.NewReader(res.Body)
+			bs, err := br.ReadBytes('\n')
+			if err != nil && err != io.EOF {
+				t.Error(err)
+			}
+			jsonData = strings.TrimLeft(string(bs), "data: ")
+			err = json.Unmarshal(json.RawMessage(jsonData), &event)
 
-      if err != nil {
-        t.Errorf("Couldn't get json info from event")
-      }
+			if err != nil {
+				t.Errorf("Couldn't get json info from event")
+			}
 
-      if event.Type == "keepalive" {
-        found = removeStringFromSlice(found, "status")
-      } else {
-        switch event.Status {
-        case "green":
-          found = removeStringFromSlice(found, "green")
-        case "amber":
-          found = removeStringFromSlice(found, "amber")
-        case "red":
-          found = removeStringFromSlice(found, "red")
-        case "grey":
-          found = removeStringFromSlice(found, "grey")
-        }
-      }
-  		t.Log(jsonData)
+			if event.Type == "keepalive" {
+				found = removeStringFromSlice(found, "status")
+			} else {
+				switch event.Status {
+				case "green":
+					found = removeStringFromSlice(found, "green")
+				case "amber":
+					found = removeStringFromSlice(found, "amber")
+				case "red":
+					found = removeStringFromSlice(found, "red")
+				case "grey":
+					found = removeStringFromSlice(found, "grey")
+				}
+			}
+			t.Log(jsonData)
 		}
 		err = res.Body.Close()
-		if err != nil {t.Error(err)}
+		if err != nil {
+			t.Error(err)
+		}
 		t.Log(found)
-  }
+	}
 }

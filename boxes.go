@@ -12,20 +12,22 @@ import (
 
 type Links struct {
 	Name string `json:"name"`
-	URL string `json:"url"`
+	URL  string `json:"url"`
 }
 
 // Box represents a single item on our monitoring screen.
 type Box struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Size        string `json:"size"`
-	Status      string `json:"status"`
-	ExpireAfter string `json:"expireAfter"`
-	MaxTBU      string `json:"maxTBU"`
-	LastUpdate  string `json:"lastUpdate"`
-	LastMessage string `json:"lastMessage"`
-	Links []Links `json:"links"`
+	ID          string  `json:"id"`
+	Description *string `json:"description"`
+	DisplayName *string `json:"displayName"`
+	Name        string  `json:"name"`
+	Size        string  `json:"size"`
+	Status      string  `json:"status"`
+	ExpireAfter string  `json:"expireAfter"`
+	MaxTBU      string  `json:"maxTBU"`
+	LastUpdate  string  `json:"lastUpdate"`
+	LastMessage string  `json:"lastMessage"`
+	Links       []Links `json:"links"`
 }
 
 var boxes []Box

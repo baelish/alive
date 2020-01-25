@@ -107,6 +107,13 @@ p.title {
     margin-block-end: auto
 }
 
+p#tooltip {
+    font-size: 100%;
+    position: absolute;
+    width: 100%;
+    bottom: -15px;
+}
+
 p.message {
     font-size:60%;
     margin-block-start: 0.5em;

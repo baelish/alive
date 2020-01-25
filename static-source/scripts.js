@@ -1,3 +1,11 @@
+// Reload if re-visiting using back/forward buttons.
+if (String(window.performance.getEntriesByType("navigation")[0].type) === "back_forward"){
+  location.reload();
+}
+
+let missedKas = 0
+
+// Register with box event source
 let source = new EventSource("/events/");
 source.onmessage = function(event) {
     event = JSON.parse(event.data);
@@ -23,21 +31,45 @@ source.onmessage = function(event) {
     }
 };
 
+function boxHover(tip) {
+    let target = document.getElementById("tooltip")
+    target.innerHTML = tip
+    target.display = "block"
+}
+
+
+function boxOut() {
+    let target = document.getElementById("tooltip")
+    target.innerHTML = ""
+    target.display = "hidden"
+}
+
 
 function boxClick(id) {
-    window.location.href = "/box/" + id
+    window.location.href = "/box/" + id;
 }
+
 
 function deleteBox(id) {
   let target = document.getElementById(id);
-  target.parentNode.removeChild(target)
+  target.parentNode.removeChild(target);
 }
+
 
 function keepalive() {
   let target = document.getElementById("status-bar");
   changeAlertLevel(target, "green", "");
-  if(typeof ka !== "undefined") { clearTimeout(ka) }
-  ka = setTimeout(function(){changeAlertLevel(target, "red", "ERROR: No keepalives for 5s.")}, 5 * 1000)
+  if(typeof ka !== "undefined") { clearTimeout(ka); };
+  ka = setTimeout(
+    function(){
+      missedKas++;
+      if (missedKas > 5 ) { location.reload(); };
+      if ((now() - lastKa) > 60 ) { location.reload(); };
+      lastKa = now();
+      changeAlertLevel(target, "red", "ERROR: No keepalives for 5s.");
+    }
+    , 5 * 1000
+  );
 }
 
 

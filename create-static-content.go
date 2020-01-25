@@ -10,11 +10,15 @@ func createStaticContent() {
 		if _, err := os.Stat(config.staticFilePath + file); os.IsNotExist(err) {
 			log.Printf("'%s/%s' doesn't exist, creating default file.", config.staticFilePath, file)
 			err = RestoreAsset(config.staticFilePath, file)
-			if err != nil {log.Print(err)}
+			if err != nil {
+				log.Print(err)
+			}
 		} else if config.useDefaultStatic {
 			log.Printf("Default files enforced, creating default file '%s/%s'.", config.staticFilePath, file)
 			err = RestoreAsset(config.staticFilePath, file)
-			if err != nil {log.Print(err)}
+			if err != nil {
+				log.Print(err)
+			}
 		}
 	}
 
@@ -28,8 +32,11 @@ func createStaticContent() {
 
 		log.Printf("Created empty data file %s", config.dataFile)
 		defer func() {
-			err = file.Close()}()
-			if err != nil {log.Print(err)}
+			err = file.Close()
+		}()
+		if err != nil {
+			log.Print(err)
+		}
 	}
 
 }
