@@ -1,5 +1,5 @@
 /* lastUpdate class  */
-.lastUpdated {
+p.lastUpdated {
     font-size:40%;
     margin-block-end: auto;
     margin-block-start: auto;
@@ -154,13 +154,14 @@ p, body, table {font-family: "Dejavu Sans", Verdana, sans-serif;}
 
 
 /* maxTBU class */
-.maxTBU {
+p.maxTBU {
     display: none;
-    font-size:40%;
-    margin-block-end: auto;
-    margin-block-start: auto;
 }
 
+/* expireAfter class */
+p.expireAfter {
+    display: none;
+}
 
 /* info table */
 .info table {
@@ -186,4 +187,3 @@ p, body, table {font-family: "Dejavu Sans", Verdana, sans-serif;}
     position: absolute;
     width: 100%;
 }
-

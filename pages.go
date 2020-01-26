@@ -12,19 +12,19 @@ import (
 const header = `
 <!DOCTYPE html>
 <html>
-	<head>
-	  <link rel='stylesheet' type='text/css' href='/static/standard.css'/>
-	  <script src='/static/scripts.js'></script>
-	</head>
-	<body onresize='rightSizeBigBox();' onload='rightSizeBigBox(); keepalive();'>
-	<input type="hidden" id="refreshed" value="no">
-	<div id='big-box' class='big-box'>
-	  <div id='status-bar' class='status fullwidth box'>
-	    <p class='title'>Status</p>
+  <head>
+    <link rel='stylesheet' type='text/css' href='/static/standard.css'/>
+    <script src='/static/scripts.js'></script>
+  </head>
+  <body onresize='rightSizeBigBox();' onload='rightSizeBigBox(); keepalive();'>
+  <input type="hidden" id="refreshed" value="no">
+  <div id='big-box' class='big-box'>
+    <div id='status-bar' class='status fullwidth box'>
+      <p class='title'>Status</p>
         <p class='tooltip' id='tooltip' display="none"></p>
-		<p class='message' display="none"></p>
-		<p class='lastUpdated'></p>
-	  </div>
+    <p class='message' display="none"></p>
+    <p class='lastUpdated'></p>
+    </div>
 `
 
 const footer = `
@@ -78,32 +78,33 @@ func handleBox(w http.ResponseWriter, r *http.Request) {
 
 func loadTemplates() (err error) {
 	boxTemplate := `
-		<div onclick='boxClick(this.id)' onmouseover='boxHover("{{.Name}}")' onmouseout='boxOut()' id='{{.ID}}' class='{{.Status}} {{.Size}} box'>
-		  <p class='title'>{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Name}}{{end}}</p>
-		  <p class='message'>{{.LastMessage}}</p>
-		  <p class='lastUpdated'>{{.LastUpdate}}</p>
-		  <p class='maxTBU'>{{.MaxTBU}}</p>
-		</div>
-	`
+    <div onclick='boxClick(this.id)' onmouseover='boxHover("{{.Name}}")' onmouseout='boxOut()' id='{{.ID}}' class='{{.Status}} {{.Size}} box'>
+        <p class='title'>{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Name}}{{end}}</p>
+        <p class='message'>{{.LastMessage}}</p>
+        <p class='lastUpdated'>{{.LastUpdate}}</p>
+        <p class='maxTBU'>{{.MaxTBU}}</p>
+            <p class='expireAfter'>{{.ExpireAfter}}</p>
+    </div>
+  `
 	templates, err = template.New("box").Parse(boxTemplate)
 	if err != nil {
 		return err
 	}
 
 	infoBoxTemplate := `
-		<div id="{{.ID}}" class="{{.Status}} fullwidth info box">
-		  <h2>{{.Name}}</h2>
-		  {{if .Links}}{{range .Links}}<a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a><br />{{end}}{{end}}
+    <div id="{{.ID}}" class="{{.Status}} fullwidth info box">
+      <h2>{{.Name}}</h2>
+      {{if .Links}}{{range .Links}}<a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a><br />{{end}}{{end}}
 
-		  <table>
-			{{if .DisplayName}}<tr><th>Display name :</th><td>{{.DisplayName}}</td></tr>{{end}}
-			{{if .Description}}<tr><th>Description :</th><td>{{.Description}}</td></tr>{{end}}
-			<tr><th>Last message :</th><td class="message">{{.LastMessage}}</td></tr>
-			<tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate}}</td></tr>
-			{{if ne .MaxTBU ""}}<tr><th>Max TBU :</th><td>{{.MaxTBU}}</td></tr>{{end}}
-			{{if ne .ExpireAfter ""}}<tr><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>{{end}}
-		</div>
-	`
+      <table>
+      {{if .DisplayName}}<tr><th>Display name :</th><td>{{.DisplayName}}</td></tr>{{end}}
+      {{if .Description}}<tr><th>Description :</th><td>{{.Description}}</td></tr>{{end}}
+      <tr><th>Last message :</th><td class="message">{{.LastMessage}}</td></tr>
+      <tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate}}</td></tr>
+      <tr class="maxTBU" {{if or (eq .MaxTBU "0") (eq .MaxTBU "")}}style="display: none;"{{end}}><th>Max TBU :</th><td>{{.MaxTBU}}</td></tr>
+      <tr class="expireAfter" {{if or (eq .ExpireAfter "0") (eq .ExpireAfter "")}}style="display: none;"{{end}}><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>
+    </div>
+  `
 	templates, err = templates.New("infoBox").Parse(infoBoxTemplate)
 	if err != nil {
 		return err
