@@ -3,7 +3,6 @@ if (String(window.performance.getEntriesByType("navigation")[0].type) === "back_
   location.reload();
 }
 
-let missedKas = 0
 
 // Register with box event source
 let source = new EventSource("/events/");
@@ -46,6 +45,8 @@ source.onmessage = function(event) {
     }
 };
 
+
+// Box tooltip
 function boxHover(tip) {
     let target = document.getElementById("tooltip")
     target.innerHTML = tip
@@ -60,34 +61,36 @@ function boxOut() {
 }
 
 
+// Box click
 function boxClick(id) {
     window.location.href = "/box/" + id;
 }
 
 
+// Remove box
 function deleteBox(id) {
   let target = document.getElementById(id);
   target.parentNode.removeChild(target);
 }
 
 
+// keepalive
+let lastKa;
 function keepalive() {
+  let ct = new Date().getTime()
+  if ( lastKa && (lastKa + 60000) < ct ) { location.reload() }
+  lastKa = ct
   let target = document.getElementById("status-bar");
   changeAlertLevel(target, "green", "");
   if(typeof ka !== "undefined") { clearTimeout(ka); };
   ka = setTimeout(
     function(){
-      missedKas++;
-      if (missedKas > 5 ) { location.reload(); };
-      if ((now() - lastKa) > 60 ) { location.reload(); };
-      lastKa = now();
-      changeAlertLevel(target, "red", "ERROR: No keepalives for 5s.");
-    }
-    , 5 * 1000
-  );
+        changeAlertLevel(target, "red", "ERROR: No keepalives since " + myTime(lastKa) + ".")
+    }, 5 * 1000)
 }
 
 
+// Print time in my preferred format
 function myTime(t) {
     let r;
     if (t != null) {
@@ -101,6 +104,7 @@ function myTime(t) {
 }
 
 
+// Pad a string
 function pad(n, width, z) {
   z = z || '0';
   n = n + '';
@@ -108,6 +112,7 @@ function pad(n, width, z) {
 }
 
 
+// Change alert level of a box
 function changeAlertLevel(target, status, message) {
     if ( ["amber","green","grey","noUpdate","red"].indexOf(status) === -1) { status = "grey" }
     target.classList.remove("amber", "green", "grey", "noUpdate", "red");
@@ -117,6 +122,7 @@ function changeAlertLevel(target, status, message) {
 }
 
 
+// Make big box to fit as many biggest boxes as will fit the current window.
 function rightSizeBigBox() {
     let availableWidth = Math.floor((window.innerWidth -30) / 512) * 512;
     let widthBox = (availableWidth >= 512) ? availableWidth:512;

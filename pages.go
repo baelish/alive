@@ -97,6 +97,7 @@ func loadTemplates() (err error) {
       {{if .Links}}{{range .Links}}<a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a><br />{{end}}{{end}}
 
       <table>
+      <tr><th>ID :</th><td>{{.ID}}</td></tr>
       {{if .DisplayName}}<tr><th>Display name :</th><td>{{.DisplayName}}</td></tr>{{end}}
       {{if .Description}}<tr><th>Description :</th><td>{{.Description}}</td></tr>{{end}}
       <tr><th>Last message :</th><td class="message">{{.LastMessage}}</td></tr>
