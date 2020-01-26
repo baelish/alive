@@ -1,154 +1,15 @@
-p {font-family: "Dejavu Sans", Verdana, sans-serif;}
-
-div.green {
-    background-color:#33cc33;
-}
-
-div.red, div.noUpdate {
-    background-color:#cc0000;
-}
-
-div.amber {
-    background-color:#ff8000;
-}
-
-div.grey {
-    background-color:#a19e9c;
-}
-
-div.xlarge {
-    width:510px;
-    height:510px;
-    font-size:2em;
-}
-
-div.dlarge {
-    width:510px;
-    height:254px;
-    font-size:1.5em;
-}
-
-div.large {
-    width:254px;
-    height:254px;
-    font-size:1.5em;
-}
-
-div.dmedium {
-    width:254px;
-    height:126px;
-    font-size:1.125em;
-}
-
-div.medium {
-    width:126px;
-    height:126px;
-    font-size:1.125em;
-}
-
-div.dsmall {
-    width:126px;
-    height:62px;
-    font-size:0.75em;
-}
-
-div.small {
-    width:62px;
-    height:62px;
-    font-size:0.75em;
-}
-
-div.dmicro {
-    width:62px;
-    height:30px;
-    font-size:0.5em;
-}
-
-div.micro {
-    width:30px;
-    height:30px;
-    font-size:0.5em;
-}
-
-div.status {
-    height: 30px;
-    font-size:1em;
-}
-
-div#status-bar p.title {
-    font-size: 100%;
+/* lastUpdate class  */
+.lastUpdated {
+    font-size:40%;
+    margin-block-end: auto;
+    margin-block-start: auto;
     position: absolute;
-    left: 3;
-    bottom: 1;
+    right: 3px;
+    bottom: 1px;
 }
 
-div#status-bar p.lastUpdated {
+div#status-bar .lastUpdated {
     font-size: 75%;
-    position: absolute;
-    right: 3;
-    bottom: 1;
-}
-
-div.box {
-    color: white;
-    float:left;
-    margin-bottom:2px;
-    margin-right:2px;
-    position: relative;
-    text-align: center;
-}
-
-div.big-box {
-    margin: auto;
-}
-
-p.title {
-    margin-block-start: 5%;
-    margin-block-end: auto
-}
-
-p#tooltip {
-    font-size: 100%;
-    position: absolute;
-    width: 100%;
-    bottom: -15px;
-}
-
-p.message {
-    font-size:60%;
-    margin-block-start: 0.5em;
-    margin-block-end: auto;
-}
-
-p.maxTBU {
-    font-size:40%;
-    margin-block-start: auto;
-    margin-block-end: auto;
-    display: none;
-}
-
-p.lastUpdated {
-    font-size:40%;
-    margin-block-start: auto;
-    margin-block-end: auto;
-    position: absolute;
-    bottom: 1;
-    right: 3;
-}
-
-.info table {
-    padding-left: 5px;
-    color: white;
-}
-.info th {
-    text-align: right;
-}
-.micro .message {
-    display: none;
-}
-
-.dmicro .message {
-    display: none;
 }
 
 .micro .lastUpdated {
@@ -162,3 +23,167 @@ p.lastUpdated {
 .small .lastUpdated {
     display: none;
 }
+
+
+/* message class */
+p.message {
+    font-size:60%;
+    margin-block-end: auto;
+    margin-block-start: 0.5em;
+}
+
+.micro .message {
+    display: none;
+}
+
+.dmicro .message {
+    display: none;
+}
+
+
+/* title class */
+.title {
+    margin-block-end: auto;
+    margin-block-start: auto;
+}
+
+div#status-bar .title {
+    bottom: 1px;
+    font-size: 100%;
+    left: 3px;
+    position: absolute;
+}
+
+
+/* setting default font family */
+p, body, table {font-family: "Dejavu Sans", Verdana, sans-serif;}
+
+
+/* box color classes */
+.green {
+    background-color:#33cc33;
+}
+
+.red, .noUpdate {
+    background-color:#cc0000;
+}
+
+.amber {
+    background-color:#ff8000;
+}
+
+.grey {
+    background-color:#a19e9c;
+}
+
+
+/* box size classes */
+.xlarge {
+    font-size:2em;
+    height:510px;
+    width:510px;
+}
+
+.dlarge {
+    font-size:1.5em;
+    height:254px;
+    width:510px;
+}
+
+.large {
+    font-size:1.5em;
+    height:254px;
+    width:254px;
+}
+
+.dmedium {
+    font-size:1.125em;
+    height:126px;
+    width:254px;
+}
+
+.medium {
+    font-size:1.125em;
+    height:126px;
+    width:126px;
+}
+
+.dsmall {
+    font-size:0.8em;
+    height:62px;
+    width:126px;
+}
+
+.small {
+    font-size:0.8em;
+    height:62px;
+    width:62px;
+}
+
+.dmicro {
+    font-size:0.8em;
+    height:30px;
+    width:62px;
+}
+
+.micro {
+    font-size:0.8em;
+    height:30px;
+    width:30px;
+}
+
+.status {
+    font-size:1em;
+    height: 30px;
+}
+
+
+/* box classes */
+.box {
+    color: white;
+    float:left;
+    margin-bottom:2px;
+    margin-right:2px;
+    position: relative;
+    text-align: center;
+}
+
+.big-box {
+    margin: auto;
+}
+
+
+/* maxTBU class */
+.maxTBU {
+    display: none;
+    font-size:40%;
+    margin-block-end: auto;
+    margin-block-start: auto;
+}
+
+
+/* info table */
+.info table {
+    color: white;
+    padding-left: 5px;
+}
+
+.info td {
+    text-align: left;
+}
+
+.info th {
+    text-align: right;
+}
+
+
+/* tooltip class */
+.tooltip {
+    bottom: 1px;
+    font-size: 100%;
+    margin-block-end: auto;
+    margin-block-start: auto;
+    position: absolute;
+    width: 100%;
+}
+

@@ -10,6 +10,7 @@ import (
 )
 
 const header = `
+<!DOCTYPE html>
 <html>
 	<head>
 	  <link rel='stylesheet' type='text/css' href='/static/standard.css'/>
@@ -20,7 +21,7 @@ const header = `
 	<div id='big-box' class='big-box'>
 	  <div id='status-bar' class='status fullwidth box'>
 	    <p class='title'>Status</p>
-        <p id='tooltip' display="none"></p>
+        <p class='tooltip' id='tooltip' display="none"></p>
 		<p class='message' display="none"></p>
 		<p class='lastUpdated'></p>
 	  </div>
