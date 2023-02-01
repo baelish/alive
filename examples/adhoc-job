@@ -13,9 +13,9 @@ response="$(curl -sS -X POST "$apiUrl/api/v1/new" -H "Content-Type: application/
     "name": "My staging deployment",
     "size": "dmedium",
     "status": "grey",
-    "expireAfter": "",
-    "maxTBU": "2",
-    "lastMessage": "Starting my staging deployment"
+    "expireAfter": "120",
+    "maxTBU": "",
+    "lastMessage": "Estimated travel time <br /><span style=\"font-size:200%\">25m</span>"
   }')"
 
 echo "$response"

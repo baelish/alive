@@ -169,7 +169,7 @@ func maintainBoxes() {
 				log.Fatal(err)
 			}
 
-			err = ioutil.WriteFile(config.dataFile, byteValue, 0644)
+			err = ioutil.WriteFile(options.DataFile, byteValue, 0644)
 
 			if err != nil {
 				log.Fatal(err)
@@ -194,7 +194,7 @@ func findBoxByID(id string) (int, error) {
 
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
 func getBoxes() {
-	byteValue, err := ioutil.ReadFile(config.dataFile)
+	byteValue, err := ioutil.ReadFile(options.DataFile)
 
 	if err != nil {
 		log.Fatal(err)
