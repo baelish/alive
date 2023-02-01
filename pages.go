@@ -124,5 +124,5 @@ func runPages() {
 	http.Handle("/box/", r)
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/health", handleStatus)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config.staticFilePath))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(options.StaticPath))))
 }

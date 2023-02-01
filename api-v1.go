@@ -212,6 +212,6 @@ func runAPI() {
 	router.HandleFunc("/api/v1/{id}", apiGetBox).Methods("GET")
 	router.HandleFunc("/api/v1/{id}", apiDeleteBox).Methods("DELETE")
 	router.HandleFunc("/api/v1/events/{id}", apiCreateEvent).Methods("POST")
-	listenOn := fmt.Sprintf(":%s", config.apiPort)
+	listenOn := fmt.Sprintf(":%s", options.ApiPort)
 	log.Fatal(http.ListenAndServe(listenOn, router))
 }
