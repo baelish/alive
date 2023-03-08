@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+log() {
+  local level="${1^^}"
+  shift
+
+  if [[ "${level}" == "DEBUG" && -z "${DEBUG:-}" ]]; then
+
+    return 0
+  fi
+
+  echo "$level " "$@" >&2
+}
+
+processOptions() {
+  dryRun=()
+  additionalTags=()
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --additional-tag|-a)
+        additionalTags+=("$2")
+        shift 2
+      ;;
+      --additional-tag=*)
+        additionalTags+=("${1#--additional-tag=}")
+        shift
+      ;;
+
+      --debug|-d)
+        DEBUG="true"
+        shift
+      ;;
+
+      --dry-run)
+        dryRun=( "echo" "would run:" )
+        shift
+      ;;
+
+      --git-tag|-g)
+        newGitTag="true"
+        shift
+      ;;
+
+      --push|-p)
+        pushImages="true"
+        shift
+      ;;
+
+      --tag|-t)
+        mainTag="${2}"
+        shift 2
+      ;;
+      --tag=*)
+        mainTag="${1#--tag=}"
+        shift
+      ;;
+
+      -*)
+        log "WARN" "Unknown option $1"
+        unknownOptions="true"
+        shift
+      ;;
+
+      *)
+        log "WARN" "This script takes no arguments $1"
+        unknownOptions="true"
+        shift
+      ;;
+
+    esac
+  done
+
+  if [[ -n "${unknownOptions:-}" ]]; then
+
+    return 1
+  fi
+
+  if [[ -z "${mainTag:-}" ]]; then
+    log "ERROR" "Missing --tag|-t"
+
+    return 1
+  fi
+
+  log "DEBUG" "mainTag=$mainTag"
+  log "DEBUG" "additionalTags=( ${additionalTags[*]} )"
+  log "DEBUG" "newGitTag=${newGitTag:-}"
+}
+
+
+main() {
+  # Check that we're on master and no changes are outstanding
+  currentBranch="$(git rev-parse --abbrev-ref HEAD)"
+  if [[ "$currentBranch" != "master" ]]; then
+    log "ERROR" "Not on master branch ($currentBranch), aborting."
+
+    return 1
+  fi
+
+  if git diff-index --quiet --cached HEAD --; then
+    log "ERROR" "Uncommitted files are present, aborting."
+
+    return 1
+  fi
+
+  mapfile -t untracked < <(git ls-files --exclude-standard --others)
+  if [[ ${#untracked[@]} -gt 0 ]]; then
+    log "ERROR" "Untracked files are present, aborting."
+
+    return 1
+  fi
+
+  if [[ "$newGitTag" == "true" ]]; then
+    # Check that this is a new tag
+    mapfile -t currentTags < <(git tag)
+    for tag in "${currentTags[@]}"; do
+      if [[ "$mainTag" == "$tag" ]]; then
+        log "ERROR" "This version already exists! $mainTag, aborting."
+
+        return 1
+      fi
+    done
+
+    # Create tag
+    "${dryRun[@]}" git tag "$mainTag"
+    "${dryRun[@]}" git push --tags
+  fi
+
+  # Build and tag image
+  "${dryRun[@]}" docker build . \
+    --build-arg BUILD_COMMIT="$(git rev-parse --verify HEAD)" \
+    --build-arg BUILD_IMAGE="baelish/alive" \
+    --build-arg BUILD_VERSION="$mainTag" \
+    --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+    -t "baelish/alive:$mainTag"
+
+  if [[ "${pushImages:-}" == "true" ]]; then
+    "${dryRun[@]}" docker push "baelish/alive:$mainTag"
+  fi
+
+  for aTag in "${additionalTags[@]}"; do
+    "${dryRun[@]}" docker tag "baelish/alive:$mainTag" "baelish/alive:$aTag"
+
+    if [[ "${pushImages:-}" == "true" ]]; then
+      "${dryRun[@]}" docker push "baelish/alive:$aTag"
+    fi
+  done
+}
+
+
+processOptions "$@"
+main
