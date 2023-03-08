@@ -99,7 +99,7 @@ main() {
     return 1
   fi
 
-  if git diff-index --quiet --cached HEAD --; then
+  if ! git diff-index --quiet HEAD --; then
     log "ERROR" "Uncommitted files are present, aborting."
 
     return 1
