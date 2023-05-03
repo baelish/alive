@@ -112,7 +112,7 @@ main() {
     return 1
   fi
 
-  if [[ "$newGitTag" == "true" ]]; then
+  if [[ "${newGitTag:-}" == "true" ]]; then
     # Check that this is a new tag
     mapfile -t currentTags < <(git tag)
     for tag in "${currentTags[@]}"; do
@@ -130,6 +130,7 @@ main() {
 
   # Build and tag image
   "${dryRun[@]}" docker build . \
+    --pull \
     --build-arg BUILD_COMMIT="$(git rev-parse --verify HEAD)" \
     --build-arg BUILD_IMAGE="baelish/alive" \
     --build-arg BUILD_VERSION="$mainTag" \
