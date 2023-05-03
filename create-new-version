@@ -53,8 +53,14 @@ processOptions() {
         mainTag="${2}"
         shift 2
       ;;
+
       --tag=*)
         mainTag="${1#--tag=}"
+        shift
+      ;;
+
+      --test)
+        testing="true"
         shift
       ;;
 
@@ -93,20 +99,20 @@ processOptions() {
 main() {
   # Check that we're on master and no changes are outstanding
   currentBranch="$(git rev-parse --abbrev-ref HEAD)"
-  if [[ "$currentBranch" != "master" ]]; then
+  if [[ "${testing:-}" != "true" && "$currentBranch" != "master" ]]; then
     log "ERROR" "Not on master branch ($currentBranch), aborting."
 
     return 1
   fi
 
-  if ! git diff-index --quiet HEAD --; then
+  if [[ "${testing:-}" != "true" ]] && ! git diff-index --quiet HEAD --; then
     log "ERROR" "Uncommitted files are present, aborting."
 
     return 1
   fi
 
   mapfile -t untracked < <(git ls-files --exclude-standard --others)
-  if [[ ${#untracked[@]} -gt 0 ]]; then
+  if [[ "${testing:-}" != "true" && ${#untracked[@]} -gt 0 ]]; then
     log "ERROR" "Untracked files are present, aborting."
 
     return 1
@@ -124,8 +130,10 @@ main() {
     done
 
     # Create tag
-    "${dryRun[@]}" git tag "$mainTag"
-    "${dryRun[@]}" git push --tags
+    if [[ "${testing:-}" != "true" ]]; then
+      "${dryRun[@]}" git tag "$mainTag"
+      "${dryRun[@]}" git push --tags
+    fi
   fi
 
   # Build and tag image
@@ -137,17 +145,19 @@ main() {
     --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
     -t "baelish/alive:$mainTag"
 
-  if [[ "${pushImages:-}" == "true" ]]; then
-    "${dryRun[@]}" docker push "baelish/alive:$mainTag"
-  fi
-
-  for aTag in "${additionalTags[@]}"; do
-    "${dryRun[@]}" docker tag "baelish/alive:$mainTag" "baelish/alive:$aTag"
-
+  if [[ ${testing:-} != "true" ]]; then
     if [[ "${pushImages:-}" == "true" ]]; then
-      "${dryRun[@]}" docker push "baelish/alive:$aTag"
+      "${dryRun[@]}" docker push "baelish/alive:$mainTag"
     fi
-  done
+
+    for aTag in "${additionalTags[@]}"; do
+      "${dryRun[@]}" docker tag "baelish/alive:$mainTag" "baelish/alive:$aTag"
+
+      if [[ "${pushImages:-}" == "true" ]]; then
+        "${dryRun[@]}" docker push "baelish/alive:$aTag"
+      fi
+    done
+  fi
 }
 
 
