@@ -1,0 +1,73 @@
+package main
+
+import (
+	"encoding/json"
+	"log"
+	"os"
+	"path/filepath"
+)
+
+var boxFile string
+
+func createDataFiles() {
+	boxFile = filepath.Clean(options.DataPath + "/boxes.json")
+	if _, err := os.Stat(options.DataPath); os.IsNotExist(err) {
+		err := os.Mkdir(options.DataPath, 0755)
+		if err != nil {
+			log.Printf("Data directory didn't exist and couldn't create it (%s)", options.DataPath)
+		}
+	}
+
+	if _, err := os.Stat(boxFile); os.IsNotExist(err) {
+		var file, err = os.Create(boxFile)
+		if err != nil {
+			log.Printf("Data file did not exist and could not create an empty one.")
+			log.Fatal(err)
+		}
+
+		err = os.WriteFile(boxFile, []byte(emptyDataFile), 0644)
+		if err != nil {
+			log.Printf("Could not add base content to file %s", boxFile)
+			log.Fatal(err)
+		}
+
+		log.Printf("Created empty data file %s", boxFile)
+		defer func() {
+			err = file.Close()
+		}()
+		if err != nil {
+			log.Print(err)
+		}
+	}
+}
+
+// Loads Json from a file and returns Boxes sorted by size (Largest first)
+func getBoxesFromDataFile() {
+	byteValue, err := os.ReadFile(boxFile)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(byteValue, &boxes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sortBoxes()
+
+}
+
+// Write json
+func saveBoxFile() {
+	byteValue, err := json.Marshal(&boxes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.WriteFile(boxFile, byteValue, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}

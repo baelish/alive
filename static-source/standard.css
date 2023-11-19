@@ -175,8 +175,14 @@ p.expireAfter {
 
 .info th {
     text-align: right;
+    vertical-align: top;
 }
 
+.info ul {
+    padding-inline-start: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
 
 /* tooltip class */
 .tooltip {
