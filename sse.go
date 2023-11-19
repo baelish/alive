@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -41,7 +42,7 @@ type Broker struct {
 // Start method, this Broker method starts a new goroutine.  It handles
 // the addition & removal of clients, as well as the broadcasting
 // of messages out to clients that are currently attached.
-func (b *Broker) Start() {
+func (b *Broker) Start(ctx context.Context) {
 
 	// Start a goroutine
 	go func() {
@@ -52,6 +53,9 @@ func (b *Broker) Start() {
 			// Block until we receive from one of the
 			// three following channels.
 			select {
+
+			case <-ctx.Done():
+				return
 
 			case s := <-b.newClients:
 
@@ -141,24 +145,29 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Send keepalives to the status bar.
-func runKeepalives() {
+func runKeepalives(ctx context.Context) {
 	// Generate a regular keepalive message that gets pushed
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
 	go func() {
 		for {
+			select {
+			case <-ctx.Done():
+				return
 
-			// Send a keepalive
-			events.messages <- fmt.Sprint(`{"type": "keepalive"}`)
+			default:
+				// Send a keepalive
+				events.messages <- fmt.Sprint(`{"type": "keepalive"}`)
 
-			// Sleep for 3s.
-			time.Sleep(3 * time.Second)
+				// Sleep for 3s.
+				time.Sleep(3 * time.Second)
+			}
 		}
 	}()
 }
 
 // Main routine
-func runSse() (b *Broker) {
+func runSSE(ctx context.Context) (b *Broker) {
 
 	// Make a new Broker instance
 	b = &Broker{
@@ -169,7 +178,7 @@ func runSse() (b *Broker) {
 	}
 
 	// Start processing events
-	b.Start()
+	b.Start(ctx)
 
 	// Make b the HTTP handler for "/events/".  It can do
 	// this because it has a ServeHTTP method.  That method

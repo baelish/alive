@@ -23,27 +23,4 @@ func createStaticContent() {
 			}
 		}
 	}
-
-	if _, err := os.Stat(options.DataFile); os.IsNotExist(err) {
-		var file, err = os.Create(options.DataFile)
-		if err != nil {
-			log.Printf("Data file did not exist and could not create an empty one.")
-			log.Fatal(err)
-		}
-
-		err = os.WriteFile(options.DataFile, []byte(emptyDataFile), 0644)
-		if err != nil {
-			log.Printf("Could not add base content to file %s", options.DataFile)
-			log.Fatal(err)
-		}
-
-		log.Printf("Created empty data file %s", options.DataFile)
-		defer func() {
-			err = file.Close()
-		}()
-		if err != nil {
-			log.Print(err)
-		}
-	}
-
 }

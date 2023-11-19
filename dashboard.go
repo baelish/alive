@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 const header = `
@@ -64,12 +66,18 @@ func handleBox(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
-	vars := mux.Vars(r)
-	i, _ := findBoxByID(vars["id"])
+
+	i, err := findBoxByID(chi.URLParam(r, "id"))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	err = templates.ExecuteTemplate(w, "infoBox", boxes[i])
 	if err != nil {
 		log.Println(err)
 	}
+
 	_, err = fmt.Fprintf(w, footer)
 	if err != nil {
 		log.Println(err)
@@ -77,13 +85,17 @@ func handleBox(w http.ResponseWriter, r *http.Request) {
 }
 
 func loadTemplates() (err error) {
+	funcMap := template.FuncMap{
+		"ToUpper": strings.ToUpper,
+	}
+
 	boxTemplate := `
     <div onclick='boxClick(this.id)' onmouseover='boxHover("{{.Name}}")' onmouseout='boxOut()' id='{{.ID}}' class='{{.Status}} {{.Size}} box'>
         <p class='title'>{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Name}}{{end}}</p>
         <p class='message'>{{.LastMessage}}</p>
         <p class='lastUpdated'>{{.LastUpdate}}</p>
         <p class='maxTBU'>{{.MaxTBU}}</p>
-            <p class='expireAfter'>{{.ExpireAfter}}</p>
+        <p class='expireAfter'>{{.ExpireAfter}}</p>
     </div>
   `
 	templates, err = template.New("box").Parse(boxTemplate)
@@ -104,9 +116,10 @@ func loadTemplates() (err error) {
       <tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate}}</td></tr>
       <tr class="maxTBU" {{if or (eq .MaxTBU "0") (eq .MaxTBU "")}}style="display: none;"{{end}}><th>Max TBU :</th><td>{{.MaxTBU}}</td></tr>
       <tr class="expireAfter" {{if or (eq .ExpireAfter "0") (eq .ExpireAfter "")}}style="display: none;"{{end}}><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>
+      <tr><th>Previous Messages:</th><td class="previousMessages">{{range $m := .Messages}}<ul>{{ $m.TimeStamp }}: {{ $m.Status | ToUpper}} ({{ $m.Message }})</ul>{{end}}</td></tr>
     </div>
   `
-	templates, err = templates.New("infoBox").Parse(infoBoxTemplate)
+	templates, err = templates.New("infoBox").Funcs(funcMap).Parse(infoBoxTemplate)
 	if err != nil {
 		return err
 	}
@@ -114,15 +127,26 @@ func loadTemplates() (err error) {
 	return nil
 }
 
-func runPages() {
+func runDashboard(ctx context.Context) {
 	err := loadTemplates()
 	if err != nil {
 		log.Printf("Unable to load templates: %v", err)
 	}
-	r := mux.NewRouter()
+	r := chi.NewRouter()
 	r.HandleFunc("/box/{id}", handleBox)
 	http.Handle("/box/", r)
 	http.HandleFunc("/", handleRoot)
+
 	http.HandleFunc("/health", handleStatus)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(options.StaticPath))))
+
+	log.Printf("listening on %s", options.SitePort)
+	listenOn := fmt.Sprintf(":%s", options.SitePort)
+	go func() { log.Fatal(http.ListenAndServe(listenOn, nil)) }()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		}
+	}
 }

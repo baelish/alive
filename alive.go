@@ -1,66 +1,86 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
-
-	goflags "github.com/jessevdk/go-flags"
 )
 
 const statusBarID = "status-bar"
+const timeFormat = "2006-01-02T15:04:05.000Z07:00"
 
 var events *Broker
 
-type Options struct {
-	ApiPort       string `long:"api-port" description:"The port to use for api calls" default:"8081"`
-	SitePort      string `short:"p" long:"port" description:"The port to use for the dashboard" default:"8080"`
-	Updater       bool   `long:"updater" description:"?"`
-	DefaultStatic bool   `long:"default-static" description:"Use default static content"`
-	DataFile      string `short:"f" long:"data-file" description:"Data file location (default: $HOME/.alive/data.json)"`
-	StaticPath    string `long:"static-path" description:"Path to store static files (default: $HOME/.alive/static)"`
-}
+func main() {
 
-var options Options
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt)
+	defer func() {
+		log.Printf("Running cleanup")
+		signal.Stop(signalChan)
+		cancel()
+	}()
 
-func processOptions() {
-	goflagParser := goflags.NewParser(&options, goflags.Default)
-
-	if _, err := goflagParser.Parse(); err != nil {
-		if flagsErr, ok := err.(*goflags.Error); ok && flagsErr.Type == goflags.ErrHelp {
-			os.Exit(0)
-		} else {
-			log.Panicf("Parse failed: %v", err)
+	go func() {
+		select {
+		case <-signalChan: // first signal, cancel context
+			log.Println("SIGINT signal received, exiting")
+			cancel()
+		case <-ctx.Done():
+			return
 		}
+		<-signalChan // second signal, hard exit
+		os.Exit(1)
+	}()
+
+	processOptions()
+
+	if options.Demo {
+		tempDir, err := os.MkdirTemp(os.TempDir(), "alive-*.tmp")
+		if err != nil {
+			log.Panicf("Unable to create a temporary directory")
+		}
+		defer os.RemoveAll(tempDir)
+
+		log.Printf("Running demo using temporary files in %s", tempDir)
+
+		options.DataPath = filepath.Clean(fmt.Sprintf("%s/data", tempDir))
+		options.StaticPath = filepath.Clean(fmt.Sprintf("%s/static", tempDir))
 	}
 
-	if options.DataFile == "" {
-		options.DataFile = filepath.Clean(fmt.Sprintf("%s/.alive/data.json", os.Getenv("HOME")))
+	if options.DataPath == "" {
+		options.DataPath = filepath.Clean(fmt.Sprintf("%s/.alive/data", os.Getenv("HOME")))
 	}
+
 	if options.StaticPath == "" {
 		options.StaticPath = filepath.Clean(fmt.Sprintf("%s/.alive/static", os.Getenv("HOME")))
 	}
 
 	log.Printf("%+v\n", options)
-}
 
-func main() {
-	processOptions()
 	createStaticContent()
-	getBoxes()
-	runPages()
-	events = runSse()
-	runKeepalives()
-	maintainBoxes()
+	createDataFiles()
+	getBoxesFromDataFile()
+	go runDashboard(ctx)
+	events = runSSE(ctx)
+	runKeepalives(ctx)
+	maintainBoxes(ctx)
 
-	if options.Updater {
-		runUpdater()
+	if options.Demo {
+		runDemo(ctx)
 	}
 
-	go runAPI()
+	go runAPI(ctx)
 
-	listenOn := fmt.Sprintf(":%s", options.SitePort)
-	log.Fatal(http.ListenAndServe(listenOn, nil))
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		}
+	}
 }
