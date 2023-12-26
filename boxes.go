@@ -71,29 +71,72 @@ func (s *boxSorter) Less(i, j int) bool {
 
 func sizeToNumber(size string) int {
 	switch size {
-	case "micro":
+	case sizes[0]:
 		return 10
-	case "dmicro":
+	case sizes[1]:
 		return 20
-	case "small":
+	case sizes[2]:
 		return 30
-	case "dsmall":
+	case sizes[3]:
 		return 40
-	case "medium":
+	case sizes[4]:
 		return 50
-	case "dmedium":
+	case sizes[5]:
 		return 60
-	case "large":
+	case sizes[6]:
 		return 70
-	case "dlarge":
+	case sizes[7]:
 		return 80
-	case "xlarge":
+	case sizes[8]:
 		return 90
 	case "status":
-		return 110
+		return 1000
 	default:
 		return 0
 	}
+}
+
+func addBox(box Box) (err error) {
+	t := time.Now()
+	ft := fmt.Sprintf("%s", t.Format(timeFormat))
+
+	if !validateBoxSize(box.Size) {
+		err = fmt.Errorf("Invalid size: %s", box.Size)
+		return err
+	}
+
+	if box.ID != "" {
+		if testBoxID(box.ID) {
+			err = fmt.Errorf("A box already exists with that ID: %s", box.ID)
+			return err
+		}
+	} else {
+		for box.ID == "" || testBoxID(box.ID) {
+			box.ID = randStringBytes(10)
+		}
+
+	}
+	box.LastUpdate = ft
+	boxes = append(boxes, box)
+
+	sortBoxes()
+
+	newBoxPrint, err := json.Marshal(box)
+	if err != nil {
+		return (err)
+	}
+	log.Printf("Creating new box with these details:'%s'", string(newBoxPrint))
+	//	time.Sleep(100 * time.Millisecond)
+
+	var event Event
+	event.Type = "reloadPage"
+	stringData, err := json.Marshal(event)
+	if err != nil {
+		return (err)
+	}
+	events.messages <- fmt.Sprintf(string(stringData))
+
+	return nil
 }
 
 func deleteBox(id string) bool {
@@ -114,13 +157,32 @@ func deleteBox(id string) bool {
 	return found
 }
 
-// Find any boxes that have expired and delete them. Also find any boxes which
-// have not had timely updates and update their status.
+// Find any boxes that have expired and delete them, find any boxes which have
+// not had timely updates and update their status. Also saves box file
+// periodically or on exit.
 func maintainBoxes(ctx context.Context) {
+	if options.Debug == true {
+		log.Print("Starting box maintenance routine")
+	}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+		var err error
+		var lastSave time.Time
 		for {
 			select {
 			case <-ctx.Done():
+				log.Printf("Saving data file before exit")
+				for t := 0; t < 3; t++ {
+					err = saveBoxFile()
+					if err != nil {
+						log.Printf("Error saving box file (%s)", err.Error())
+					} else {
+
+						return
+					}
+				}
+
 				return
 
 			default:
@@ -176,7 +238,15 @@ func maintainBoxes(ctx context.Context) {
 					}
 				}
 				// Write json
-				saveBoxFile()
+				if time.Now().Sub(lastSave) > time.Duration(1*time.Minute) {
+					log.Print("Saving data file")
+					err = saveBoxFile()
+					if err != nil {
+						log.Printf("Error saving data file (%s)", err.Error())
+					} else {
+						lastSave = time.Now()
+					}
+				}
 
 				// Sleep for 1s.
 				time.Sleep(1 * time.Second)
@@ -219,4 +289,52 @@ func testBoxID(id string) bool {
 	}
 
 	return false
+}
+
+func update(event Event) {
+	t := time.Now()
+	ft := fmt.Sprintf("%s", t.Format(timeFormat))
+	i, err := findBoxByID(event.ID)
+
+	if err != nil {
+		log.Print(err)
+
+		return
+	}
+
+	boxes[i].LastMessage = event.Message
+
+	boxes[i].Messages = append(
+		[]Message{
+			{
+				Message:   event.Message,
+				Status:    event.Status,
+				TimeStamp: ft,
+			},
+		},
+		boxes[i].Messages...,
+	)
+
+	m := 30
+	if len(boxes[i].Messages) > m {
+		boxes[i].Messages = boxes[i].Messages[:m]
+	}
+
+	if event.Type != missedStatusUpdate {
+		boxes[i].LastUpdate = ft
+	}
+
+	boxes[i].Status = event.Status
+
+	if event.MaxTBU != "" {
+		boxes[i].MaxTBU = event.MaxTBU
+	}
+
+	if event.ExpireAfter != "" {
+		boxes[i].ExpireAfter = event.ExpireAfter
+	}
+
+	event.Type = "updateBox"
+	dataString, _ := json.Marshal(event)
+	events.messages <- fmt.Sprint(string(dataString))
 }

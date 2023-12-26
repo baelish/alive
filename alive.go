@@ -7,17 +7,18 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 )
 
 const statusBarID = "status-bar"
 const timeFormat = "2006-01-02T15:04:05.000Z07:00"
 
 var events *Broker
+var wg sync.WaitGroup
 
 func main() {
 
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 	defer func() {
@@ -29,13 +30,12 @@ func main() {
 	go func() {
 		select {
 		case <-signalChan: // first signal, cancel context
-			log.Println("SIGINT signal received, exiting")
+			log.Println("SIGINT signal received, exiting gracefully")
 			cancel()
-		case <-ctx.Done():
-			return
 		}
 		<-signalChan // second signal, hard exit
-		os.Exit(1)
+		log.Println("2nd SIGINT signal received, hard exit")
+		os.Exit(2)
 	}()
 
 	processOptions()
@@ -66,21 +66,20 @@ func main() {
 	createStaticContent()
 	createDataFiles()
 	getBoxesFromDataFile()
-	go runDashboard(ctx)
+
+	runDashboard(ctx)
+
 	events = runSSE(ctx)
+
 	runKeepalives(ctx)
+
 	maintainBoxes(ctx)
 
 	if options.Demo {
 		runDemo(ctx)
 	}
 
-	go runAPI(ctx)
+	runAPI(ctx)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		}
-	}
+	wg.Wait()
 }

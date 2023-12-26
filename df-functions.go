@@ -10,6 +10,9 @@ import (
 var boxFile string
 
 func createDataFiles() {
+	if options.Debug == true {
+		log.Print("Creating data files")
+	}
 	boxFile = filepath.Clean(options.DataPath + "/boxes.json")
 	if _, err := os.Stat(options.DataPath); os.IsNotExist(err) {
 		err := os.Mkdir(options.DataPath, 0755)
@@ -43,6 +46,9 @@ func createDataFiles() {
 
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
 func getBoxesFromDataFile() {
+	if options.Debug == true {
+		log.Print("Getting boxes from data file")
+	}
 	byteValue, err := os.ReadFile(boxFile)
 
 	if err != nil {
@@ -59,15 +65,16 @@ func getBoxesFromDataFile() {
 }
 
 // Write json
-func saveBoxFile() {
+func saveBoxFile() error {
 	byteValue, err := json.Marshal(&boxes)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	err = os.WriteFile(boxFile, byteValue, 0644)
-
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	return nil
 }
