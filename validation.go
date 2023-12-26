@@ -1,6 +1,16 @@
 package main
 
-var sizes = []string{"micro", "dmicro", "small", "dsmall", "medium", "dmedium", "large", "dlarge", "xlarge", "status"}
+var sizes = [9]string{
+	"micro",
+	"dmicro",
+	"small",
+	"dsmall",
+	"medium",
+	"dmedium",
+	"large",
+	"dlarge",
+	"xlarge",
+}
 
 func validateBoxSize(s string) bool {
 	for _, v := range sizes {

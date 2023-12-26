@@ -8,6 +8,9 @@ import (
 const emptyDataFile = "[]"
 
 func createStaticContent() {
+	if options.Debug == true {
+		log.Printf("Creating Static Content")
+	}
 	for _, file := range AssetNames() {
 		if _, err := os.Stat(options.StaticPath + "/" + file); os.IsNotExist(err) {
 			log.Printf("'%s/%s' doesn't exist, creating default file.", options.StaticPath, file)

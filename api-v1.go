@@ -73,8 +73,6 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiCreateBox(w http.ResponseWriter, r *http.Request) {
-	t := time.Now()
-	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
 	var newBox Box
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
@@ -86,50 +84,21 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !validateBoxSize(newBox.Size) {
-		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot create box, the ID requested already exists."}`))
+	err = addBox(newBox)
+	if err != nil {
+		json.NewEncoder(w).Encode(json.RawMessage(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+
 		if err != nil {
 			log.Print(err)
 		}
+
 		return
 	}
 
-	if newBox.ID != "" {
-		if testBoxID(newBox.ID) {
-			err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot create box, the ID requested already exists."}`))
-			if err != nil {
-				log.Print(err)
-			}
-
-			return
-		}
-	} else {
-		for newBox.ID == "" || testBoxID(newBox.ID) {
-			newBox.ID = randStringBytes(10)
-		}
-
-	}
-
-	newBox.LastUpdate = ft
-	boxes = append(boxes, newBox)
-	sortBoxes()
-	newBoxPrint, err := json.Marshal(newBox)
-	if err != nil {
-		log.Print(err)
-	}
-	log.Printf(string(newBoxPrint))
 	err = json.NewEncoder(w).Encode(newBox)
 	if err != nil {
 		log.Print(err)
 	}
-
-	var event Event
-	event.Type = "reloadPage"
-	stringData, err := json.Marshal(event)
-	if err != nil {
-		log.Print(err)
-	}
-	events.messages <- fmt.Sprintf(string(stringData))
 }
 
 func apiStatus(w http.ResponseWriter, _ *http.Request) {
@@ -204,6 +173,9 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 }
 
 func runAPI(ctx context.Context) {
+	if options.Debug == true {
+		log.Print("Starting up API")
+	}
 	router := mux.NewRouter()
 	router.HandleFunc("/health", apiStatus).Methods("GET")
 	router.HandleFunc("/api/v1/box", apiGetBoxes).Methods("GET")
@@ -216,10 +188,4 @@ func runAPI(ctx context.Context) {
 	go func() {
 		log.Fatal(http.ListenAndServe(listenOn, router))
 	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		}
-	}
 }

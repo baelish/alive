@@ -10,6 +10,7 @@ import (
 type Options struct {
 	ApiPort       string `long:"api-port" description:"The port to use for api calls" default:"8081"`
 	SitePort      string `short:"p" long:"port" description:"The port to use for the dashboard" default:"8080"`
+	Debug         bool   `long:"debug" description:"Print debug messages"`
 	Demo          bool   `long:"run-demo" description:"Run a demo, will use temporary folder"`
 	DefaultStatic bool   `long:"default-static" description:"Use default static content"`
 	DataPath      string `short:"d" long:"data-path" description:"Path to store data files (default: $HOME/.alive/data)"`

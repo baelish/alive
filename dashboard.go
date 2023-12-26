@@ -128,6 +128,9 @@ func loadTemplates() (err error) {
 }
 
 func runDashboard(ctx context.Context) {
+	if options.Debug == true {
+		log.Print("Starting Dashboard")
+	}
 	err := loadTemplates()
 	if err != nil {
 		log.Printf("Unable to load templates: %v", err)
@@ -142,11 +145,7 @@ func runDashboard(ctx context.Context) {
 
 	log.Printf("listening on %s", options.SitePort)
 	listenOn := fmt.Sprintf(":%s", options.SitePort)
-	go func() { log.Fatal(http.ListenAndServe(listenOn, nil)) }()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		}
-	}
+	go func() {
+		log.Fatal(http.ListenAndServe(listenOn, nil))
+	}()
 }
