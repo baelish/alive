@@ -178,11 +178,18 @@ func runAPI(ctx context.Context) {
 	}
 	router := mux.NewRouter()
 	router.HandleFunc("/health", apiStatus).Methods("GET")
+	router.HandleFunc("/api/v1", apiGetBoxes).Methods("GET")                 // deprecate
+	router.HandleFunc("/api/v1/", apiGetBoxes).Methods("GET")                // deprecate
+	router.HandleFunc("/api/v1/new", apiCreateBox).Methods("POST")           // deprecate
+	router.HandleFunc("/api/v1/update", apiUpdateBox).Methods("POST")        // deprecate
+	router.HandleFunc("/api/v1/{id}", apiDeleteBox).Methods("DELETE")        // deprecate
+	router.HandleFunc("/api/v1/{id}", apiGetBox).Methods("GET")              // deprecate
+	router.HandleFunc("/api/v1/events/{id}", apiCreateEvent).Methods("POST") // deprecate
 	router.HandleFunc("/api/v1/box", apiGetBoxes).Methods("GET")
 	router.HandleFunc("/api/v1/box/new", apiCreateBox).Methods("POST")
 	router.HandleFunc("/api/v1/box/update", apiUpdateBox).Methods("POST")
-	router.HandleFunc("/api/v1/box/{id}", apiGetBox).Methods("GET")
 	router.HandleFunc("/api/v1/box/{id}", apiDeleteBox).Methods("DELETE")
+	router.HandleFunc("/api/v1/box/{id}", apiGetBox).Methods("GET")
 	router.HandleFunc("/api/v1/box/{id}/event", apiCreateEvent).Methods("POST")
 	listenOn := fmt.Sprintf(":%s", options.ApiPort)
 	go func() {
