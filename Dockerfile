@@ -20,4 +20,4 @@ LABEL org.label-schema.version="$BUILD_VERSION"
 RUN mkdir /app /data
 WORKDIR /app
 COPY --from=builder /go/bin/alive .
-ENTRYPOINT [ "./alive", "--data-file=/data/data.json" , "--static-path=/data/static" ]
+ENTRYPOINT [ "./alive", "--data-path=/data" , "--static-path=/data/static" ]
