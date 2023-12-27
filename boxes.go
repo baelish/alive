@@ -228,7 +228,7 @@ func maintainBoxes(ctx context.Context) {
 							var event Event
 							event.ID = box.ID
 							event.Status = missedStatusUpdate
-							event.Message = fmt.Sprintf("No new updates for %ss. <br /> Last message: %s on %s", box.MaxTBU, box.LastMessage, box.LastUpdate)
+							event.Message = fmt.Sprintf("No new updates for %ss.", box.MaxTBU)
 							event.Type = missedStatusUpdate
 							update(event)
 
