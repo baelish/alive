@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // Event struct is used to stream events to dashboard.
@@ -32,8 +32,7 @@ func apiGetBoxes(w http.ResponseWriter, _ *http.Request) {
 }
 
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	i, err := findBoxByID(params["id"])
+	i, err := findBoxByID(chi.URLParam(r, "id"))
 
 	if err != nil {
 		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "id not found"}`))
@@ -51,7 +50,6 @@ func apiGetBox(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
 	var event Event
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
@@ -63,7 +61,7 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event.ID = params["id"]
+	event.ID = chi.URLParam(r, "id")
 	event.Type = "updateBox"
 	update(event)
 	err = json.NewEncoder(w).Encode(event)
@@ -148,14 +146,14 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
 	var message json.RawMessage
+	id := chi.URLParam(r, "id")
 
-	if deleteBox(params["id"]) {
-		message = json.RawMessage(fmt.Sprintf(`{"info": "deleted box %s"}`, params["id"]))
+	if deleteBox(id) {
+		message = json.RawMessage(fmt.Sprintf(`{"info": "deleted box %s"}`, id))
 		var event Event
 		event.Type = "deleteBox"
-		event.ID = params["id"]
+		event.ID = id
 		stringData, err := json.Marshal(event)
 		if err != nil {
 			log.Print(err)
@@ -176,21 +174,21 @@ func runAPI(ctx context.Context) {
 	if options.Debug == true {
 		log.Print("Starting up API")
 	}
-	router := mux.NewRouter()
-	router.HandleFunc("/health", apiStatus).Methods("GET")
-	router.HandleFunc("/api/v1", apiGetBoxes).Methods("GET")                 // deprecate
-	router.HandleFunc("/api/v1/", apiGetBoxes).Methods("GET")                // deprecate
-	router.HandleFunc("/api/v1/new", apiCreateBox).Methods("POST")           // deprecate
-	router.HandleFunc("/api/v1/update", apiUpdateBox).Methods("POST")        // deprecate
-	router.HandleFunc("/api/v1/{id}", apiDeleteBox).Methods("DELETE")        // deprecate
-	router.HandleFunc("/api/v1/{id}", apiGetBox).Methods("GET")              // deprecate
-	router.HandleFunc("/api/v1/events/{id}", apiCreateEvent).Methods("POST") // deprecate
-	router.HandleFunc("/api/v1/box", apiGetBoxes).Methods("GET")
-	router.HandleFunc("/api/v1/box/new", apiCreateBox).Methods("POST")
-	router.HandleFunc("/api/v1/box/update", apiUpdateBox).Methods("POST")
-	router.HandleFunc("/api/v1/box/{id}", apiDeleteBox).Methods("DELETE")
-	router.HandleFunc("/api/v1/box/{id}", apiGetBox).Methods("GET")
-	router.HandleFunc("/api/v1/box/{id}/event", apiCreateEvent).Methods("POST")
+	router := chi.NewRouter()
+	router.Get("/health", apiStatus)
+	router.Get("/api/v1", apiGetBoxes)                 // deprecate
+	router.Get("/api/v1/", apiGetBoxes)                // deprecate
+	router.Post("/api/v1/new", apiCreateBox)           // deprecate
+	router.Post("/api/v1/update", apiUpdateBox)        // deprecate
+	router.Delete("/api/v1/{id}", apiDeleteBox)        // deprecate
+	router.Get("/api/v1/{id}", apiGetBox)              // deprecate
+	router.Post("/api/v1/events/{id}", apiCreateEvent) // deprecate
+	router.Get("/api/v1/box", apiGetBoxes)
+	router.Post("/api/v1/box/new", apiCreateBox)
+	router.Post("/api/v1/box/update", apiUpdateBox)
+	router.Delete("/api/v1/box/{id}", apiDeleteBox)
+	router.Get("/api/v1/box/{id}", apiGetBox)
+	router.Post("/api/v1/box/{id}/event", apiCreateEvent)
 	listenOn := fmt.Sprintf(":%s", options.ApiPort)
 	go func() {
 		log.Fatal(http.ListenAndServe(listenOn, router))
