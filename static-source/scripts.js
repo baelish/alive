@@ -81,12 +81,16 @@ function keepalive() {
   if ( lastKa && (lastKa + 60000) < ct ) { location.reload() }
   lastKa = ct
   let target = document.getElementById("status-bar");
-  changeAlertLevel(target, "green", "");
+  target.classList.remove("amber","green","grey","noUpdate","red");
+  target.classList.add("green");
+  target.getElementsByClassName("message")[0].innerHTML = "";
   if(typeof ka !== "undefined") { clearTimeout(ka); };
   ka = setTimeout(
     function(){
-        changeAlertLevel(target, "red", "ERROR: No keepalives since " + myTime(lastKa) + ".")
-    }, 5 * 1000)
+        target.classList.remove("amber","green","grey","noUpdate","red");
+        target.classList.add("noUpdate");
+        target.getElementsByClassName("message")[0].innerHTML = "ERROR: No keepalives since " + myTime(lastKa) + ".";
+      }, 5 * 1000)
 }
 
 
@@ -117,9 +121,7 @@ function changeAlertLevel(target, status, message) {
     target.classList.add(status);
     target.getElementsByClassName("message")[0].innerHTML = message;
     target.getElementsByClassName("lastUpdated")[0].innerHTML = myTime();
-    target.getElementsByClassName("previousMessages")[0].innerHTML =
-      "<ul>" + myTime() + ": " + status.toUpperCase() + " (" + message + ")</ul>" +
-      target.getElementsByClassName("previousMessages")[0].innerHTML
+    target.getElementsByClassName("previousMessages")[0].insertAdjacentHTML('afterbegin', "<li>" + myTime() + ": " + status.toUpperCase() + " (" + message + ")</li>");
 }
 
 

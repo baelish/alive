@@ -116,7 +116,7 @@ func loadTemplates() (err error) {
       <tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate}}</td></tr>
       <tr class="maxTBU" {{if or (eq .MaxTBU "0") (eq .MaxTBU "")}}style="display: none;"{{end}}><th>Max TBU :</th><td>{{.MaxTBU}}</td></tr>
       <tr class="expireAfter" {{if or (eq .ExpireAfter "0") (eq .ExpireAfter "")}}style="display: none;"{{end}}><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>
-      <tr><th>Previous Messages:</th><td class="previousMessages">{{range $m := .Messages}}<ul>{{ $m.TimeStamp }}: {{ $m.Status | ToUpper}} ({{ $m.Message }})</ul>{{end}}</td></tr>
+      <tr><th>Previous Messages:</th><td><ul class="previousMessages">{{range $m := .Messages}}<li>{{ $m.TimeStamp }}: {{ $m.Status | ToUpper}} ({{ $m.Message }})</li>{{end}}</ul></td></tr>
     </div>
   `
 	templates, err = templates.New("infoBox").Funcs(funcMap).Parse(infoBoxTemplate)
