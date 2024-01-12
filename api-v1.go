@@ -82,7 +82,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = addBox(newBox)
+	id, err := addBox(newBox)
 	if err != nil {
 		json.NewEncoder(w).Encode(json.RawMessage(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 
@@ -92,6 +92,8 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	newBox.ID = id
 
 	err = json.NewEncoder(w).Encode(newBox)
 	if err != nil {
