@@ -13,11 +13,13 @@ import (
 
 // Event struct is used to stream events to dashboard.
 type Event struct {
-	ID          string `json:"id"`
-	Status      string `json:"status"`
-	ExpireAfter string `json:"expireAfter"`
-	Message     string `json:"lastMessage"`
-	MaxTBU      string `json:"maxTBU"`
+	ID          string `json:"id,omitempty"`
+	After       string `json:"after,omitempty"`
+	Box         *Box   `json:"box,omitempty"`
+	Status      string `json:"status,omitempty"`
+	ExpireAfter string `json:"expireAfter,omitempty"`
+	Message     string `json:"lastMessage,omitempty"`
+	MaxTBU      string `json:"maxTBU,omitempty"`
 	Type        string `json:"type"`
 }
 
@@ -131,7 +133,7 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleteBox(newBox.ID)
+	deleteBox(newBox.ID, false)
 	newBox.LastUpdate = ft
 	boxes = append(boxes, newBox)
 	sortBoxes()
@@ -151,16 +153,8 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 	var message json.RawMessage
 	id := chi.URLParam(r, "id")
 
-	if deleteBox(id) {
+	if deleteBox(id, true) {
 		message = json.RawMessage(fmt.Sprintf(`{"info": "deleted box %s"}`, id))
-		var event Event
-		event.Type = "deleteBox"
-		event.ID = id
-		stringData, err := json.Marshal(event)
-		if err != nil {
-			log.Print(err)
-		}
-		events.messages <- fmt.Sprintf(string(stringData))
 	} else {
 		message = json.RawMessage(`{"error": "box not found"}`)
 	}

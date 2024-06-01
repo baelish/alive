@@ -397,6 +397,8 @@ func runDemo(ctx context.Context) {
 	x := 0
 	var event Event
 
+	time.Sleep(5000 * time.Millisecond)
+
 	// Create a box if there are none.
 	if len(boxes) == 0 {
 		createRandomBox()
@@ -416,7 +418,7 @@ func runDemo(ctx context.Context) {
 					}
 				case e < 10: // Delete a box
 					if len(boxes) > 10 {
-						deleteBox(boxes[rand.Intn(len(boxes))].ID)
+						deleteBox(boxes[rand.Intn(len(boxes))].ID, true)
 					}
 				case e < 20: // Update a box with a random event
 					max := len(boxes) - 1
@@ -458,7 +460,7 @@ func runDemo(ctx context.Context) {
 					update(event)
 
 				}
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 			}
 		}
 	}()

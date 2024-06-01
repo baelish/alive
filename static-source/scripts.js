@@ -1,3 +1,5 @@
+/* jshint esversion: 6 */
+
 // Reload if re-visiting using back/forward buttons.
 if (String(window.performance.getEntriesByType("navigation")[0].type) === "back_forward"){
   location.reload();
@@ -15,55 +17,74 @@ source.onmessage = function(event) {
       break;
 
     case "updateBox":
-      let targetBox = document.getElementById(event.id);
-
-      if (targetBox !== null) {
-        changeAlertLevel(targetBox, event.status, event.lastMessage);
-      }
-
-      if (event.maxTBU !== "") {
-        let row = targetBox.getElementsByClassName("maxTBU")[0]
-        row.getElementsByTagName('td')[0].innerHTML = event.maxTBU;
-        if (event.maxTBU === "0") {row.style.display = "none"} else {row.style.display = "table-row"}
-      }
-
-      if (event.expireAfter !== "") {
-        let row = targetBox.getElementsByClassName("expireAfter")[0]
-        row.getElementsByTagName('td')[0].innerHTML = event.expireAfter;
-        if (event.expireAfter === "0") {row.style.display = "none"} else {row.style.display = "table-row"}
+      if ( window.location.pathname === "/" || window.location.pathname === `/box/${event.id}`) {
+        updateBox(event);
       }
 
       break;
 
     case "deleteBox":
-      deleteBox(event.id);
+      if ( window.location.pathname === "/" || window.location.pathname === `/box/${event.id}`) {
+        deleteBox(event.id);
+      }
+
+      break;
+
+    case "createBox":
+      if ( window.location.pathname === "/" ) {
+        createBox(event.after, event.box);
+      }
 
       break;
 
     case "reloadPage":
-      location.reload()
+      location.reload();
   }
 };
 
 
 // Box tooltip
 function boxHover(tip) {
-  let target = document.getElementById("tooltip")
-  target.innerHTML = tip
-  target.display = "block"
+  let target = document.getElementById("tooltip");
+  target.innerHTML = tip;
+  target.display = "block";
 }
 
 
 function boxOut() {
-  let target = document.getElementById("tooltip")
-  target.innerHTML = ""
-  target.display = "hidden"
+  let target = document.getElementById("tooltip");
+  target.innerHTML = "";
+  target.display = "hidden";
 }
 
 
 // Box click
 function boxClick(id) {
   window.location.href = "/box/" + id;
+}
+
+
+// Create box
+function createBox(after, box) {
+  let title;
+  if (box.displayname) {
+    title = box.displayname;
+  } else {
+    title = box.name;
+  }
+
+  let divContent = `
+    <div onclick='boxClick(this.id)' onmouseover='boxHover("${box.name}")' onmouseout='boxOut()' id='${box.id}' class='${box.status} ${box.size} box'>
+        <p class='title'>${title}</p>
+        <p class='message'>${box.lastMessage}</p>
+        <p class='lastUpdated'>${box.lastUpdate}</p>
+        <p class='maxTBU'>${box.maxTBU}</p>
+        <p class='expireAfter'>${box.expireAfter}</p>
+    </div>
+  `;
+
+  let precedingBox = document.getElementById(after);
+  precedingBox.insertAdjacentHTML("afterEnd", divContent);
 }
 
 
@@ -74,24 +95,46 @@ function deleteBox(id) {
 }
 
 
+// Update box
+function updateBox(event) {
+  let targetBox = document.getElementById(event.id);
+
+  if (targetBox !== null) {
+    changeAlertLevel(targetBox, event.status, event.lastMessage);
+  }
+
+  if (event.maxTBU) {
+    let row = targetBox.getElementsByClassName("maxTBU")[0];
+    row.getElementsByTagName('td')[0].innerHTML = event.maxTBU;
+    if (event.maxTBU === "0") {row.style.display = "none";} else {row.style.display = "table-row";}
+  }
+
+  if (event.expireAfter) {
+    let row = targetBox.getElementsByClassName("expireAfter")[0];
+    row.getElementsByTagName('td')[0].innerHTML = event.expireAfter;
+    if (event.expireAfter === "0") {row.style.display = "none";} else {row.style.display = "table-row";}
+  }
+}
+
+
 // keepalive
 let lastKa;
 function keepalive() {
-  let ct = new Date().getTime()
-  if ( lastKa && (lastKa + 60000) < ct ) { location.reload() }
-  lastKa = ct
+  let ct = new Date().getTime();
+  if ( lastKa && (lastKa + 60000) < ct ) { location.reload();}
+  lastKa = ct;
   let target = document.getElementById("status-bar");
   target.classList.remove("amber","green","grey","noUpdate","red");
   target.classList.add("green");
   target.getElementsByClassName("message")[0].innerHTML = "";
-  if(typeof ka !== "undefined") { clearTimeout(ka); };
+  if(typeof ka !== "undefined") { clearTimeout(ka); }
   ka = setTimeout(
     function(){
       target.classList.remove("amber","green","grey","noUpdate","red");
       target.classList.add("noUpdate");
       target.getElementsByClassName("message")[0].innerHTML = "ERROR: No keepalives since " + myTime(lastKa) + ".";
     }, 5 * 1000
-  )
+  );
 }
 
 
@@ -99,11 +142,11 @@ function keepalive() {
 function myTime(t) {
   let r;
   if (t != null) {
-    r = new Date(t)
+    r = new Date(t);
   } else {
-    r = new Date()
+    r = new Date();
   }
-  return r.toISOString()
+  return r.toISOString();
 }
 
 
@@ -117,12 +160,12 @@ function pad(n, width, z) {
 
 // Change alert level of a box
 function changeAlertLevel(target, status, message) {
-  if ( ["amber","green","grey","noUpdate","red"].indexOf(status) === -1) { status = "grey" }
+  if ( ["amber","green","grey","noUpdate","red"].indexOf(status) === -1) { status = "grey";}
   target.classList.remove("amber", "green", "grey", "noUpdate", "red");
   target.classList.add(status);
   target.getElementsByClassName("message")[0].innerHTML = message;
   target.getElementsByClassName("lastUpdated")[0].innerHTML = myTime();
-  var pMessages = target.getElementsByClassName("previousMessages");
+  let pMessages = target.getElementsByClassName("previousMessages");
   if (typeof(pMessages[0] != 'undefined') && pMessages[0] != null) {
     pMessages[0].insertAdjacentHTML('afterbegin', "<li>" + myTime() + ": " + status.toUpperCase() + " (" + message + ")</li>");
   }
