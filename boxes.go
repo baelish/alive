@@ -129,7 +129,16 @@ func addBox(box Box) (id string, err error) {
 	//	time.Sleep(100 * time.Millisecond)
 
 	var event Event
-	event.Type = "reloadPage"
+	event.Type = "createBox"
+	event.Box = &box
+
+	i, err := findBoxByID(box.ID)
+	if i == 0 {
+		event.After = "status-bar"
+	} else {
+		event.After = boxes[i-1].ID
+	}
+
 	stringData, err := json.Marshal(event)
 	if err != nil {
 		return "", (err)
@@ -139,7 +148,7 @@ func addBox(box Box) (id string, err error) {
 	return box.ID, nil
 }
 
-func deleteBox(id string) bool {
+func deleteBox(id string, event bool) bool {
 	var newBoxes []Box
 	var found bool
 
@@ -147,12 +156,23 @@ func deleteBox(id string) bool {
 		if box.ID != id {
 			newBoxes = append(newBoxes, box)
 		} else {
-			log.Printf("Deleting box %s", id)
+			log.Printf("Deleting box %s (%s)", id, box.Name)
 			found = true
 		}
 	}
 
 	boxes = newBoxes
+
+	if event {
+		var event Event
+		event.Type = "deleteBox"
+		event.ID = id
+		stringData, err := json.Marshal(event)
+		if err != nil {
+			log.Print(err)
+		}
+		events.messages <- fmt.Sprintf(string(stringData))
+	}
 
 	return found
 }
@@ -206,12 +226,7 @@ func maintainBoxes(ctx context.Context) {
 							log.Println(err)
 						} else if lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) {
 							log.Printf("deleting expired box %s", box.ID)
-							_ = deleteBox(box.ID)
-							var event Event
-							event.ID = box.ID
-							event.Type = "deleteBox"
-							stringData, _ := json.Marshal(event)
-							events.messages <- fmt.Sprintf(string(stringData))
+							_ = deleteBox(box.ID, true)
 
 							continue
 						}
