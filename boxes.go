@@ -96,19 +96,19 @@ func sizeToNumber(size string) int {
 	}
 }
 
-func addBox(box Box) (err error) {
+func addBox(box Box) (id string, err error) {
 	t := time.Now()
 	ft := fmt.Sprintf("%s", t.Format(timeFormat))
 
 	if !validateBoxSize(box.Size) {
 		err = fmt.Errorf("Invalid size: %s", box.Size)
-		return err
+		return "", err
 	}
 
 	if box.ID != "" {
 		if testBoxID(box.ID) {
 			err = fmt.Errorf("A box already exists with that ID: %s", box.ID)
-			return err
+			return "", err
 		}
 	} else {
 		for box.ID == "" || testBoxID(box.ID) {
@@ -123,7 +123,7 @@ func addBox(box Box) (err error) {
 
 	newBoxPrint, err := json.Marshal(box)
 	if err != nil {
-		return (err)
+		return "", (err)
 	}
 	log.Printf("Creating new box with these details:'%s'", string(newBoxPrint))
 	//	time.Sleep(100 * time.Millisecond)
@@ -132,11 +132,11 @@ func addBox(box Box) (err error) {
 	event.Type = "reloadPage"
 	stringData, err := json.Marshal(event)
 	if err != nil {
-		return (err)
+		return "", (err)
 	}
 	events.messages <- fmt.Sprintf(string(stringData))
 
-	return nil
+	return box.ID, nil
 }
 
 func deleteBox(id string) bool {
