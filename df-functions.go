@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 var boxFile string
@@ -69,6 +71,34 @@ func saveBoxFile() error {
 	byteValue, err := json.Marshal(&boxes)
 	if err != nil {
 		return err
+	}
+
+	if _, err := os.Stat(boxFile + ".bak9"); err == nil {
+		err = os.Remove(boxFile + ".bak9")
+		if err != nil {
+			log.Print(err)
+		}
+	} else if errors.Is(err, os.ErrNotExist) {
+	} else {
+		log.Print(err)
+	}
+
+	for i := 8; i > 0; i-- {
+		s := strconv.Itoa(i)
+		t := strconv.Itoa(i + 1)
+		if _, err := os.Stat(boxFile + ".bak" + s); err == nil {
+			os.Rename(boxFile+".bak"+s, boxFile+".bak"+t)
+		} else if errors.Is(err, os.ErrNotExist) {
+		} else {
+			log.Print(err)
+		}
+	}
+
+	if _, err := os.Stat(boxFile); err == nil {
+		os.Rename(boxFile, boxFile+".bak1")
+	} else if errors.Is(err, os.ErrNotExist) {
+	} else {
+		log.Print(err)
 	}
 
 	err = os.WriteFile(boxFile, byteValue, 0644)
