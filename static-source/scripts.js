@@ -67,8 +67,8 @@ function boxClick(id) {
 // Create box
 function createBox(after, box) {
   let title;
-  if (box.displayname) {
-    title = box.displayname;
+  if (box.displayName) {
+    title = box.displayName;
   } else {
     title = box.name;
   }
