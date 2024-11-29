@@ -1,10 +1,10 @@
 module alive
 
-go 1.21.4
+go 1.23.3
 
 require (
-	github.com/go-chi/chi/v5 v5.0.12
-	github.com/jessevdk/go-flags v1.5.0
+	github.com/go-chi/chi/v5 v5.1.0
+	github.com/jessevdk/go-flags v1.6.1
 )
 
-require golang.org/x/sys v0.20.0 // indirect
+require golang.org/x/sys v0.27.0 // indirect
