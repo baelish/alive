@@ -1,4 +1,4 @@
-FROM golang:alpine as builder
+FROM golang:alpine AS builder
 COPY * /go/src/github.com/baelish/alive/
 RUN apk add git
 RUN cd /go/src/github.com/baelish/alive/ && go install .
@@ -17,7 +17,9 @@ LABEL org.label-schema.vcs-url="https://github.com/baelish/alive"
 LABEL org.label-schema.vcs-ref="$BUILD_COMMIT"
 LABEL org.label-schema.version="$BUILD_VERSION"
 
-RUN mkdir /app /data
+RUN mkdir /app
 WORKDIR /app
 COPY --from=builder /go/bin/alive .
+RUN addgroup -g 9001 alive && adduser -h /data -D -u 9001 -G alive alive
+USER alive:alive
 ENTRYPOINT [ "./alive", "--data-path=/data" , "--static-path=/data/static" ]
