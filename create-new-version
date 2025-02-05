@@ -1,4 +1,30 @@
 #!/usr/bin/env bash
+#
+# create-new-version
+#
+# This will create a new alive release, tag the current master create a new
+# image with the new tag and push if desired.
+#
+# Prerequisites:
+#
+#   - Must be in the master branch
+#   - Have no outstanding changes
+#   - Main tag supplied must not already exist
+#   - Docker daemon must be running
+#
+# Usage:
+#
+#   ./create-new-version --tag <version>
+#
+# Examples:
+#
+#   # Create a new git tag v0.5.1, build a new docker image, tag it with v0.5.1
+#   # and latest and push the images.
+#   ./create-new-version -t v0.5.1 -g -a latest --push
+#
+#
+
+
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -97,6 +123,13 @@ processOptions() {
 
 
 main() {
+  # Check that the docker daemon is running
+  if ! docker system info &> /dev/null; then
+    log "ERROR" "Looks like the docker daemon isn't running and it is needed."
+
+    return 1
+  fi
+
   # Check that we're on master and no changes are outstanding
   currentBranch="$(git rev-parse --abbrev-ref HEAD)"
   if [[ "${testing:-}" != "true" && "$currentBranch" != "master" ]]; then
