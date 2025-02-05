@@ -101,7 +101,7 @@ func bindataScriptsJs() (*asset, error) {
 		size: 5095,
 		md5checksum: "",
 		mode: os.FileMode(420),
-		modTime: time.Unix(1717432361, 0),
+		modTime: time.Unix(1717432632, 0),
 	}
 
 	a := &asset{bytes: bytes, info: info}
