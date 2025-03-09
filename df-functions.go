@@ -12,7 +12,7 @@ import (
 var boxFile string
 
 func createDataFiles() {
-	if options.Debug == true {
+	if options.Debug {
 		log.Print("Creating data files")
 	}
 	boxFile = filepath.Clean(options.DataPath + "/boxes.json")
@@ -48,7 +48,7 @@ func createDataFiles() {
 
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
 func getBoxesFromDataFile() {
-	if options.Debug == true {
+	if options.Debug {
 		log.Print("Getting boxes from data file")
 	}
 	byteValue, err := os.ReadFile(boxFile)

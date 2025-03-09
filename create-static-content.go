@@ -8,7 +8,7 @@ import (
 const emptyDataFile = "[]"
 
 func createStaticContent() {
-	if options.Debug == true {
+	if options.Debug {
 		log.Printf("Creating Static Content")
 	}
 	for _, file := range AssetNames() {

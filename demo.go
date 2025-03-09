@@ -388,7 +388,7 @@ func createRandomBox() {
 }
 
 func runDemo(ctx context.Context) {
-	if options.Debug == true {
+	if options.Debug {
 		log.Print("Starting demo routine")
 	}
 	// Generate a constant stream of events that get pushed
@@ -452,7 +452,7 @@ func runDemo(ctx context.Context) {
 					// Create a little message to send to clients,
 					// including the current time.
 					t := time.Now()
-					ft := fmt.Sprintf("%s", t.Format(timeFormat))
+					ft := t.Format(timeFormat)
 
 					event.ID = id
 					event.Status = "green"

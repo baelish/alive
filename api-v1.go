@@ -87,10 +87,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	id, err := addBox(newBox)
 	if err != nil {
 		json.NewEncoder(w).Encode(json.RawMessage(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
-
-		if err != nil {
-			log.Print(err)
-		}
+		log.Print(err)
 
 		return
 	}
@@ -112,7 +109,7 @@ func apiStatus(w http.ResponseWriter, _ *http.Request) {
 
 func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
-	ft := fmt.Sprintf("%s", t.Format(time.RFC3339))
+	ft := t.Format(time.RFC3339)
 	var newBox Box
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
@@ -138,7 +135,7 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	boxes = append(boxes, newBox)
 	sortBoxes()
 	newBoxPrint, _ := json.Marshal(newBox)
-	log.Printf(string(newBoxPrint))
+	log.Print(string(newBoxPrint))
 	err = json.NewEncoder(w).Encode(newBox)
 	if err != nil {
 		log.Print(err)
@@ -146,7 +143,7 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	var event Event
 	event.Type = "reloadPage"
 	stringData, _ := json.Marshal(event)
-	events.messages <- fmt.Sprintf(string(stringData))
+	events.messages <- string(stringData)
 }
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
@@ -166,8 +163,8 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func runAPI(ctx context.Context) {
-	if options.Debug == true {
+func runAPI(_ context.Context) {
+	if options.Debug {
 		log.Print("Starting up API")
 	}
 	router := chi.NewRouter()

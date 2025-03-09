@@ -98,16 +98,16 @@ func sizeToNumber(size string) int {
 
 func addBox(box Box) (id string, err error) {
 	t := time.Now()
-	ft := fmt.Sprintf("%s", t.Format(timeFormat))
+	ft := t.Format(timeFormat)
 
 	if !validateBoxSize(box.Size) {
-		err = fmt.Errorf("Invalid size: %s", box.Size)
+		err = fmt.Errorf("invalid size: %s", box.Size)
 		return "", err
 	}
 
 	if box.ID != "" {
 		if testBoxID(box.ID) {
-			err = fmt.Errorf("A box already exists with that ID: %s", box.ID)
+			err = fmt.Errorf("a box already exists with that ID: %s", box.ID)
 			return "", err
 		}
 	} else {
@@ -125,7 +125,7 @@ func addBox(box Box) (id string, err error) {
 	if err != nil {
 		return "", (err)
 	}
-	log.Printf("Creating new box with these details:'%s'", string(newBoxPrint))
+	log.Printf("creating new box with these details:'%s'", string(newBoxPrint))
 	//	time.Sleep(100 * time.Millisecond)
 
 	var event Event
@@ -133,6 +133,9 @@ func addBox(box Box) (id string, err error) {
 	event.Box = &box
 
 	i, err := findBoxByID(box.ID)
+	if err != nil {
+		log.Printf("couldn't find box (%s)", err.Error())
+	}
 	if i == 0 {
 		event.After = "status-bar"
 	} else {
@@ -143,7 +146,7 @@ func addBox(box Box) (id string, err error) {
 	if err != nil {
 		return "", (err)
 	}
-	events.messages <- fmt.Sprintf(string(stringData))
+	events.messages <- string(stringData)
 
 	return box.ID, nil
 }
@@ -171,7 +174,7 @@ func deleteBox(id string, event bool) bool {
 		if err != nil {
 			log.Print(err)
 		}
-		events.messages <- fmt.Sprintf(string(stringData))
+		events.messages <- string(stringData)
 	}
 
 	return found
@@ -181,7 +184,7 @@ func deleteBox(id string, event bool) bool {
 // not had timely updates and update their status. Also saves box file
 // periodically or on exit.
 func maintainBoxes(ctx context.Context) {
-	if options.Debug == true {
+	if options.Debug {
 		log.Print("Starting box maintenance routine")
 	}
 	wg.Add(1)
@@ -253,7 +256,7 @@ func maintainBoxes(ctx context.Context) {
 					}
 				}
 				// Write json
-				if time.Now().Sub(lastSave) > time.Duration(1*time.Minute) {
+				if time.Since(lastSave) > time.Duration(1*time.Minute) {
 					log.Print("Saving data file")
 					err = saveBoxFile()
 					if err != nil {
@@ -308,7 +311,7 @@ func testBoxID(id string) bool {
 
 func update(event Event) {
 	t := time.Now()
-	ft := fmt.Sprintf("%s", t.Format(timeFormat))
+	ft := t.Format(timeFormat)
 	i, err := findBoxByID(event.ID)
 
 	if err != nil {

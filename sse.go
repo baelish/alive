@@ -146,7 +146,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Send keepalives to the status bar.
 func runKeepalives(ctx context.Context) {
-	if options.Debug == true {
+	if options.Debug {
 		log.Print("Starting keepalive routine")
 	}
 	// Generate a regular keepalive message that gets pushed
@@ -160,7 +160,7 @@ func runKeepalives(ctx context.Context) {
 
 			default:
 				// Send a keepalive
-				events.messages <- fmt.Sprint(`{"type": "keepalive"}`)
+				events.messages <- `{"type": "keepalive"}`
 
 				// Sleep for 3s.
 				time.Sleep(3 * time.Second)
@@ -171,7 +171,7 @@ func runKeepalives(ctx context.Context) {
 
 // Main routine
 func runSSE(ctx context.Context) (b *Broker) {
-	if options.Debug == true {
+	if options.Debug {
 		log.Print("Starting SSE broker")
 	}
 
