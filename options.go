@@ -15,6 +15,9 @@ type Options struct {
 	DefaultStatic bool   `long:"default-static" description:"Use default static content"`
 	DataPath      string `short:"d" long:"data-path" description:"Path to store data files (default: $HOME/.alive/data)"`
 	StaticPath    string `long:"static-path" description:"Path to store static files (default: $HOME/.alive/static)"`
+	ParentUrl     string `long:"parent-url" description:"Url for a parent dashboard, if set enables updating a parent dashboard with the overal status of this dashboard"`
+	ParentBoxID   string `long:"parent-id" description:"Box id to use when updating status on a parent dashboard"`
+	ParentBoxSize string `long:"parent-size" description:"Box size to use when updating status on a parent dashboard (default: large)" default:"large"`
 }
 
 var options Options

@@ -145,7 +145,6 @@ func runDashboard(_ context.Context) {
 
 	log.Printf("listening on %s", options.SitePort)
 	listenOn := fmt.Sprintf(":%s", options.SitePort)
-	go func() {
-		log.Fatal(http.ListenAndServe(listenOn, nil))
-	}()
+
+	log.Fatal(http.ListenAndServe(listenOn, nil))
 }

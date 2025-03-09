@@ -187,90 +187,81 @@ func maintainBoxes(ctx context.Context) {
 	if options.Debug {
 		log.Print("Starting box maintenance routine")
 	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		var err error
-		var lastSave time.Time
-		for {
-			select {
-			case <-ctx.Done():
-				log.Printf("Saving data file before exit")
-				for t := 0; t < 3; t++ {
-					err = saveBoxFile()
-					if err != nil {
-						log.Printf("Error saving box file (%s)", err.Error())
-					} else {
+	var err error
+	var lastSave time.Time
+	for {
+		for _, box := range boxes {
+			if box.LastUpdate == "" {
+				continue
+			}
 
-						return
-					}
+			lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
+
+			if err != nil {
+				log.Println(err)
+
+				continue
+			}
+
+			if box.ExpireAfter != "0" && box.ExpireAfter != "" {
+				expireAfter, err := strconv.Atoi(box.ExpireAfter)
+
+				if err != nil {
+					log.Println(err)
+				} else if lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) {
+					log.Printf("deleting expired box %s", box.ID)
+					_ = deleteBox(box.ID, true)
+
+					continue
 				}
 
-				return
+			}
 
-			default:
-				for _, box := range boxes {
-					if box.LastUpdate == "" {
-						continue
-					}
+			if box.MaxTBU != "0" && box.MaxTBU != "" {
+				alertAfter, err := strconv.Atoi(box.MaxTBU)
 
-					lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
+				if err != nil {
+					log.Println(err)
+				} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != missedStatusUpdate {
+					log.Printf("no events for box %s", box.ID)
+					var event Event
+					event.ID = box.ID
+					event.Status = missedStatusUpdate
+					event.Message = fmt.Sprintf("No new updates for %ss.", box.MaxTBU)
+					event.Type = missedStatusUpdate
+					update(event)
 
-					if err != nil {
-						log.Println(err)
-
-						continue
-					}
-
-					if box.ExpireAfter != "0" && box.ExpireAfter != "" {
-						expireAfter, err := strconv.Atoi(box.ExpireAfter)
-
-						if err != nil {
-							log.Println(err)
-						} else if lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) {
-							log.Printf("deleting expired box %s", box.ID)
-							_ = deleteBox(box.ID, true)
-
-							continue
-						}
-
-					}
-
-					if box.MaxTBU != "0" && box.MaxTBU != "" {
-						alertAfter, err := strconv.Atoi(box.MaxTBU)
-
-						if err != nil {
-							log.Println(err)
-						} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != missedStatusUpdate {
-							log.Printf("no events for box %s", box.ID)
-							var event Event
-							event.ID = box.ID
-							event.Status = missedStatusUpdate
-							event.Message = fmt.Sprintf("No new updates for %ss.", box.MaxTBU)
-							event.Type = missedStatusUpdate
-							update(event)
-
-							continue
-						}
-
-					}
-				}
-				// Write json
-				if time.Since(lastSave) > time.Duration(1*time.Minute) {
-					log.Print("Saving data file")
-					err = saveBoxFile()
-					if err != nil {
-						log.Printf("Error saving data file (%s)", err.Error())
-					} else {
-						lastSave = time.Now()
-					}
+					continue
 				}
 
-				// Sleep for 1s.
-				time.Sleep(1 * time.Second)
 			}
 		}
-	}()
+		// Write json
+		if time.Since(lastSave) > time.Duration(1*time.Minute) {
+			log.Print("Saving data file")
+			err = saveBoxFile()
+			if err != nil {
+				log.Printf("Error saving data file (%s)", err.Error())
+			} else {
+				lastSave = time.Now()
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			log.Printf("Saving data file before exit")
+			for t := 0; t < 3; t++ {
+				err = saveBoxFile()
+				if err != nil {
+					log.Printf("Error saving box file (%s)", err.Error())
+				}
+			}
+
+			return
+
+		case <-time.After(time.Duration(1 * time.Second)):
+		}
+	}
 }
 
 // Find a box in the boxes array, supply the box ID, will return the array id

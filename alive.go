@@ -7,34 +7,20 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sync"
+	"syscall"
+	"time"
 )
 
 const timeFormat = "2006-01-02T15:04:05.000Z07:00"
 
 var events *Broker
-var wg sync.WaitGroup
 
 func main() {
 
-	ctx, cancel := context.WithCancel(context.Background())
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer func() {
 		log.Printf("Running cleanup")
-		signal.Stop(signalChan)
 		cancel()
-	}()
-
-	go func() {
-		select {
-		case <-signalChan: // first signal, cancel context
-			log.Println("SIGINT signal received, exiting gracefully")
-			cancel()
-		}
-		<-signalChan // second signal, hard exit
-		log.Println("2nd SIGINT signal received, hard exit")
-		os.Exit(2)
 	}()
 
 	processOptions()
@@ -66,19 +52,27 @@ func main() {
 	createDataFiles()
 	getBoxesFromDataFile()
 
-	runDashboard(ctx)
-
 	events = runSSE(ctx)
 
-	runKeepalives(ctx)
+	go runDashboard(ctx)
+	go runAPI(ctx)
 
-	maintainBoxes(ctx)
+	go runKeepalives(ctx)
+	go maintainBoxes(ctx)
 
-	if options.Demo {
-		runDemo(ctx)
+	if options.ParentUrl != "" {
+		go parentUpdater(ctx)
 	}
 
-	runAPI(ctx)
+	if options.Demo {
+		go runDemo(ctx)
+	}
 
-	wg.Wait()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Duration(1 * time.Second)):
+		}
+	}
 }

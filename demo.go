@@ -404,64 +404,62 @@ func runDemo(ctx context.Context) {
 		createRandomBox()
 	}
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			default:
-				switch e := rand.Intn(100); {
-				case e < 5: // Create a box
-					if len(boxes) < 60 {
-						createRandomBox()
-					}
-				case e < 10: // Delete a box
-					if len(boxes) > 10 {
-						deleteBox(boxes[rand.Intn(len(boxes))].ID, true)
-					}
-				case e < 20: // Update a box with a random event
-					max := len(boxes) - 1
-
-					if max > 0 {
-						y := rand.Intn(max)
-
-						switch rand.Intn(3) {
-						case 0:
-							event.Status = "red"
-							event.Message = "PANIC! Red Alert"
-						case 1:
-							event.Status = "amber"
-							event.Message = "OH NOES! Something's not quite right"
-						case 2:
-							event.Status = "grey"
-							event.Message = "Meh not sure what to do now...."
-						}
-
-						event.ID = boxes[y].ID
-						update(event)
-
-					}
-				default:
-					x++
-					if x >= len(boxes) {
-						x = 0
-					}
-
-					id := boxes[x].ID
-					// Create a little message to send to clients,
-					// including the current time.
-					t := time.Now()
-					ft := t.Format(timeFormat)
-
-					event.ID = id
-					event.Status = "green"
-					event.Message = fmt.Sprintf("the time is %s", ft)
-					update(event)
-
-				}
-				time.Sleep(500 * time.Millisecond)
+	for {
+		switch e := rand.Intn(100); {
+		case e < 5: // Create a box
+			if len(boxes) < 60 {
+				createRandomBox()
 			}
+		case e < 10: // Delete a box
+			if len(boxes) > 10 {
+				deleteBox(boxes[rand.Intn(len(boxes))].ID, true)
+			}
+		case e < 20: // Update a box with a random event
+			max := len(boxes) - 1
+
+			if max > 0 {
+				y := rand.Intn(max)
+
+				switch rand.Intn(3) {
+				case 0:
+					event.Status = "red"
+					event.Message = "PANIC! Red Alert"
+				case 1:
+					event.Status = "amber"
+					event.Message = "OH NOES! Something's not quite right"
+				case 2:
+					event.Status = "grey"
+					event.Message = "Meh not sure what to do now...."
+				}
+
+				event.ID = boxes[y].ID
+				update(event)
+
+			}
+		default:
+			x++
+			if x >= len(boxes) {
+				x = 0
+			}
+
+			id := boxes[x].ID
+			// Create a little message to send to clients,
+			// including the current time.
+			t := time.Now()
+			ft := t.Format(timeFormat)
+
+			event.ID = id
+			event.Status = "green"
+			event.Message = fmt.Sprintf("the time is %s", ft)
+			update(event)
+
 		}
-	}()
+
+		select {
+		case <-ctx.Done():
+			return
+
+		case <-time.After(time.Duration(500 * time.Millisecond)):
+		}
+	}
 }
