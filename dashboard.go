@@ -36,7 +36,7 @@ const footer = `
 var templates *template.Template
 
 func handleRoot(w http.ResponseWriter, _ *http.Request) {
-	_, err := fmt.Fprintf(w, header)
+	_, err := fmt.Fprint(w, header)
 	if err != nil {
 		log.Println(err)
 	}
@@ -48,7 +48,7 @@ func handleRoot(w http.ResponseWriter, _ *http.Request) {
 		}
 	}
 
-	_, err = fmt.Fprintf(w, footer)
+	_, err = fmt.Fprint(w, footer)
 	if err != nil {
 		log.Print(err)
 	}
@@ -62,7 +62,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 }
 
 func handleBox(w http.ResponseWriter, r *http.Request) {
-	_, err := fmt.Fprintf(w, header)
+	_, err := fmt.Fprint(w, header)
 	if err != nil {
 		log.Print(err)
 	}
@@ -78,7 +78,7 @@ func handleBox(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	_, err = fmt.Fprintf(w, footer)
+	_, err = fmt.Fprint(w, footer)
 	if err != nil {
 		log.Println(err)
 	}
@@ -127,8 +127,8 @@ func loadTemplates() (err error) {
 	return nil
 }
 
-func runDashboard(ctx context.Context) {
-	if options.Debug == true {
+func runDashboard(_ context.Context) {
+	if options.Debug {
 		log.Print("Starting Dashboard")
 	}
 	err := loadTemplates()
