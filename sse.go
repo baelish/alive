@@ -1,11 +1,3 @@
-// Golang HTML5 Server Side Events Example
-//
-// Run this code like:
-//  > go run server.go
-//
-// Then open up your browser to http://localhost:8000
-// Your browser must support HTML5 SSE, of course.
-
 package main
 
 import (
@@ -152,21 +144,20 @@ func runKeepalives(ctx context.Context) {
 	// Generate a regular keepalive message that gets pushed
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			default:
-				// Send a keepalive
-				events.messages <- `{"type": "keepalive"}`
-
-				// Sleep for 3s.
-				time.Sleep(3 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			if options.Debug {
+				log.Print("Stopping keepalive routine")
 			}
+			return
+
+		case <-time.After(time.Duration(3 * time.Second)):
 		}
-	}()
+
+		// Send a keepalive
+		events.messages <- `{"type": "keepalive"}`
+	}
 }
 
 // Main routine

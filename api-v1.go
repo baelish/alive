@@ -183,7 +183,5 @@ func runAPI(_ context.Context) {
 	router.Get("/api/v1/box/{id}", apiGetBox)
 	router.Post("/api/v1/box/{id}/event", apiCreateEvent)
 	listenOn := fmt.Sprintf(":%s", options.ApiPort)
-	go func() {
-		log.Fatal(http.ListenAndServe(listenOn, router))
-	}()
+	log.Fatal(http.ListenAndServe(listenOn, router))
 }
