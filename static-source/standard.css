@@ -27,6 +27,10 @@ div#status-bar .lastUpdated {
     font-size: 75%;
 }
 
+.dot .lastUpdated {
+    display: none;
+}
+
 .micro .lastUpdated {
     display: none;
 }
@@ -47,6 +51,10 @@ p.message {
     margin-block-start: 0.5em;
 }
 
+.dot .message {
+    display: none;
+}
+
 .micro .message {
     display: none;
 }
@@ -60,6 +68,10 @@ p.message {
 .title {
     margin-block-end: auto;
     margin-block-start: auto;
+}
+
+.dot .title {
+    display: none;
 }
 
 div#status-bar .title {
@@ -93,59 +105,76 @@ div#status-bar .title {
     font-size:2em;
     height:510px;
     width:510px;
+    overflow: hidden;
 }
 
 .dlarge {
     font-size:1.5em;
     height:254px;
     width:510px;
+    overflow: hidden;
 }
 
 .large {
     font-size:1.5em;
     height:254px;
     width:254px;
+    overflow: hidden;
 }
 
 .dmedium {
     font-size:1.125em;
     height:126px;
     width:254px;
+    overflow: hidden;
 }
 
 .medium {
     font-size:1.125em;
     height:126px;
     width:126px;
+    overflow: hidden;
 }
 
 .dsmall {
     font-size:0.8em;
     height:62px;
     width:126px;
+    overflow: hidden;
 }
 
 .small {
     font-size:0.8em;
     height:62px;
     width:62px;
+    overflow: hidden;
 }
 
 .dmicro {
     font-size:0.8em;
     height:30px;
     width:62px;
+    overflow: hidden;
 }
 
 .micro {
     font-size:0.8em;
     height:30px;
     width:30px;
+    overflow: hidden;
+}
+
+.dot {
+    font-size: 0.6em;
+    height: 14px;
+    width: 14px;
+    overflow: hidden;
 }
 
 .status {
     font-size:1em;
     height: 30px;
+    overflow: hidden;
 }
 
 

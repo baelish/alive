@@ -16,7 +16,7 @@ type Event struct {
 	ID          string `json:"id,omitempty"`
 	After       string `json:"after,omitempty"`
 	Box         *Box   `json:"box,omitempty"`
-	Status      string `json:"status,omitempty"`
+	Status      Status `json:"status,omitempty"`
 	ExpireAfter string `json:"expireAfter,omitempty"`
 	Message     string `json:"lastMessage,omitempty"`
 	MaxTBU      string `json:"maxTBU,omitempty"`

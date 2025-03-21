@@ -382,8 +382,8 @@ var animals = [...]string{
 func createRandomBox() {
 	var newBox Box
 	newBox.Name = animals[rand.Intn(len(animals))]
-	newBox.Size = sizes[rand.Intn(len(sizes))]
-	newBox.Status = "grey"
+	newBox.Size = BoxSize(rand.Intn(int(Xlarge)-int(Dot)+1) + int(Dot))
+	newBox.Status = Grey
 	addBox(newBox)
 }
 
@@ -396,8 +396,6 @@ func runDemo(ctx context.Context) {
 	// out to any clients that are attached.
 	x := 0
 	var event Event
-
-	time.Sleep(5000 * time.Millisecond)
 
 	// Create a box if there are none.
 	if len(boxes) == 0 {
@@ -422,13 +420,13 @@ func runDemo(ctx context.Context) {
 
 				switch rand.Intn(3) {
 				case 0:
-					event.Status = "red"
+					event.Status = Red
 					event.Message = "PANIC! Red Alert"
 				case 1:
-					event.Status = "amber"
+					event.Status = Amber
 					event.Message = "OH NOES! Something's not quite right"
 				case 2:
-					event.Status = "grey"
+					event.Status = Grey
 					event.Message = "Meh not sure what to do now...."
 				}
 
@@ -449,7 +447,7 @@ func runDemo(ctx context.Context) {
 			ft := t.Format(timeFormat)
 
 			event.ID = id
-			event.Status = "green"
+			event.Status = Green
 			event.Message = fmt.Sprintf("the time is %s", ft)
 			update(event)
 
