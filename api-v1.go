@@ -13,14 +13,14 @@ import (
 
 // Event struct is used to stream events to dashboard.
 type Event struct {
-	ID          string `json:"id,omitempty"`
-	After       string `json:"after,omitempty"`
-	Box         *Box   `json:"box,omitempty"`
-	Status      Status `json:"status,omitempty"`
-	ExpireAfter string `json:"expireAfter,omitempty"`
-	Message     string `json:"lastMessage,omitempty"`
-	MaxTBU      string `json:"maxTBU,omitempty"`
-	Type        string `json:"type"`
+	ID          string   `json:"id,omitempty"`
+	After       string   `json:"after,omitempty"`
+	Box         *Box     `json:"box,omitempty"`
+	Status      Status   `json:"status,omitempty"`
+	ExpireAfter Duration `json:"expireAfter,omitempty"`
+	Message     string   `json:"lastMessage,omitempty"`
+	MaxTBU      Duration `json:"maxTBU,omitempty"`
+	Type        string   `json:"type"`
 }
 
 func apiGetBoxes(w http.ResponseWriter, _ *http.Request) {
@@ -109,7 +109,6 @@ func apiStatus(w http.ResponseWriter, _ *http.Request) {
 
 func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
-	ft := t.Format(time.RFC3339)
 	var newBox Box
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
@@ -131,7 +130,7 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deleteBox(newBox.ID, false)
-	newBox.LastUpdate = ft
+	newBox.LastUpdate = t
 	boxes = append(boxes, newBox)
 	sortBoxes()
 	newBoxPrint, _ := json.Marshal(newBox)

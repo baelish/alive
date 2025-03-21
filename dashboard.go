@@ -93,7 +93,7 @@ func loadTemplates() (err error) {
     <div onclick='boxClick(this.id)' onmouseover='boxHover("{{.Name}}")' onmouseout='boxOut()' id='{{.ID}}' class='{{.Status}} {{.Size}} box'>
         <p class='title'>{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Name}}{{end}}</p>
         <p class='message'>{{.LastMessage}}</p>
-        <p class='lastUpdated'>{{.LastUpdate}}</p>
+        <p class='lastUpdated'>{{.LastUpdate.Format "2006-01-02T15:04:05.000Z07:00"}}</p>
         <p class='maxTBU'>{{.MaxTBU}}</p>
         <p class='expireAfter'>{{.ExpireAfter}}</p>
     </div>
@@ -113,10 +113,11 @@ func loadTemplates() (err error) {
       {{if .DisplayName}}<tr><th>Display name :</th><td>{{.DisplayName}}</td></tr>{{end}}
       {{if .Description}}<tr><th>Description :</th><td>{{.Description}}</td></tr>{{end}}
       <tr><th>Last message :</th><td class="message">{{.LastMessage}}</td></tr>
-      <tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate}}</td></tr>
-      <tr class="maxTBU" {{if or (eq .MaxTBU "0") (eq .MaxTBU "")}}style="display: none;"{{end}}><th>Max TBU :</th><td>{{.MaxTBU}}</td></tr>
-      <tr class="expireAfter" {{if or (eq .ExpireAfter "0") (eq .ExpireAfter "")}}style="display: none;"{{end}}><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>
-      <tr><th>Previous Messages:</th><td><ul class="previousMessages">{{range $m := .Messages}}<li>{{ $m.TimeStamp }}: {{ $m.Status | ToUpper}} ({{ $m.Message }})</li>{{end}}</ul></td></tr>
+      <tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
+      <tr class="maxTBU" {{if eq .MaxTBU.Duration 0}}style="display: none;"{{end}}><th>Max TBU:</th><td>{{.MaxTBU}}</td></tr>
+      <tr class="expireAfter" {{if eq .ExpireAfter.Duration 0 }}style="display: none;"{{end}}><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>
+      <tr><th>Previous Messages:</th><td><ul class="previousMessages">{{range $m := .Messages}}<li>{{$m.TimeStamp.Format "2006-01-02T15:04:05.000Z07:00" }}: {{$m.Status | ToUpper}} ({{$m.Message}})</li>{{end}}</ul></td></tr>
+
     </div>
   `
 	templates, err = templates.New("infoBox").Funcs(funcMap).Parse(infoBoxTemplate)

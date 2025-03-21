@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"sort"
-	"strconv"
 	"time"
 )
 
@@ -17,9 +16,9 @@ type Links struct {
 }
 
 type Message struct {
-	Message   string `json:"message"`
-	Status    string `json:"status"`
-	TimeStamp string `json:"timeStamp"`
+	Message   string    `json:"message"`
+	Status    string    `json:"status"`
+	TimeStamp time.Time `json:"timeStamp"`
 }
 
 type Status int
@@ -140,6 +139,35 @@ func (bs BoxSize) MarshalJSON() ([]byte, error) {
 	return json.Marshal(bs.String())
 }
 
+type Duration struct {
+	time.Duration
+}
+
+func (d *Duration) UnmarshalJSON(b []byte) (err error) {
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		d.Duration = time.Duration(value)
+		return nil
+	case string:
+		var err error
+		d.Duration, err = time.ParseDuration(value)
+		if err != nil {
+			return err
+		}
+		return nil
+	default:
+		return fmt.Errorf("invalid duration")
+	}
+}
+
+func (d Duration) MarshalJSON() (b []byte, err error) {
+	return []byte(fmt.Sprintf(`"%s"`, d.String())), nil
+}
+
 // Box represents a single item on our monitoring screen.
 type Box struct {
 	ID          string    `json:"id"`
@@ -149,10 +177,10 @@ type Box struct {
 	Parent      string    `json:"parent,omitempty"`
 	Size        BoxSize   `json:"size"`
 	Status      Status    `json:"status"`
-	ExpireAfter string    `json:"expireAfter,omitempty"`
-	MaxTBU      string    `json:"maxTBU,omitempty"`
+	ExpireAfter Duration  `json:"expireAfter,omitempty"`
+	MaxTBU      Duration  `json:"maxTBU,omitempty"`
 	Messages    []Message `json:"messages"`
-	LastUpdate  string    `json:"lastUpdate"`
+	LastUpdate  time.Time `json:"lastUpdate"`
 	LastMessage string    `json:"lastMessage"`
 	Links       []Links   `json:"links"`
 }
@@ -189,7 +217,6 @@ func (s *boxSorter) Less(i, j int) bool {
 
 func addBox(box Box) (id string, err error) {
 	t := time.Now()
-	ft := t.Format(timeFormat)
 
 	if box.ID != "" {
 		if testBoxID(box.ID) {
@@ -202,7 +229,7 @@ func addBox(box Box) (id string, err error) {
 		}
 
 	}
-	box.LastUpdate = ft
+	box.LastUpdate = t
 	boxes = append(boxes, box)
 
 	sortBoxes()
@@ -212,7 +239,6 @@ func addBox(box Box) (id string, err error) {
 		return "", (err)
 	}
 	log.Printf("creating new box with these details:'%s'", string(newBoxPrint))
-	//	time.Sleep(100 * time.Millisecond)
 
 	var event Event
 	event.Type = "createBox"
@@ -277,11 +303,11 @@ func maintainBoxes(ctx context.Context) {
 	var lastSave time.Time
 	for {
 		for _, box := range boxes {
-			if box.LastUpdate == "" {
+			if box.LastUpdate.IsZero() {
 				continue
 			}
 
-			lastUpdate, err := time.Parse(time.RFC3339, box.LastUpdate)
+			lastUpdate := box.LastUpdate
 
 			if err != nil {
 				log.Println(err)
@@ -289,12 +315,8 @@ func maintainBoxes(ctx context.Context) {
 				continue
 			}
 
-			if box.ExpireAfter != "0" && box.ExpireAfter != "" {
-				expireAfter, err := strconv.Atoi(box.ExpireAfter)
-
-				if err != nil {
-					log.Println(err)
-				} else if lastUpdate.Add(time.Second * time.Duration(expireAfter)).Before(time.Now()) {
+			if box.ExpireAfter.Duration != 0 {
+				if time.Since(lastUpdate) > box.ExpireAfter.Duration {
 					log.Printf("deleting expired box %s", box.ID)
 					_ = deleteBox(box.ID, true)
 
@@ -303,23 +325,18 @@ func maintainBoxes(ctx context.Context) {
 
 			}
 
-			if box.MaxTBU != "0" && box.MaxTBU != "" {
-				alertAfter, err := strconv.Atoi(box.MaxTBU)
-
-				if err != nil {
-					log.Println(err)
-				} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != NoUpdate {
+			if box.MaxTBU.Duration != 0 {
+				if time.Since(lastUpdate) > box.MaxTBU.Duration && box.Status != NoUpdate {
 					log.Printf("no events for box %s", box.ID)
 					var event Event
 					event.ID = box.ID
 					event.Status = NoUpdate
-					event.Message = fmt.Sprintf("No new updates for %ss.", box.MaxTBU)
+					event.Message = fmt.Sprintf("No new updates for %s.", box.MaxTBU)
 					event.Type = NoUpdate.String()
 					update(event)
 
 					continue
 				}
-
 			}
 		}
 		// Write json
@@ -385,7 +402,6 @@ func testBoxID(id string) bool {
 
 func update(event Event) {
 	t := time.Now()
-	ft := t.Format(timeFormat)
 	i, err := findBoxByID(event.ID)
 
 	if err != nil {
@@ -401,7 +417,7 @@ func update(event Event) {
 			{
 				Message:   event.Message,
 				Status:    event.Status.String(),
-				TimeStamp: ft,
+				TimeStamp: t,
 			},
 		},
 		boxes[i].Messages...,
@@ -413,16 +429,16 @@ func update(event Event) {
 	}
 
 	if event.Type != NoUpdate.String() {
-		boxes[i].LastUpdate = ft
+		boxes[i].LastUpdate = t
 	}
 
 	boxes[i].Status = event.Status
 
-	if event.MaxTBU != "" {
+	if event.MaxTBU.Duration != 0 {
 		boxes[i].MaxTBU = event.MaxTBU
 	}
 
-	if event.ExpireAfter != "" {
+	if event.ExpireAfter.Duration != 0 {
 		boxes[i].ExpireAfter = event.ExpireAfter
 	}
 

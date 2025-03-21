@@ -106,13 +106,13 @@ function updateBox(event) {
   if (event.maxTBU) {
     let row = targetBox.getElementsByClassName("maxTBU")[0];
     row.getElementsByTagName('td')[0].innerHTML = event.maxTBU;
-    if (event.maxTBU === "0") {row.style.display = "none";} else {row.style.display = "table-row";}
+    if (event.maxTBU === "0s") {row.style.display = "none";} else {row.style.display = "table-row";}
   }
 
   if (event.expireAfter) {
     let row = targetBox.getElementsByClassName("expireAfter")[0];
     row.getElementsByTagName('td')[0].innerHTML = event.expireAfter;
-    if (event.expireAfter === "0") {row.style.display = "none";} else {row.style.display = "table-row";}
+    if (event.expireAfter === "0s") {row.style.display = "none";} else {row.style.display = "table-row";}
   }
 }
 
