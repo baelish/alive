@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// Send keepalives to the status bar.
 func parentUpdater(ctx context.Context) {
 	if options.Debug {
 		log.Print("starting parent update routine")

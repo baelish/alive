@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-const missedStatusUpdate = "noUpdate"
-
 // Broker which will be created in this program. It is responsible
 // for keeping a list of which clients (browsers) are currently attached
 // and broadcasting events (messages) to those clients.

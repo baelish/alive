@@ -22,6 +22,124 @@ type Message struct {
 	TimeStamp string `json:"timeStamp"`
 }
 
+type Status int
+
+const (
+	Grey Status = iota
+	Red
+	Amber
+	Green
+	NoUpdate
+)
+
+func (s Status) String() string {
+	return [...]string{
+		"grey",
+		"red",
+		"amber",
+		"green",
+		"noUpdate",
+	}[s]
+}
+
+func (s *Status) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+
+	switch str {
+	case "green":
+		*s = Green
+	case "grey":
+		*s = Grey
+	case "gray":
+		*s = Grey
+	case "noUpdate":
+		*s = NoUpdate
+	case "red":
+		*s = Red
+	case "amber":
+		*s = Amber
+	default:
+		return fmt.Errorf("invalid status")
+	}
+
+	return nil
+}
+
+func (s Status) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+type BoxSize int
+
+const (
+	Dot BoxSize = iota
+	Micro
+	Dmicro
+	Small
+	Dsmall
+	Medium
+	Dmedium
+	Large
+	Dlarge
+	Xlarge
+)
+
+func (bs BoxSize) String() string {
+	return [...]string{
+		"dot",
+		"micro",
+		"dmicro",
+		"small",
+		"dsmall",
+		"medium",
+		"dmedium",
+		"large",
+		"dlarge",
+		"xlarge",
+	}[bs]
+}
+
+func (bs *BoxSize) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+
+	switch str {
+	case "dot":
+		*bs = Dot
+	case "micro":
+		*bs = Micro
+	case "dmicro":
+		*bs = Dmicro
+	case "small":
+		*bs = Small
+	case "dsmall":
+		*bs = Dsmall
+	case "medium":
+		*bs = Medium
+	case "dmedium":
+		*bs = Dmedium
+	case "large":
+		*bs = Large
+	case "dlarge":
+		*bs = Dlarge
+	case "xlarge":
+		*bs = Xlarge
+	default:
+		return fmt.Errorf("invalid box size")
+	}
+
+	return nil
+}
+
+func (bs BoxSize) MarshalJSON() ([]byte, error) {
+	return json.Marshal(bs.String())
+}
+
 // Box represents a single item on our monitoring screen.
 type Box struct {
 	ID          string    `json:"id"`
@@ -29,8 +147,8 @@ type Box struct {
 	DisplayName string    `json:"displayName,omitempty"`
 	Name        string    `json:"name"`
 	Parent      string    `json:"parent,omitempty"`
-	Size        string    `json:"size"`
-	Status      string    `json:"status"`
+	Size        BoxSize   `json:"size"`
+	Status      Status    `json:"status"`
 	ExpireAfter string    `json:"expireAfter,omitempty"`
 	MaxTBU      string    `json:"maxTBU,omitempty"`
 	Messages    []Message `json:"messages"`
@@ -69,41 +187,9 @@ func (s *boxSorter) Less(i, j int) bool {
 	return s.by(&s.boxes[i], &s.boxes[j])
 }
 
-func sizeToNumber(size string) int {
-	switch size {
-	case sizes[0]:
-		return 10
-	case sizes[1]:
-		return 20
-	case sizes[2]:
-		return 30
-	case sizes[3]:
-		return 40
-	case sizes[4]:
-		return 50
-	case sizes[5]:
-		return 60
-	case sizes[6]:
-		return 70
-	case sizes[7]:
-		return 80
-	case sizes[8]:
-		return 90
-	case "status":
-		return 1000
-	default:
-		return 0
-	}
-}
-
 func addBox(box Box) (id string, err error) {
 	t := time.Now()
 	ft := t.Format(timeFormat)
-
-	if !validateBoxSize(box.Size) {
-		err = fmt.Errorf("invalid size: %s", box.Size)
-		return "", err
-	}
 
 	if box.ID != "" {
 		if testBoxID(box.ID) {
@@ -222,13 +308,13 @@ func maintainBoxes(ctx context.Context) {
 
 				if err != nil {
 					log.Println(err)
-				} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != missedStatusUpdate {
+				} else if lastUpdate.Add(time.Second*time.Duration(alertAfter)).Before(time.Now()) && box.Status != NoUpdate {
 					log.Printf("no events for box %s", box.ID)
 					var event Event
 					event.ID = box.ID
-					event.Status = missedStatusUpdate
+					event.Status = NoUpdate
 					event.Message = fmt.Sprintf("No new updates for %ss.", box.MaxTBU)
-					event.Type = missedStatusUpdate
+					event.Type = NoUpdate.String()
 					update(event)
 
 					continue
@@ -281,10 +367,7 @@ func sortBoxes() {
 			return p1.Name < p2.Name
 		}
 
-		size1 := sizeToNumber(p1.Size)
-		size2 := sizeToNumber(p2.Size)
-
-		return size1 > size2
+		return int(p1.Size) > int(p2.Size)
 	}
 
 	by(Size).Sort(boxes)
@@ -317,7 +400,7 @@ func update(event Event) {
 		[]Message{
 			{
 				Message:   event.Message,
-				Status:    event.Status,
+				Status:    event.Status.String(),
 				TimeStamp: ft,
 			},
 		},
@@ -329,7 +412,7 @@ func update(event Event) {
 		boxes[i].Messages = boxes[i].Messages[:m]
 	}
 
-	if event.Type != missedStatusUpdate {
+	if event.Type != NoUpdate.String() {
 		boxes[i].LastUpdate = ft
 	}
 
