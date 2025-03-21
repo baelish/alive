@@ -403,6 +403,10 @@ func runDemo(ctx context.Context) {
 	}
 
 	for {
+		max := len(boxes) - 1
+		if max < 1 {
+			max = 1
+		}
 		switch e := rand.Intn(100); {
 		case e < 5: // Create a box
 			if len(boxes) < 60 {
@@ -413,27 +417,36 @@ func runDemo(ctx context.Context) {
 				deleteBox(boxes[rand.Intn(len(boxes))].ID, true)
 			}
 		case e < 20: // Update a box with a random event
-			max := len(boxes) - 1
 
-			if max > 0 {
-				y := rand.Intn(max)
+			y := rand.Intn(max)
 
-				switch rand.Intn(3) {
-				case 0:
-					event.Status = Red
-					event.Message = "PANIC! Red Alert"
-				case 1:
-					event.Status = Amber
-					event.Message = "OH NOES! Something's not quite right"
-				case 2:
-					event.Status = Grey
-					event.Message = "Meh not sure what to do now...."
-				}
-
-				event.ID = boxes[y].ID
-				update(event)
-
+			switch rand.Intn(3) {
+			case 0:
+				event.Status = Red
+				event.Message = "PANIC! Red Alert"
+			case 1:
+				event.Status = Amber
+				event.Message = "OH NOES! Something's not quite right"
+			case 2:
+				event.Status = Grey
+				event.Message = "Meh not sure what to do now...."
 			}
+
+			event.ID = boxes[y].ID
+			update(event)
+		case e < 25: // Set Max TBU to small number
+			event.MaxTBU.Duration = time.Second * 4
+			event.ExpireAfter.Duration = 0
+			event.Message = "Adding 4s MaxTBU"
+			event.Status = Green
+			event.ID = boxes[rand.Intn(max)].ID
+
+		case e < 30: // Set Max TBU to small number
+			event.MaxTBU.Duration = 0
+			event.ExpireAfter.Duration = 5 * time.Second
+			event.Message = "Expiring box in 5s"
+			event.Status = Grey
+			event.ID = boxes[rand.Intn(max)].ID
 		default:
 			x++
 			if x >= len(boxes) {
