@@ -104,15 +104,23 @@ function updateBox(event) {
   }
 
   if (event.maxTBU) {
-    let row = targetBox.getElementsByClassName("maxTBU")[0];
-    row.getElementsByTagName('td')[0].innerHTML = event.maxTBU;
-    if (event.maxTBU === "0s") {row.style.display = "none";} else {row.style.display = "table-row";}
+    let t = targetBox.getElementsByClassName("maxTBU")[0];
+    if (t.tagName === 'TR') {
+      t.getElementsByTagName('TD')[0].innerHTML = event.maxTBU;
+      if (event.maxTBU === "0s") {t.style.display = "none";} else {t.style.display = "table-row";}
+    } else {
+      t.innerHTML = event.maxTBU
+    }
   }
 
   if (event.expireAfter) {
-    let row = targetBox.getElementsByClassName("expireAfter")[0];
-    row.getElementsByTagName('td')[0].innerHTML = event.expireAfter;
-    if (event.expireAfter === "0s") {row.style.display = "none";} else {row.style.display = "table-row";}
+    let t = targetBox.getElementsByClassName("expireAfter")[0];
+    if (t.tagName === 'TR') {
+      t.getElementsByTagName('TD')[0].innerHTML = event.expireAfter;
+      if (event.expireAfter === "0s") {t.style.display = "none";} else {t.style.display = "table-row";}
+    } else {
+      t.innerHTML = event.expireAfter
+    }
   }
 }
 
