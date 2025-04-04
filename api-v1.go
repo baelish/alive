@@ -17,8 +17,8 @@ type Event struct {
 	After       string   `json:"after,omitempty"`
 	Box         *Box     `json:"box,omitempty"`
 	Status      Status   `json:"status,omitempty"`
-	ExpireAfter Duration `json:"expireAfter,omitempty"`
 	Message     string   `json:"lastMessage,omitempty"`
+	ExpireAfter Duration `json:"expireAfter,omitempty"`
 	MaxTBU      Duration `json:"maxTBU,omitempty"`
 	Type        string   `json:"type"`
 }
@@ -55,9 +55,9 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	var event Event
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
-		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
-		if err != nil {
-			log.Print(err)
+		jsonErr := json.NewEncoder(w).Encode(json.RawMessage(fmt.Sprintf(`{"message": "could not decode data received","error": "%s"}`, err.Error())))
+		if jsonErr != nil {
+			log.Print(jsonErr)
 		}
 
 		return
@@ -76,6 +76,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	var newBox Box
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
+		log.Printf("error decoding json: %s", err.Error())
 		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
 		if err != nil {
 			log.Print(err)

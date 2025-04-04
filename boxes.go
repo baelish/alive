@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -141,8 +142,12 @@ func (bs BoxSize) MarshalJSON() ([]byte, error) {
 
 type Duration struct {
 	time.Duration
+	bool
 }
 
+// This is a custom UnmarshalJSON() for a time.Duration that can have a null
+// value ("") as well as being backward compatible with supplying a string with
+// the number of seconds.
 func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -151,21 +156,41 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 	switch value := v.(type) {
 	case float64:
 		d.Duration = time.Duration(value)
+		d.bool = true
 		return nil
 	case string:
 		var err error
+		if value == "" {
+			d.Duration = 0
+			d.bool = false
+			return nil
+		}
 		d.Duration, err = time.ParseDuration(value)
 		if err != nil {
-			return err
+			i, err := strconv.Atoi(value)
+			if err != nil {
+				return err
+			}
+			d.Duration = time.Duration(i) * time.Second
+			d.bool = true
+			return nil
+		} else {
+			d.bool = true
+			return nil
 		}
-		return nil
 	default:
-		return fmt.Errorf("invalid duration")
+		return fmt.Errorf("invalid type for duration (%T)", v)
 	}
 }
 
+// This is a custom MarshalJSON() for a time.Duration that can have a null value
+// ("")
 func (d Duration) MarshalJSON() (b []byte, err error) {
-	return []byte(fmt.Sprintf(`"%s"`, d.String())), nil
+	if d.bool {
+		return []byte(fmt.Sprintf(`"%s"`, d.String())), nil
+	} else {
+		return []byte(`""`), nil
+	}
 }
 
 // Box represents a single item on our monitoring screen.
@@ -433,12 +458,11 @@ func update(event Event) {
 	}
 
 	boxes[i].Status = event.Status
-
-	if event.MaxTBU.Duration != 0 {
+	if event.MaxTBU.bool {
 		boxes[i].MaxTBU = event.MaxTBU
 	}
 
-	if event.ExpireAfter.Duration != 0 {
+	if event.ExpireAfter.bool {
 		boxes[i].ExpireAfter = event.ExpireAfter
 	}
 
