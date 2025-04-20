@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"time"
 )
 
 func parentUpdater(ctx context.Context) {
 	if options.Debug {
-		log.Print("starting parent update routine")
+		logger.Info("starting parent update routine")
 	}
 
 	for {
@@ -17,7 +16,7 @@ func parentUpdater(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			if options.Debug {
-				log.Print("stopping parent update routine")
+				logger.Info("stopping parent update routine")
 			}
 			return
 

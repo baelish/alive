@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	goflags "github.com/jessevdk/go-flags"
@@ -29,7 +28,7 @@ func processOptions() {
 		if flagsErr, ok := err.(*goflags.Error); ok && flagsErr.Type == goflags.ErrHelp {
 			os.Exit(0)
 		} else {
-			log.Panicf("Parse failed: %v", err)
+			logger.Panic(err.Error())
 		}
 	}
 }

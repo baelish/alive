@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // Broker which will be created in this program. It is responsible
@@ -52,7 +53,7 @@ func (b *Broker) Start(ctx context.Context) {
 				// There is a new client attached and we
 				// want to start sending them messages.
 				b.clients[s] = true
-				log.Printf("Added new client t:%d", len(b.clients))
+				logger.Info("Added new client", zap.Int("currentClientCount", len(b.clients)))
 
 			case s := <-b.defunctClients:
 
@@ -61,7 +62,7 @@ func (b *Broker) Start(ctx context.Context) {
 				delete(b.clients, s)
 				close(s)
 
-				log.Printf("Removed client t:%d", len(b.clients))
+				logger.Info("Removed client", zap.Int("currentClientCount", len(b.clients)))
 
 			case msg := <-b.messages:
 
@@ -101,7 +102,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Remove this client from the map of attached clients
 		// when `EventHandler` exits.
 		b.defunctClients <- messageChan
-		log.Println("HTTP connection just closed.")
+		logger.Warn("http connection just closed")
 	}()
 
 	// Set the headers related to event streaming.
@@ -131,13 +132,13 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Done.
-	log.Println("Finished HTTP request at ", r.URL.Path)
+	logger.Info("Finished HTTP request", zap.String("path", r.URL.Path))
 }
 
 // Send keepalives to the status bar.
 func runKeepalives(ctx context.Context) {
 	if options.Debug {
-		log.Print("Starting keepalive routine")
+		logger.Info("Starting keepalive routine")
 	}
 	// Generate a regular keepalive message that gets pushed
 	// into the Broker's messages channel and are then broadcast
@@ -146,7 +147,7 @@ func runKeepalives(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			if options.Debug {
-				log.Print("Stopping keepalive routine")
+				logger.Info("Stopping keepalive routine")
 			}
 			return
 
@@ -161,7 +162,7 @@ func runKeepalives(ctx context.Context) {
 // Main routine
 func runSSE(ctx context.Context) (b *Broker) {
 	if options.Debug {
-		log.Print("Starting SSE broker")
+		logger.Info("Starting SSE broker")
 	}
 
 	// Make a new Broker instance

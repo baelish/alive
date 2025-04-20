@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 )
@@ -389,7 +388,7 @@ func createRandomBox() {
 
 func runDemo(ctx context.Context) {
 	if options.Debug {
-		log.Print("Starting demo routine")
+		logger.Info("Starting demo routine")
 	}
 	// Generate a constant stream of events that get pushed
 	// into the Broker's messages channel and are then broadcast

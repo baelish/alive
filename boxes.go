@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // Links describes a URL with a name.
@@ -167,9 +169,9 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 		}
 		d.Duration, err = time.ParseDuration(value)
 		if err != nil {
-			i, err := strconv.Atoi(value)
-			if err != nil {
-				return err
+			i, err2 := strconv.Atoi(value)
+			if err2 != nil {
+				return errors.Join(err, err2)
 			}
 			d.Duration = time.Duration(i) * time.Second
 			d.bool = true
@@ -259,11 +261,8 @@ func addBox(box Box) (id string, err error) {
 
 	sortBoxes()
 
-	newBoxPrint, err := json.Marshal(box)
-	if err != nil {
-		return "", (err)
-	}
-	log.Printf("creating new box with these details:'%s'", string(newBoxPrint))
+	logger.Info("creating a new box", zap.String("id", box.ID))
+	logger.Debug("box detail", logStructDetails(box)...)
 
 	var event Event
 	event.Type = "createBox"
@@ -271,7 +270,7 @@ func addBox(box Box) (id string, err error) {
 
 	i, err := findBoxByID(box.ID)
 	if err != nil {
-		log.Printf("couldn't find box (%s)", err.Error())
+		logger.Error(err.Error())
 	}
 	if i == 0 {
 		event.After = "status-bar"
@@ -296,7 +295,7 @@ func deleteBox(id string, event bool) bool {
 		if box.ID != id {
 			newBoxes = append(newBoxes, box)
 		} else {
-			log.Printf("Deleting box %s (%s)", id, box.Name)
+			logger.Info("deleting box", zap.String("id", box.ID), zap.String("name", box.Name))
 			found = true
 		}
 	}
@@ -309,7 +308,7 @@ func deleteBox(id string, event bool) bool {
 		event.ID = id
 		stringData, err := json.Marshal(event)
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 		events.messages <- string(stringData)
 	}
@@ -322,7 +321,7 @@ func deleteBox(id string, event bool) bool {
 // periodically or on exit.
 func maintainBoxes(ctx context.Context) {
 	if options.Debug {
-		log.Print("Starting box maintenance routine")
+		logger.Info("Starting box maintenance routine")
 	}
 	var err error
 	var lastSave time.Time
@@ -335,14 +334,14 @@ func maintainBoxes(ctx context.Context) {
 			lastUpdate := box.LastUpdate
 
 			if err != nil {
-				log.Println(err)
+				logger.Error(err.Error())
 
 				continue
 			}
 
 			if box.ExpireAfter.Duration != 0 {
 				if time.Since(lastUpdate) > box.ExpireAfter.Duration {
-					log.Printf("deleting expired box %s", box.ID)
+					logger.Info("deleting expired box", zap.String("id", box.ID))
 					_ = deleteBox(box.ID, true)
 
 					continue
@@ -352,7 +351,7 @@ func maintainBoxes(ctx context.Context) {
 
 			if box.MaxTBU.Duration != 0 {
 				if time.Since(lastUpdate) > box.MaxTBU.Duration && box.Status != NoUpdate {
-					log.Printf("no events for box %s", box.ID)
+					logger.Warn("no events for box", zap.String("id", box.ID))
 					var event Event
 					event.ID = box.ID
 					event.Status = NoUpdate
@@ -366,10 +365,10 @@ func maintainBoxes(ctx context.Context) {
 		}
 		// Write json
 		if time.Since(lastSave) > time.Duration(1*time.Minute) {
-			log.Print("Saving data file")
+			logger.Info("Saving data file")
 			err = saveBoxFile()
 			if err != nil {
-				log.Printf("Error saving data file (%s)", err.Error())
+				logger.Error(err.Error())
 			} else {
 				lastSave = time.Now()
 			}
@@ -377,11 +376,11 @@ func maintainBoxes(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
-			log.Printf("Saving data file before exit")
+			logger.Info("Saving data file before exit")
 			for t := 0; t < 3; t++ {
 				err = saveBoxFile()
 				if err != nil {
-					log.Printf("Error saving box file (%s)", err.Error())
+					logger.Error(err.Error())
 				}
 			}
 
@@ -430,7 +429,7 @@ func update(event Event) {
 	i, err := findBoxByID(event.ID)
 
 	if err != nil {
-		log.Print(err)
+		logger.Error(err.Error())
 
 		return
 	}

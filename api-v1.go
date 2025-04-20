@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 // Event struct is used to stream events to dashboard.
@@ -28,7 +28,7 @@ func apiGetBoxes(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not get boxes"}`))
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 	}
 }
@@ -39,7 +39,7 @@ func apiGetBox(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "id not found"}`))
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 
 		return
@@ -47,7 +47,7 @@ func apiGetBox(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(boxes[i])
 	if err != nil {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 }
 
@@ -57,7 +57,7 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		jsonErr := json.NewEncoder(w).Encode(json.RawMessage(fmt.Sprintf(`{"message": "could not decode data received","error": "%s"}`, err.Error())))
 		if jsonErr != nil {
-			log.Print(jsonErr)
+			logger.Error(jsonErr.Error())
 		}
 
 		return
@@ -68,7 +68,7 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	update(event)
 	err = json.NewEncoder(w).Encode(event)
 	if err != nil {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 }
 
@@ -76,10 +76,10 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	var newBox Box
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
-		log.Printf("error decoding json: %s", err.Error())
+		logger.Error(err.Error())
 		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 
 		return
@@ -88,7 +88,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	id, err := addBox(newBox)
 	if err != nil {
 		json.NewEncoder(w).Encode(json.RawMessage(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
-		log.Print(err)
+		logger.Error(err.Error())
 
 		return
 	}
@@ -97,14 +97,14 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(newBox)
 	if err != nil {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 }
 
 func apiStatus(w http.ResponseWriter, _ *http.Request) {
 	err := json.NewEncoder(w).Encode(json.RawMessage(`{"status": "ok"}`))
 	if err != nil {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 }
 
@@ -115,7 +115,7 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 
 		return
@@ -124,7 +124,7 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	if newBox.ID == "" {
 		err := json.NewEncoder(w).Encode(json.RawMessage(`{"error": "Cannot update box without an ID."}`))
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 
 		return
@@ -134,11 +134,11 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	newBox.LastUpdate = t
 	boxes = append(boxes, newBox)
 	sortBoxes()
-	newBoxPrint, _ := json.Marshal(newBox)
-	log.Print(string(newBoxPrint))
+	logger.Info("updating box", zap.String("id", newBox.ID))
+	logger.Debug("update details", logStructDetails(newBox)...)
 	err = json.NewEncoder(w).Encode(newBox)
 	if err != nil {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 	var event Event
 	event.Type = "reloadPage"
@@ -158,14 +158,14 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewEncoder(w).Encode(message)
 	if err != nil {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 
 }
 
 func runAPI(_ context.Context) {
 	if options.Debug {
-		log.Print("Starting up API")
+		logger.Info("Starting up API")
 	}
 	router := chi.NewRouter()
 	router.Get("/health", apiStatus)
@@ -183,5 +183,5 @@ func runAPI(_ context.Context) {
 	router.Get("/api/v1/box/{id}", apiGetBox)
 	router.Post("/api/v1/box/{id}/event", apiCreateEvent)
 	listenOn := fmt.Sprintf(":%s", options.ApiPort)
-	log.Fatal(http.ListenAndServe(listenOn, router))
+	logger.Fatal(http.ListenAndServe(listenOn, router).Error())
 }

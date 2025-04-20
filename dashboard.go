@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 const header = `
@@ -38,13 +39,13 @@ var templates *template.Template
 func handleRoot(w http.ResponseWriter, _ *http.Request) {
 	_, err := fmt.Fprint(w, header)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err.Error())
 	}
 
 	for i := 0; i < len(boxes); i++ {
 		err := templates.ExecuteTemplate(w, "box", boxes[i])
 		if err != nil {
-			log.Println(err)
+			logger.Error(err.Error())
 		}
 	}
 
@@ -57,7 +58,7 @@ func handleRoot(w http.ResponseWriter, _ *http.Request) {
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	_, err := fmt.Fprint(w, `{"status":"ok"}`)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err.Error())
 	}
 }
 
@@ -69,18 +70,18 @@ func handleBox(w http.ResponseWriter, r *http.Request) {
 
 	i, err := findBoxByID(chi.URLParam(r, "id"))
 	if err != nil {
-		log.Println(err)
+		logger.Error(err.Error())
 		return
 	}
 
 	err = templates.ExecuteTemplate(w, "infoBox", boxes[i])
 	if err != nil {
-		log.Println(err)
+		logger.Error(err.Error())
 	}
 
 	_, err = fmt.Fprint(w, footer)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err.Error())
 	}
 }
 
@@ -130,11 +131,11 @@ func loadTemplates() (err error) {
 
 func runDashboard(_ context.Context) {
 	if options.Debug {
-		log.Print("Starting Dashboard")
+		logger.Info("Starting Dashboard")
 	}
 	err := loadTemplates()
 	if err != nil {
-		log.Printf("Unable to load templates: %v", err)
+		logger.Error(err.Error())
 	}
 	r := chi.NewRouter()
 	r.HandleFunc("/box/{id}", handleBox)
@@ -144,7 +145,7 @@ func runDashboard(_ context.Context) {
 	http.HandleFunc("/health", handleStatus)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(options.StaticPath))))
 
-	log.Printf("listening on %s", options.SitePort)
+	logger.Info("listening", zap.String("port", options.SitePort))
 	listenOn := fmt.Sprintf(":%s", options.SitePort)
 
 	log.Fatal(http.ListenAndServe(listenOn, nil))

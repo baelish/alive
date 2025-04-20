@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const timeFormat = "2006-01-02T15:04:05.000Z07:00"
@@ -16,23 +17,31 @@ const timeFormat = "2006-01-02T15:04:05.000Z07:00"
 var events *Broker
 
 func main() {
-
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer func() {
-		log.Printf("Running cleanup")
-		cancel()
-	}()
+	logger = zap.Must(zap.NewProduction())
 
 	processOptions()
+
+	if os.Getenv("DEV") != "" {
+		logger.Sync()
+		logger = zap.Must(zap.NewDevelopment())
+	} else if options.Debug {
+		cfg := zap.NewProductionConfig()
+		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+		logger.Sync()
+		logger = zap.Must(cfg.Build())
+	}
+
+	zap.ReplaceGlobals(logger)
+	defer logger.Sync()
 
 	if options.Demo {
 		tempDir, err := os.MkdirTemp(os.TempDir(), "alive-*.tmp")
 		if err != nil {
-			log.Panicf("Unable to create a temporary directory")
+			logger.Panic("Unable to create a temporary directory", zap.String("dir", tempDir))
 		}
 		defer os.RemoveAll(tempDir)
 
-		log.Printf("Running demo using temporary files in %s", tempDir)
+		logger.Info("Running demo using temporary files", zap.String("dir", tempDir))
 
 		options.DataPath = filepath.Clean(fmt.Sprintf("%s/data", tempDir))
 		options.StaticPath = filepath.Clean(fmt.Sprintf("%s/static", tempDir))
@@ -46,7 +55,13 @@ func main() {
 		options.StaticPath = filepath.Clean(fmt.Sprintf("%s/.alive/static", os.Getenv("HOME")))
 	}
 
-	log.Printf("%+v\n", options)
+	logger.Debug("options requested", logStructDetails(options)...)
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer func() {
+		logger.Info("Running cleanup")
+		cancel()
+	}()
 
 	createStaticContent()
 	createDataFiles()
