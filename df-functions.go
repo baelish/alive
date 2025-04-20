@@ -3,45 +3,42 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
 var boxFile string
 
 func createDataFiles() {
-	if options.Debug {
-		log.Print("Creating data files")
-	}
+	logger.Debug("Creating data files")
 	boxFile = filepath.Clean(options.DataPath + "/boxes.json")
 	if _, err := os.Stat(options.DataPath); os.IsNotExist(err) {
 		err := os.Mkdir(options.DataPath, 0755)
 		if err != nil {
-			log.Printf("Data directory didn't exist and couldn't create it (%s)", options.DataPath)
+			logger.Error(err.Error())
 		}
 	}
 
 	if _, err := os.Stat(boxFile); os.IsNotExist(err) {
 		var file, err = os.Create(boxFile)
 		if err != nil {
-			log.Printf("Data file did not exist and could not create an empty one.")
-			log.Fatal(err)
+			logger.Fatal(err.Error())
 		}
 
 		err = os.WriteFile(boxFile, []byte(emptyDataFile), 0644)
 		if err != nil {
-			log.Printf("Could not add base content to file %s", boxFile)
-			log.Fatal(err)
+			logger.Fatal(err.Error())
 		}
 
-		log.Printf("Created empty data file %s", boxFile)
+		logger.Info("Created empty data file", zap.String("file", boxFile))
 		defer func() {
 			err = file.Close()
 		}()
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 	}
 }
@@ -49,17 +46,17 @@ func createDataFiles() {
 // Loads Json from a file and returns Boxes sorted by size (Largest first)
 func getBoxesFromDataFile() {
 	if options.Debug {
-		log.Print("Getting boxes from data file")
+		logger.Info("Getting boxes from data file")
 	}
 	byteValue, err := os.ReadFile(boxFile)
 
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 
 	err = json.Unmarshal(byteValue, &boxes)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 
 	sortBoxes()
@@ -76,11 +73,11 @@ func saveBoxFile() error {
 	if _, err := os.Stat(boxFile + ".bak9"); err == nil {
 		err = os.Remove(boxFile + ".bak9")
 		if err != nil {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 	} else if errors.Is(err, os.ErrNotExist) {
 	} else {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 
 	for i := 8; i > 0; i-- {
@@ -90,7 +87,7 @@ func saveBoxFile() error {
 			os.Rename(boxFile+".bak"+s, boxFile+".bak"+t)
 		} else if errors.Is(err, os.ErrNotExist) {
 		} else {
-			log.Print(err)
+			logger.Error(err.Error())
 		}
 	}
 
@@ -98,7 +95,7 @@ func saveBoxFile() error {
 		os.Rename(boxFile, boxFile+".bak1")
 	} else if errors.Is(err, os.ErrNotExist) {
 	} else {
-		log.Print(err)
+		logger.Error(err.Error())
 	}
 
 	err = os.WriteFile(boxFile, byteValue, 0644)
