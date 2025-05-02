@@ -65,7 +65,7 @@ updateBox() {
             "size": "dMedium",
             "lastMessage": "'$message'",
             "maxTBU": "0",
-            "expireAfter": "600"
+            "expireAfter": "10m"
         }'
 
     logEntry "DEBUG" $'curlData:\n'"$curlData"
@@ -119,5 +119,3 @@ _main() {
 
 _checkPreReq
 _main
-
-
