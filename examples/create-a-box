@@ -1,10 +1,10 @@
-curl -sS -X POST "http://127.0.0.1:8081/api/v1/new" -H "Content-Type: application/json" -d '
+curl -sS -X POST "http://127.0.0.1:8081/api/v1/box/new" -H "Content-Type: application/json" -d '
   {
     "id": "example-111",
     "name": "Example box",
     "size": "dMedium",
     "status": "grey",
     "expireAfter": "",
-    "maxTBU": "21600",
+    "maxTBU": "6h",
     "lastMessage": ""
   }'
