@@ -42,8 +42,8 @@ func handleRoot(w http.ResponseWriter, _ *http.Request) {
 		logger.Error(err.Error())
 	}
 
-	for i := 0; i < len(boxes); i++ {
-		err := templates.ExecuteTemplate(w, "box", boxes[i])
+	for _, box := range boxes {
+		err := templates.ExecuteTemplate(w, "box", box)
 		if err != nil {
 			logger.Error(err.Error())
 		}

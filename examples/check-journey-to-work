@@ -72,7 +72,7 @@ updateBox() {
 
     curl -sS -X POST -H "Content-Type: application/json" \
         -d "$curlData" \
-        "$ALIVE_API_URL/api/v1/update"
+        "$ALIVE_API_URL/api/v1/box/update"
 }
 
 

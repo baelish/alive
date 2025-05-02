@@ -91,7 +91,7 @@ main() {
 
     curl -X POST -H "Content-Type: application/json" \
         -d "{ \"status\": \"$status\", \"lastMessage\": \"$message\"}" \
-        "$apiUrl/api/v1/events/$id"
+        "$apiUrl/api/v1/box/$id/event"
 }
 
 main

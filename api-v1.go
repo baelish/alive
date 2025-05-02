@@ -169,13 +169,6 @@ func runAPI(_ context.Context) {
 	}
 	router := chi.NewRouter()
 	router.Get("/health", apiStatus)
-	router.Get("/api/v1", apiGetBoxes)                 // deprecate
-	router.Get("/api/v1/", apiGetBoxes)                // deprecate
-	router.Post("/api/v1/new", apiCreateBox)           // deprecate
-	router.Post("/api/v1/update", apiUpdateBox)        // deprecate
-	router.Delete("/api/v1/{id}", apiDeleteBox)        // deprecate
-	router.Get("/api/v1/{id}", apiGetBox)              // deprecate
-	router.Post("/api/v1/events/{id}", apiCreateEvent) // deprecate
 	router.Get("/api/v1/box", apiGetBoxes)
 	router.Post("/api/v1/box/new", apiCreateBox)
 	router.Post("/api/v1/box/update", apiUpdateBox)
