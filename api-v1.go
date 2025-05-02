@@ -18,8 +18,8 @@ type Event struct {
 	Box         *Box     `json:"box,omitempty"`
 	Status      Status   `json:"status,omitempty"`
 	Message     string   `json:"lastMessage,omitempty"`
-	ExpireAfter Duration `json:"expireAfter,omitempty"`
-	MaxTBU      Duration `json:"maxTBU,omitempty"`
+	ExpireAfter Duration `json:"expireAfter"`
+	MaxTBU      Duration `json:"maxTBU"`
 	Type        string   `json:"type"`
 }
 
