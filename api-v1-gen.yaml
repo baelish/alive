@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Box API
+  version: "1.0"
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                example: { "status": "ok" }
+
+  /api/v1/box:
+    get:
+      summary: List boxes
+      responses:
+        "200":
+          description: A list of boxes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Box"
+
+  /api/v1/box/new:
+    post:
+      summary: Create new box
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Box"
+      responses:
+        "200":
+          description: Created box
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Box"
+
+  /api/v1/box/update:
+    post:
+      summary: Update box
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Box"
+      responses:
+        "200":
+          description: Updated box
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Box"
+
+  /api/v1/box/{id}:
+    get:
+      summary: Get box by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Box found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Box"
+    delete:
+      summary: Delete box
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deletion result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/v1/box/{id}/event:
+    post:
+      summary: Send event to box
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Event"
+      responses:
+        "200":
+          description: Event accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+components:
+  schemas:
+    Box:
+      type: object
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+        description:
+          type: string
+        displayName:
+          type: string
+        expireAfter:
+          type: string
+          format: duration
+          description: Go-style duration string (e.g., "5s", "1h30m")
+        lastMessage:
+          type: string
+        lastUpdate:
+          type: string
+          format: date-time
+        maxTBU:
+          type: string
+          format: duration
+          description: Go-style duration string (e.g., "5s", "1h30m")
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        name:
+          type: string
+        parent:
+          type: string
+        size:
+          $ref: "#/components/schemas/BoxSize"
+        status:
+          $ref: "#/components/schemas/Status"
+
+    BoxSize:
+      type: integer
+      description: Enum representing box size.
+      enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      x-enum-varnames:
+        - Dot
+        - Micro
+        - Dmicro
+        - Small
+        - Dsmall
+        - Medium
+        - Dmedium
+        - Large
+        - Dlarge
+        - Xlarge
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+        after:
+          type: string
+        box:
+          $ref: "#/components/schemas/Box"
+        status:
+          $ref: "#/components/schemas/Status"
+        message:
+          type: string
+        expireAfter:
+          type: string
+        maxTBU:
+          type: string
+        type:
+          type: string
+      required:
+        - type
+
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        timeStamp:
+          type: string
+          format: date-time
+      required:
+        - message
+        - status
+        - timeStamp
+
+    Status:
+      type: integer
+      description: Enum representing status
+      enum: [0, 1, 2, 3, 4]
+      x-enum-varnames:
+        - Grey
+        - Red
+        - Amber
+        - Green
+        - NoUpdate
