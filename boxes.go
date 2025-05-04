@@ -1,6 +1,7 @@
 package main
 
 import (
+	"alive/api"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -74,7 +75,7 @@ func addBox(box Box) (id string, err error) {
 		logger.Error(err.Error())
 	}
 	if i == 0 {
-		event.After = "status-bar"
+		event.After = Ptr("status-bar")
 	} else {
 		event.After = boxes[i-1].ID
 	}
@@ -85,7 +86,7 @@ func addBox(box Box) (id string, err error) {
 	}
 	events.messages <- string(stringData)
 
-	return box.ID, nil
+	return *box.ID, nil
 }
 
 func deleteBox(id string, event bool) bool {
@@ -93,10 +94,10 @@ func deleteBox(id string, event bool) bool {
 	var found bool
 
 	for _, box := range boxes {
-		if box.ID != id {
+		if *box.ID != id {
 			newBoxes = append(newBoxes, box)
 		} else {
-			logger.Info("deleting box", zap.String("id", box.ID), zap.String("name", box.Name))
+			logger.Info("deleting box", zap.String("id", *box.ID), zap.String("name", *box.Name))
 			found = true
 		}
 	}
@@ -106,7 +107,7 @@ func deleteBox(id string, event bool) bool {
 	if event {
 		var event Event
 		event.Type = "deleteBox"
-		event.ID = id
+		event.ID = Ptr(id)
 		stringData, err := json.Marshal(event)
 		if err != nil {
 			logger.Error(err.Error())
@@ -140,23 +141,23 @@ func maintainBoxes(ctx context.Context) {
 				continue
 			}
 
-			if box.ExpireAfter.Duration != 0 {
-				if time.Since(lastUpdate) > box.ExpireAfter.Duration {
-					logger.Info("deleting expired box", zap.String("id", box.ID))
-					_ = deleteBox(box.ID, true)
+			if box.ExpireAfter != nil {
+				if time.Since(*lastUpdate) > *DurationFromString(box.ExpireAfter) {
+					logger.Info("deleting expired box", zap.String("id", *box.ID))
+					_ = deleteBox(*box.ID, true)
 
 					continue
 				}
 
 			}
 
-			if box.MaxTBU.Duration != 0 {
-				if time.Since(lastUpdate) > box.MaxTBU.Duration && box.Status != NoUpdate {
-					logger.Warn("no events for box", zap.String("id", box.ID))
+			if box.MaxTBU != nil {
+				if time.Since(*lastUpdate) > *DurationFromString(box.MaxTBU) && *box.Status != NoUpdate {
+					logger.Warn("no events for box", zap.String("id", *box.ID))
 					var event Event
 					event.ID = box.ID
-					event.Status = NoUpdate
-					event.Message = fmt.Sprintf("No new updates for %s.", box.MaxTBU)
+					event.Status = Ptr(NoUpdate)
+					event.Message = Ptr(fmt.Sprintf("No new updates for %s.", box.MaxTBU))
 					event.Type = NoUpdate.String()
 					update(event)
 
@@ -193,9 +194,9 @@ func maintainBoxes(ctx context.Context) {
 }
 
 // Find a box in the boxes array, supply the box ID, will return the array id
-func findBoxByID(id *string) (int, error) {
+func findBoxByID(id string) (int, error) {
 	for i, box := range boxes {
-		if box.ID == id {
+		if box.ID == &id {
 			return i, nil
 		}
 	}
@@ -227,7 +228,7 @@ func testBoxID(id string) bool {
 
 func update(event Event) {
 	t := time.Now()
-	i, err := findBoxByID(event.ID)
+	i, err := findBoxByID(*event.ID)
 
 	if err != nil {
 		logger.Error(err.Error())
@@ -238,10 +239,10 @@ func update(event Event) {
 	boxes[i].LastMessage = event.Message
 	var msgStatus string
 	if event.Status != nil {
-		msgStatus = *event.Status
+		msgStatus = event.Status.String()
 	} else {
 		logger.Warn("event status is missing", zap.String("id", *event.ID))
-		msgStatus = Grey.String()
+		msgStatus = api.Grey.String()
 	}
 	var msgString string
 	if event.Message != nil {
@@ -256,23 +257,24 @@ func update(event Event) {
 		Status:    msgStatus,
 		TimeStamp: t,
 	}
-	*boxes[i].Messages = append([]Message{*newMessage}, *boxes[i].Messages...)
+	boxes[i].Messages = Ptr(append([]Message{*newMessage}, *boxes[i].Messages...))
 
-	m := 30
-	if len(boxes[i].Messages) > m {
-		boxes[i].Messages = boxes[i].Messages[:m]
+	const maxMessages = 30
+	if messages := boxes[i].Messages; messages != nil && len(*messages) > maxMessages {
+		trimmed := (*messages)[:maxMessages]
+		boxes[i].Messages = &trimmed
 	}
 
 	if event.Type != NoUpdate.String() {
-		boxes[i].LastUpdate = t
+		boxes[i].LastUpdate = &t
 	}
 
 	boxes[i].Status = event.Status
-	if event.MaxTBU.bool {
+	if event.MaxTBU != nil {
 		boxes[i].MaxTBU = event.MaxTBU
 	}
 
-	if event.ExpireAfter.bool {
+	if event.ExpireAfter != nil {
 		boxes[i].ExpireAfter = event.ExpireAfter
 	}
 

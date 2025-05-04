@@ -380,9 +380,9 @@ var animals = [...]string{
 
 func createRandomBox() {
 	var newBox Box
-	newBox.Name = animals[rand.Intn(len(animals))]
-	newBox.Size = BoxSize(rand.Intn(int(Xlarge)-int(Dot)+1) + int(Dot))
-	newBox.Status = Grey
+	newBox.Name = Ptr(animals[rand.Intn(len(animals))])
+	newBox.Size = Ptr(BoxSize(rand.Intn(int(Xlarge)-int(Dot)+1) + int(Dot)))
+	newBox.Status = Ptr(Grey)
 	addBox(newBox)
 }
 
@@ -413,7 +413,7 @@ func runDemo(ctx context.Context) {
 			}
 		case e < 10: // Delete a box
 			if len(boxes) > 10 {
-				deleteBox(boxes[rand.Intn(len(boxes))].ID, true)
+				deleteBox(*boxes[rand.Intn(len(boxes))].ID, true)
 			}
 		case e < 20: // Update a box with a random event
 
@@ -421,30 +421,30 @@ func runDemo(ctx context.Context) {
 
 			switch rand.Intn(3) {
 			case 0:
-				event.Status = Red
-				event.Message = "PANIC! Red Alert"
+				event.Status = Ptr(Red)
+				event.Message = Ptr("PANIC! Red Alert")
 			case 1:
-				event.Status = Amber
-				event.Message = "OH NOES! Something's not quite right"
+				event.Status = Ptr(Amber)
+				event.Message = Ptr("OH NOES! Something's not quite right")
 			case 2:
-				event.Status = Grey
-				event.Message = "Meh not sure what to do now...."
+				event.Status = Ptr(Grey)
+				event.Message = Ptr("Meh not sure what to do now....")
 			}
 
 			event.ID = boxes[y].ID
 			update(event)
 		case e < 25: // Set Max TBU to small number
-			event.MaxTBU.Duration = time.Second * 4
-			event.ExpireAfter.Duration = 0
-			event.Message = "Adding 4s MaxTBU"
-			event.Status = Green
+			event.MaxTBU = Ptr("4s")
+			event.ExpireAfter = nil
+			event.Message = Ptr("Adding 4s MaxTBU")
+			event.Status = Ptr(Green)
 			event.ID = boxes[rand.Intn(max)].ID
 
 		case e < 30: // Set Max TBU to small number
-			event.MaxTBU.Duration = 0
-			event.ExpireAfter.Duration = 5 * time.Second
-			event.Message = "Expiring box in 5s"
-			event.Status = Grey
+			event.MaxTBU = nil
+			event.ExpireAfter = Ptr("5s")
+			event.Message = Ptr("Expiring box in 5s")
+			event.Status = Ptr(Grey)
 			event.ID = boxes[rand.Intn(max)].ID
 		default:
 			x++
@@ -459,8 +459,8 @@ func runDemo(ctx context.Context) {
 			ft := t.Format(timeFormat)
 
 			event.ID = id
-			event.Status = Green
-			event.Message = fmt.Sprintf("the time is %s", ft)
+			event.Status = Ptr(Green)
+			event.Message = Ptr(fmt.Sprintf("the time is %s", ft))
 			update(event)
 
 		}
