@@ -132,18 +132,14 @@ components:
         displayName:
           type: string
         expireAfter:
-          type: string
-          format: duration
-          description: Go-style duration string (e.g., "5s", "1h30m")
+          $ref: "#/components/schemas/DurationString"
         lastMessage:
           type: string
         lastUpdate:
           type: string
           format: date-time
         maxTBU:
-          type: string
-          format: duration
-          description: Go-style duration string (e.g., "5s", "1h30m")
+          $ref: "#/components/schemas/DurationString"
         messages:
           type: array
           items:
@@ -173,6 +169,11 @@ components:
         - Dlarge
         - Xlarge
 
+    DurationString:
+      type: string
+      format: durationString
+      description: Go-style duration string (e.g., "5s", "1h30m") Integers will be treated as seconds
+
     Event:
       type: object
       properties:
@@ -188,9 +189,9 @@ components:
         message:
           type: string
         expireAfter:
-          type: string
+          $ref: "#/components/schemas/DurationString"
         maxTBU:
-          type: string
+          $ref: "#/components/schemas/DurationString"
         type:
           type: string
       required:

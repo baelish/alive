@@ -16,6 +16,9 @@ const timeFormat = "2006-01-02T15:04:05.000Z07:00"
 
 var events *Broker
 
+func Ptr[T any](v T) *T {
+	return &v
+}
 func main() {
 	logger = zap.Must(zap.NewProduction())
 
