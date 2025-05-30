@@ -378,7 +378,7 @@ func maintainBoxes(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			logger.Info("Saving data file before exit")
-			for t := 0; t < 3; t++ {
+			for range 3 {
 				err = saveBoxFile()
 				if err != nil {
 					logger.Error(err.Error())
