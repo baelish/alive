@@ -13,9 +13,9 @@ import (
 )
 
 const dashboard = `
-{{define "dashboard"}}
+{{ define "dashboard" }}
 <!DOCTYPE html>
-{{ template "head" .}}
+{{ template "head" . }}
 <html>
 	<body onresize='rightSizeBigBox("dashboard");' onload='rightSizeBigBox("dashboard"); keepalive();'>
 		<input type="hidden" id="refreshed" value="no">
@@ -25,12 +25,12 @@ const dashboard = `
 		</div>
 	</body>
 </html>
-{{end}}`
+{{ end }}`
 
 const infoPage = `
-{{define "infoPage"}}
+{{ define "infoPage" }}
 <!DOCTYPE html>
-{{ template "head" .}}
+{{ template "head" . }}
 <html>
 	<body onresize='rightSizeBigBox();' onload='rightSizeBigBox(); keepalive();'>
 	<input type="hidden" id="refreshed" value="no">
@@ -40,8 +40,7 @@ const infoPage = `
 		</div>
 	</body>
 </html>
-{{end}}
-`
+{{ end }}`
 
 const generic = `
 {{ define "head" }}
@@ -49,7 +48,7 @@ const generic = `
   <link rel='stylesheet' type='text/css' href='/static/standard.css'/>
   <script src='/static/scripts.js'></script>
 </head>
-{{end}}
+{{ end }}
 
 {{ define "statusBar" }}
 <div id='status-bar' class='status fullwidth box'>
@@ -58,46 +57,44 @@ const generic = `
 <p class='message' display="none"></p>
 <p class='lastUpdated'></p>
 </div>
-{{end}}
-`
+{{ end }}`
 
 const boxGrid = `
-{{define "boxGrid"}}
-  {{range .}}
-    {{template "box" .}}
-  {{end}}
-{{end}}
+{{ define "boxGrid" }}
+  {{ range . }}
+    {{ template "box" . }}
+  {{ end }}
+{{ end }}
 
-{{define "box"}}
-<div onclick='boxClick(this.id)' onmouseover='boxHover("{{.Name}}")' onmouseout='boxOut()' id='{{.ID}}' class='{{.Status}} {{.Size}} box'>
-    <p class='title'>{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Name}}{{end}}</p>
-    <p class='message'>{{.LastMessage}}</p>
-    <p class='lastUpdated'>{{.LastUpdate.Format "2006-01-02T15:04:05.000Z07:00"}}</p>
-    <p class='maxTBU'>{{.MaxTBU}}</p>
-    <p class='expireAfter'>{{.ExpireAfter}}</p>
+{{ define "box" }}
+<div onclick='boxClick(this.id)' onmouseover='boxHover("{{ .Name }}")' onmouseout='boxOut()' id='{{ .ID }}' class='{{ .Status }} {{ .Size }} box'>
+    <p class='title'>{{ if .DisplayName }}{{ .DisplayName }}{{ else }}{{ .Name }}{{ end }}</p>
+    <p class='message'>{{ .LastMessage }}</p>
+    <p class='lastUpdated'>{{ .LastUpdate.Format "2006-01-02T15:04:05.000Z07:00"}}</p>
+    <p class='maxTBU'>{{ .MaxTBU }}</p>
+    <p class='expireAfter'>{{ .ExpireAfter }}</p>
 </div>
-{{end}}`
+{{ end }}`
 
 const boxInfo = `
-{{define "boxInfo"}}
-<div id="{{.ID}}" class="{{.Status}} fullwidth info box">
-  <h2>{{.Name}}</h2>
-  {{if .Links}}{{range .Links}}<a href="{{.URL}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a><br />{{end}}{{end}}
+{{ define "boxInfo" }}
+<div id="{{ .ID }}" class="{{ .Status }} fullwidth info box">
+  <h2>{{ .Name }}</h2>
+  {{ if .Links }}{{ range .Links }}<a href="{{ .URL }}" target="_blank" rel="noopener noreferrer">{{ .Name }}</a><br />{{ end }}{{ end }}
 
   <table>
-  <tr><th>ID:</th><td>{{.ID}}</td></tr>
-  {{if .DisplayName}}<tr><th>Display name:</th><td>{{.DisplayName}}</td></tr>{{end}}
-  {{if .Description}}<tr><th>Description:</th><td>{{.Description}}</td></tr>{{end}}
-  {{if .Info}}{{range $key, $value := .Info}}<tr><th>{{$key}}:</th><td>{{$value}}</td></tr>{{end}}{{end}}
-  <tr><th>Last message:</th><td class="message">{{.LastMessage}}</td></tr>
-  <tr><th>Last updated:</th><td class="lastUpdated">{{.LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
-  <tr class="maxTBU" {{if eq .MaxTBU.Duration 0}}style="display: none;"{{end}}><th>Max TBU:</th><td>{{.MaxTBU}}</td></tr>
-  <tr class="expireAfter" {{if eq .ExpireAfter.Duration 0 }}style="display: none;"{{end}}><th>Expires after:</th><td>{{.ExpireAfter}}</td></tr>
-  <tr><th>Previous Messages:</th><td><ul class="previousMessages">{{range $m := .Messages}}<li>{{$m.TimeStamp.Format "2006-01-02T15:04:05.000Z07:00" }}: {{$m.Status | ToUpper}} ({{$m.Message}})</li>{{end}}</ul></td></tr>
+  <tr><th>ID:</th><td>{{ .ID }}</td></tr>
+  {{ if .DisplayName }}<tr><th>Display name:</th><td>{{ .DisplayName }}</td></tr>{{ end }}
+  {{ if .Description }}<tr><th>Description:</th><td>{{ .Description }}</td></tr>{{ end }}
+  {{ if .Info }}{{ range $key, $value := .Info }}<tr><th>{{ $key }}:</th><td>{{ $value }}</td></tr>{{ end }}{{ end }}
+  <tr><th>Last message:</th><td class="message">{{ .LastMessage }}</td></tr>
+  <tr><th>Last updated:</th><td class="lastUpdated">{{ .LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
+  <tr class="maxTBU" {{ if eq .MaxTBU.Duration 0}}style="display: none;"{{ end }}><th>Max TBU:</th><td>{{ .MaxTBU }}</td></tr>
+  <tr class="expireAfter" {{ if eq .ExpireAfter.Duration 0 }}style="display: none;"{{ end }}><th>Expires after:</th><td>{{ .ExpireAfter }}</td></tr>
+  <tr><th>Previous Messages:</th><td><ul class="previousMessages">{{ range $m := .Messages }}<li>{{ $m.TimeStamp.Format "2006-01-02T15:04:05.000Z07:00" }}: {{ $m.Status | ToUpper }} ({{ $m.Message }})</li>{{ end }}</ul></td></tr>
 
 </div>
-{{end}}`
-
+{{ end }}`
 var templates *template.Template
 
 func loadTemplates() (err error) {
