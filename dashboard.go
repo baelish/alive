@@ -95,7 +95,6 @@ const boxInfo = `
 
 </div>
 {{ end }}`
-
 var templates *template.Template
 
 func loadTemplates() (err error) {
