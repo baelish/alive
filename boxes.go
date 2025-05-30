@@ -197,19 +197,20 @@ func (d Duration) MarshalJSON() (b []byte, err error) {
 
 // Box represents a single item on our monitoring screen.
 type Box struct {
-	ID          string    `json:"id"`
-	Description string    `json:"description,omitempty"`
-	DisplayName string    `json:"displayName,omitempty"`
-	Name        string    `json:"name"`
-	Parent      string    `json:"parent,omitempty"`
-	Size        BoxSize   `json:"size"`
-	Status      Status    `json:"status"`
-	ExpireAfter Duration  `json:"expireAfter,omitempty"`
-	MaxTBU      Duration  `json:"maxTBU,omitempty"`
-	Messages    []Message `json:"messages"`
-	LastUpdate  time.Time `json:"lastUpdate"`
-	LastMessage string    `json:"lastMessage"`
-	Links       []Links   `json:"links"`
+	ID          string             `json:"id"`
+	Description string             `json:"description,omitempty"`
+	DisplayName string             `json:"displayName,omitempty"`
+	Name        string             `json:"name"`
+	Info        *map[string]string `json:"info,omitempty"`
+	Parent      string             `json:"parent,omitempty"`
+	Size        BoxSize            `json:"size"`
+	Status      Status             `json:"status"`
+	ExpireAfter Duration           `json:"expireAfter,omitempty"`
+	MaxTBU      Duration           `json:"maxTBU,omitempty"`
+	Messages    []Message          `json:"messages"`
+	LastUpdate  time.Time          `json:"lastUpdate"`
+	LastMessage string             `json:"lastMessage"`
+	Links       []Links            `json:"links"`
 }
 
 var boxes []Box

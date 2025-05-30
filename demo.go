@@ -382,6 +382,10 @@ func createRandomBox() {
 	var newBox Box
 	newBox.Name = animals[rand.Intn(len(animals))]
 	newBox.Size = BoxSize(rand.Intn(int(Xlarge)-int(Dot)+1) + int(Dot))
+	info := map[string]string{}
+	info["foo"] = "bar"
+	info["boo"] = "hoo"
+	newBox.Info = &info
 	newBox.Status = Grey
 	addBox(newBox)
 }
