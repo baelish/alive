@@ -111,10 +111,11 @@ func loadTemplates() (err error) {
 
       <table>
       <tr><th>ID :</th><td>{{.ID}}</td></tr>
-      {{if .DisplayName}}<tr><th>Display name :</th><td>{{.DisplayName}}</td></tr>{{end}}
-      {{if .Description}}<tr><th>Description :</th><td>{{.Description}}</td></tr>{{end}}
-      <tr><th>Last message :</th><td class="message">{{.LastMessage}}</td></tr>
-      <tr><th>Last updated :</th><td class="lastUpdated">{{.LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
+      {{if .DisplayName}}<tr><th>Display name:</th><td>{{.DisplayName}}</td></tr>{{end}}
+      {{if .Description}}<tr><th>Description:</th><td>{{.Description}}</td></tr>{{end}}
+      {{if .Info}}{{range $key, $value := .Info}}<tr><th>{{$key}}:</th><td>{{$value}}</td></tr>{{end}}{{end}}
+      <tr><th>Last message:</th><td class="message">{{.LastMessage}}</td></tr>
+      <tr><th>Last updated:</th><td class="lastUpdated">{{.LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
       <tr class="maxTBU" {{if eq .MaxTBU.Duration 0}}style="display: none;"{{end}}><th>Max TBU:</th><td>{{.MaxTBU}}</td></tr>
       <tr class="expireAfter" {{if eq .ExpireAfter.Duration 0 }}style="display: none;"{{end}}><th>Expires after :</th><td>{{.ExpireAfter}}</td></tr>
       <tr><th>Previous Messages:</th><td><ul class="previousMessages">{{range $m := .Messages}}<li>{{$m.TimeStamp.Format "2006-01-02T15:04:05.000Z07:00" }}: {{$m.Status | ToUpper}} ({{$m.Message}})</li>{{end}}</ul></td></tr>
