@@ -1,10 +1,12 @@
-package main
+package server
 
 import (
 	"context"
 	"fmt"
 	"math/rand"
 	"time"
+
+	"github.com/baelish/alive/api"
 )
 
 var animals = [...]string{
@@ -379,14 +381,14 @@ var animals = [...]string{
 }
 
 func createRandomBox() {
-	var newBox Box
+	var newBox api.Box
 	newBox.Name = animals[rand.Intn(len(animals))]
-	newBox.Size = BoxSize(rand.Intn(int(Xlarge)-int(Dot)+1) + int(Dot))
+	newBox.Size = api.BoxSize(rand.Intn(int(api.Xlarge)-int(api.Dot)+1) + int(api.Dot))
 	info := map[string]string{}
 	info["foo"] = "bar"
 	info["boo"] = "hoo"
 	newBox.Info = &info
-	newBox.Status = Grey
+	newBox.Status = api.Grey
 	addBox(newBox)
 }
 
@@ -398,7 +400,7 @@ func runDemo(ctx context.Context) {
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
 	x := 0
-	var event Event
+	var event api.Event
 
 	// Create a box if there are none.
 	if len(boxes) == 0 {
@@ -425,13 +427,13 @@ func runDemo(ctx context.Context) {
 
 			switch rand.Intn(3) {
 			case 0:
-				event.Status = Red
+				event.Status = api.Red
 				event.Message = "PANIC! Red Alert"
 			case 1:
-				event.Status = Amber
+				event.Status = api.Amber
 				event.Message = "OH NOES! Something's not quite right"
 			case 2:
-				event.Status = Grey
+				event.Status = api.Grey
 				event.Message = "Meh not sure what to do now...."
 			}
 
@@ -441,14 +443,14 @@ func runDemo(ctx context.Context) {
 			event.MaxTBU.Duration = time.Second * 4
 			event.ExpireAfter.Duration = 0
 			event.Message = "Adding 4s MaxTBU"
-			event.Status = Green
+			event.Status = api.Green
 			event.ID = boxes[rand.Intn(max)].ID
 
 		case e < 30: // Set Max TBU to small number
 			event.MaxTBU.Duration = 0
 			event.ExpireAfter.Duration = 5 * time.Second
 			event.Message = "Expiring box in 5s"
-			event.Status = Grey
+			event.Status = api.Grey
 			event.ID = boxes[rand.Intn(max)].ID
 		default:
 			x++
@@ -463,7 +465,7 @@ func runDemo(ctx context.Context) {
 			ft := t.Format(timeFormat)
 
 			event.ID = id
-			event.Status = Green
+			event.Status = api.Green
 			event.Message = fmt.Sprintf("the time is %s", ft)
 			update(event)
 
