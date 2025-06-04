@@ -59,6 +59,8 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(event)
 	if err != nil {
 		logger.Error(err.Error())
+	} else {
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -85,6 +87,8 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 
 	newBox.ID = id
 
+	w.Header().Set("Location", fmt.Sprintf("/api/boxes/%s", newBox.ID))
+	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(newBox)
 	if err != nil {
 		logger.Error(err.Error())
@@ -159,12 +163,13 @@ func runAPI(_ context.Context) {
 	}
 	router := chi.NewRouter()
 	router.Get("/health", apiStatus)
-	router.Get("/api/v1/box", apiGetBoxes)
-	router.Post("/api/v1/box/new", apiCreateBox)
-	router.Post("/api/v1/box/update", apiUpdateBox)
-	router.Delete("/api/v1/box/{id}", apiDeleteBox)
-	router.Get("/api/v1/box/{id}", apiGetBox)
-	router.Post("/api/v1/box/{id}/event", apiCreateEvent)
+	// deprecate old box paths.
+	router.Get("/api/v1/box", apiGetBoxes)                // move to boxes
+	router.Post("/api/v1/box/new", apiCreateBox)          // move to boxes remove new
+	router.Post("/api/v1/box/update", apiUpdateBox)       // move to boxes remove update, change to patch or put
+	router.Delete("/api/v1/box/{id}", apiDeleteBox)       // move to boxes
+	router.Get("/api/v1/box/{id}", apiGetBox)             // move to boxes
+	router.Post("/api/v1/box/{id}/event", apiCreateEvent) // move to boxes/{id}/events
 	listenOn := fmt.Sprintf(":%s", options.ApiPort)
 	logger.Fatal(http.ListenAndServe(listenOn, router).Error())
 }
