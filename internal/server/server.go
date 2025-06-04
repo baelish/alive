@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -16,7 +16,7 @@ const timeFormat = "2006-01-02T15:04:05.000Z07:00"
 
 var events *Broker
 
-func main() {
+func Start() {
 	logger = zap.Must(zap.NewProduction())
 
 	processOptions()

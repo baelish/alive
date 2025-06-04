@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -7,21 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/baelish/alive/api"
+
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
-
-// Event struct is used to stream events to dashboard.
-type Event struct {
-	ID          string   `json:"id,omitempty"`
-	After       string   `json:"after,omitempty"`
-	Box         *Box     `json:"box,omitempty"`
-	Status      Status   `json:"status,omitempty"`
-	Message     string   `json:"lastMessage,omitempty"`
-	ExpireAfter Duration `json:"expireAfter"`
-	MaxTBU      Duration `json:"maxTBU"`
-	Type        string   `json:"type"`
-}
 
 func apiGetBoxes(w http.ResponseWriter, _ *http.Request) {
 	err := json.NewEncoder(w).Encode(boxes)
@@ -52,7 +42,7 @@ func apiGetBox(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
-	var event Event
+	var event api.Event
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		jsonErr := json.NewEncoder(w).Encode(json.RawMessage(fmt.Sprintf(`{"message": "could not decode data received","error": "%s"}`, err.Error())))
@@ -73,7 +63,7 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiCreateBox(w http.ResponseWriter, r *http.Request) {
-	var newBox Box
+	var newBox api.Box
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
 		logger.Error(err.Error())
@@ -110,7 +100,7 @@ func apiStatus(w http.ResponseWriter, _ *http.Request) {
 
 func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	t := time.Now()
-	var newBox Box
+	var newBox api.Box
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
 		err = json.NewEncoder(w).Encode(json.RawMessage(`{"error": "could not decode data received"}`))
@@ -140,7 +130,7 @@ func apiUpdateBox(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error(err.Error())
 	}
-	var event Event
+	var event api.Event
 	event.Type = "reloadPage"
 	stringData, _ := json.Marshal(event)
 	events.messages <- string(stringData)
