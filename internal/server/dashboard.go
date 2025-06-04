@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -95,6 +95,7 @@ const boxInfo = `
 
 </div>
 {{ end }}`
+
 var templates *template.Template
 
 func loadTemplates() (err error) {

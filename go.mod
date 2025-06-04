@@ -1,4 +1,4 @@
-module alive
+module github.com/baelish/alive
 
 go 1.24
 
