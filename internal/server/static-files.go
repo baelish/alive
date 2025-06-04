@@ -3,7 +3,7 @@
 // static-source/scripts.js
 // static-source/standard.css
 
-package main
+package server
 
 
 import (
@@ -101,7 +101,7 @@ func bindataScriptsJs() (*asset, error) {
 		size: 5564,
 		md5checksum: "",
 		mode: os.FileMode(420),
-		modTime: time.Unix(1748632895, 0),
+		modTime: time.Unix(1748634346, 0),
 	}
 
 	a := &asset{bytes: bytes, info: info}
