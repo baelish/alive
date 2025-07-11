@@ -11,7 +11,7 @@ import (
 
 // CreateEvent sends a POST request to create a new event.
 func (c *Client) CreateEvent(event api.Event) (*api.Event, error) {
-	url := fmt.Sprintf("%s/api/events", c.baseURL)
+	url := fmt.Sprintf("%s/api/v1/boxes/%s/events", c.baseURL, event.ID)
 
 	payload, err := json.Marshal(event)
 	if err != nil {
