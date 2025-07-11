@@ -1,7 +1,7 @@
 FROM golang:alpine AS builder
-COPY * /go/src/github.com/baelish/alive/
+COPY ./ /workdir/
 RUN apk add git
-RUN cd /go/src/github.com/baelish/alive/ && go install .
+RUN go build -C /workdir -o /workdir/alive ./cmd/server
 
 FROM alpine:latest
 
@@ -19,7 +19,7 @@ LABEL org.label-schema.version="$BUILD_VERSION"
 
 RUN mkdir /app
 WORKDIR /app
-COPY --from=builder /go/bin/alive .
+COPY --from=builder /workdir/alive .
 RUN addgroup -g 9001 alive && adduser -h /data -D -u 9001 -G alive alive
 USER alive:alive
 ENTRYPOINT [ "./alive", "--data-path=/data" , "--static-path=/data/static" ]
