@@ -403,26 +403,30 @@ func runDemo(ctx context.Context) {
 	var event api.Event
 
 	// Create a box if there are none.
-	if len(boxes) == 0 {
+	if boxStore.Len() == 0 {
 		createRandomBox()
 	}
 
 	for {
-		max := len(boxes) - 1
+		boxCount := boxStore.Len()
+		max := boxCount - 1
 		if max < 1 {
 			max = 1
 		}
 		switch e := rand.Intn(100); {
 		case e < 5: // Create a box
-			if len(boxes) < 60 {
+			if boxCount < 60 {
 				createRandomBox()
 			}
 		case e < 10: // Delete a box
-			if len(boxes) > 10 {
-				deleteBox(boxes[rand.Intn(len(boxes))].ID, true)
+			if boxCount > 10 {
+				// Get a random box to delete
+				allBoxes := boxStore.GetAll()
+				if len(allBoxes) > 0 {
+					deleteBox(allBoxes[rand.Intn(len(allBoxes))].ID, true)
+				}
 			}
 		case e < 20: // Update a box with a random event
-
 			y := rand.Intn(max)
 
 			switch rand.Intn(3) {
@@ -437,37 +441,51 @@ func runDemo(ctx context.Context) {
 				event.Message = "Meh not sure what to do now...."
 			}
 
-			event.ID = boxes[y].ID
-			update(event)
+			allBoxes := boxStore.GetAll()
+			if y < len(allBoxes) {
+				event.ID = allBoxes[y].ID
+				update(event)
+			}
 		case e < 25: // Set Max TBU to small number
 			event.MaxTBU.Duration = time.Second * 4
 			event.ExpireAfter.Duration = 0
 			event.Message = "Adding 4s MaxTBU"
 			event.Status = api.Green
-			event.ID = boxes[rand.Intn(max)].ID
+			allBoxes := boxStore.GetAll()
+			if len(allBoxes) > 0 {
+				event.ID = allBoxes[rand.Intn(max)].ID
+				update(event)
+			}
 
 		case e < 30: // Set Max TBU to small number
 			event.MaxTBU.Duration = 0
 			event.ExpireAfter.Duration = 5 * time.Second
 			event.Message = "Expiring box in 5s"
 			event.Status = api.Grey
-			event.ID = boxes[rand.Intn(max)].ID
+			allBoxes := boxStore.GetAll()
+			if len(allBoxes) > 0 {
+				event.ID = allBoxes[rand.Intn(max)].ID
+				update(event)
+			}
 		default:
 			x++
-			if x >= len(boxes) {
+			allBoxes := boxStore.GetAll()
+			if x >= len(allBoxes) {
 				x = 0
 			}
 
-			id := boxes[x].ID
-			// Create a little message to send to clients,
-			// including the current time.
-			t := time.Now()
-			ft := t.Format(timeFormat)
+			if len(allBoxes) > 0 && x < len(allBoxes) {
+				id := allBoxes[x].ID
+				// Create a little message to send to clients,
+				// including the current time.
+				t := time.Now()
+				ft := t.Format(timeFormat)
 
-			event.ID = id
-			event.Status = api.Green
-			event.Message = fmt.Sprintf("the time is %s", ft)
-			update(event)
+				event.ID = id
+				event.Status = api.Green
+				event.Message = fmt.Sprintf("the time is %s", ft)
+				update(event)
+			}
 
 		}
 

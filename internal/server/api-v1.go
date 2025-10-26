@@ -11,6 +11,7 @@ import (
 	"github.com/baelish/alive/api"
 
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 func handleApiErrorResponse(w http.ResponseWriter, status int, e error, message string, includeError bool, skipServerLog bool) {
@@ -36,10 +37,11 @@ func handleApiErrorResponse(w http.ResponseWriter, status int, e error, message 
 
 func apiGetBoxes(w http.ResponseWriter, _ *http.Request) {
 	var buf bytes.Buffer
+	// Get all boxes from store (thread-safe)
+	boxes := boxStore.GetAll()
 	err := json.NewEncoder(&buf).Encode(boxes)
 	if err != nil {
 		handleApiErrorResponse(w, http.StatusInternalServerError, err, "could not get boxes", false, false)
-
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -48,16 +50,19 @@ func apiGetBoxes(w http.ResponseWriter, _ *http.Request) {
 }
 
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
-	i, err := findBoxByID(chi.URLParam(r, "id"))
+	id := chi.URLParam(r, "id")
 
+	// Get box from store (thread-safe)
+	box, err := boxStore.GetByID(id)
 	if err != nil {
 		handleApiErrorResponse(w, http.StatusNotFound, err, "id not found", false, false)
-
 		return
 	}
 
-	// TODO Mutex boxes
-	_ = json.NewEncoder(w).Encode(boxes[i])
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(box); err != nil {
+		logger.Error("failed to encode box", zap.Error(err))
+	}
 }
 
 func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +116,6 @@ func apiReplaceBox(w http.ResponseWriter, r *http.Request) {
 	var newBox api.Box
 	if err := json.NewDecoder(r.Body).Decode(&newBox); err != nil {
 		handleApiErrorResponse(w, http.StatusBadRequest, err, "failed to decode data received", true, false)
-
 		return
 	}
 
@@ -122,7 +126,7 @@ func apiReplaceBox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO Add mutex
+	// Delete old box and add new one (both thread-safe)
 	found, oldBox := deleteBox(newBox.ID, true)
 	if _, err := addBox(newBox); err != nil {
 		var msg string
@@ -136,14 +140,12 @@ func apiReplaceBox(w http.ResponseWriter, r *http.Request) {
 			msg = "failed to create the box"
 		}
 		handleApiErrorResponse(w, http.StatusInternalServerError, err, msg, false, false)
-
 		return
 	}
 
 	// Send success
 	if found {
 		w.WriteHeader(http.StatusOK) // replaced existing
-
 	} else {
 		w.WriteHeader(http.StatusCreated) // created new
 	}
