@@ -200,12 +200,12 @@ func runAPI(_ context.Context) {
 	router.Post("/api/v1/boxes/{id}/events", apiCreateEvent) // Create a box event
 
 	// Old paths, Deprecated.
-	router.Get("/api/v1/box", DeprecatedRoute("use GET /api/v1/boxes instead")(apiGetBoxes))
-	router.Post("/api/v1/box/new", DeprecatedRoute("use POST /api/v1/boxes instead")(apiCreateBox))
-	router.Post("/api/v1/box/update", DeprecatedRoute("use PUT /api/v1/boxes/{id} instead")(apiReplaceBox))
-	router.Delete("/api/v1/box/{id}", DeprecatedRoute("use DELETE /api/v1/boxes/{id} instead")(apiDeleteBox))
-	router.Get("/api/v1/box/{id}", DeprecatedRoute("use GET /api/v1/boxes/{id} instead")(apiGetBox))
-	router.Post("/api/v1/box/{id}/event", DeprecatedRoute("use POST /api/v1/boxes/{id}/event instead")(apiCreateEvent))
+	router.Get("/api/v1/box", DeprecatedRoute("this path is depricated. use GET /api/v1/boxes instead")(apiGetBoxes))
+	router.Post("/api/v1/box/new", DeprecatedRoute("this path is depricated. use POST /api/v1/boxes instead")(apiCreateBox))
+	router.Post("/api/v1/box/update", DeprecatedRoute("this path is depricated. use PUT /api/v1/boxes/{id} instead")(apiReplaceBox))
+	router.Delete("/api/v1/box/{id}", DeprecatedRoute("this path is depricated. use DELETE /api/v1/boxes/{id} instead")(apiDeleteBox))
+	router.Get("/api/v1/box/{id}", DeprecatedRoute("this path is depricated. use GET /api/v1/boxes/{id} instead")(apiGetBox))
+	router.Post("/api/v1/box/{id}/event", DeprecatedRoute("this path is depricated. use POST /api/v1/boxes/{id}/event instead")(apiCreateEvent))
 
 	listenOn := fmt.Sprintf(":%s", options.ApiPort)
 	logger.Fatal(http.ListenAndServe(listenOn, router).Error())
