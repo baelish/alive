@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/baelish/alive/api"
 	"go.uber.org/zap"
 )
 
@@ -54,17 +55,23 @@ func getBoxesFromDataFile() {
 		logger.Fatal(err.Error())
 	}
 
-	err = json.Unmarshal(byteValue, &boxes)
+	var loadedBoxes []api.Box
+	err = json.Unmarshal(byteValue, &loadedBoxes)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
-	sortBoxes()
-
+	// Load boxes into the store (thread-safe)
+	boxStore.mu.Lock()
+	boxStore.boxes = loadedBoxes
+	boxStore.sortUnsafe()
+	boxStore.mu.Unlock()
 }
 
 // Write json
 func saveBoxFile() error {
+	// Get all boxes from store (thread-safe)
+	boxes := boxStore.GetAll()
 	byteValue, err := json.Marshal(&boxes)
 	if err != nil {
 		return err

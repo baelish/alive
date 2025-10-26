@@ -112,6 +112,8 @@ func loadTemplates() (err error) {
 }
 
 func handleRoot(w http.ResponseWriter, _ *http.Request) {
+	// Get all boxes from store (thread-safe)
+	boxes := boxStore.GetAll()
 	err := templates.ExecuteTemplate(w, "dashboard", boxes)
 	if err != nil {
 		logger.Error(err.Error())
@@ -126,13 +128,16 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 }
 
 func handleBox(w http.ResponseWriter, r *http.Request) {
-	i, err := findBoxByID(chi.URLParam(r, "id"))
+	id := chi.URLParam(r, "id")
+
+	// Get box from store (thread-safe)
+	box, err := boxStore.GetByID(id)
 	if err != nil {
 		logger.Error(err.Error())
 		return
 	}
 
-	err = templates.ExecuteTemplate(w, "infoPage", boxes[i])
+	err = templates.ExecuteTemplate(w, "infoPage", box)
 	if err != nil {
 		logger.Error(err.Error())
 	}

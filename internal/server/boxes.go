@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/baelish/alive/api"
@@ -12,7 +13,145 @@ import (
 	"go.uber.org/zap"
 )
 
-var boxes []api.Box
+// BoxStore provides thread-safe access to boxes
+type BoxStore struct {
+	mu    sync.RWMutex
+	boxes []api.Box
+}
+
+// Global box store instance
+var boxStore = &BoxStore{
+	boxes: make([]api.Box, 0),
+}
+
+// GetAll returns a copy of all boxes (thread-safe read)
+func (bs *BoxStore) GetAll() []api.Box {
+	bs.mu.RLock()
+	defer bs.mu.RUnlock()
+
+	// Return a copy to prevent external modifications
+	result := make([]api.Box, len(bs.boxes))
+	copy(result, bs.boxes)
+	return result
+}
+
+// GetByID returns a copy of a box by ID (thread-safe read)
+func (bs *BoxStore) GetByID(id string) (*api.Box, error) {
+	bs.mu.RLock()
+	defer bs.mu.RUnlock()
+
+	for i := range bs.boxes {
+		if bs.boxes[i].ID == id {
+			// Return a copy
+			box := bs.boxes[i]
+			return &box, nil
+		}
+	}
+	return nil, fmt.Errorf("could not find %s", id)
+}
+
+// FindIndexByID returns the index of a box by ID (thread-safe read)
+func (bs *BoxStore) FindIndexByID(id string) (int, error) {
+	bs.mu.RLock()
+	defer bs.mu.RUnlock()
+
+	for i := range bs.boxes {
+		if bs.boxes[i].ID == id {
+			return i, nil
+		}
+	}
+	return -1, fmt.Errorf("could not find %s", id)
+}
+
+// Exists checks if a box with given ID exists (thread-safe read)
+func (bs *BoxStore) Exists(id string) bool {
+	bs.mu.RLock()
+	defer bs.mu.RUnlock()
+
+	for i := range bs.boxes {
+		if bs.boxes[i].ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+// Add adds a new box (thread-safe write)
+func (bs *BoxStore) Add(box api.Box) error {
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+
+	// Check if ID already exists
+	for i := range bs.boxes {
+		if bs.boxes[i].ID == box.ID {
+			return fmt.Errorf("a box already exists with that ID: %s", box.ID)
+		}
+	}
+
+	bs.boxes = append(bs.boxes, box)
+	bs.sortUnsafe()
+	return nil
+}
+
+// Delete removes a box by ID (thread-safe write)
+func (bs *BoxStore) Delete(id string) (found bool, deletedBox api.Box) {
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+
+	for i := range bs.boxes {
+		if bs.boxes[i].ID == id {
+			deletedBox = bs.boxes[i]
+			// Remove from slice
+			bs.boxes = append(bs.boxes[:i], bs.boxes[i+1:]...)
+			return true, deletedBox
+		}
+	}
+	return false, api.Box{}
+}
+
+// Update modifies an existing box (thread-safe write)
+func (bs *BoxStore) Update(id string, updateFn func(*api.Box)) error {
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+
+	for i := range bs.boxes {
+		if bs.boxes[i].ID == id {
+			updateFn(&bs.boxes[i])
+			return nil
+		}
+	}
+	return fmt.Errorf("could not find box %s", id)
+}
+
+// ForEach iterates over all boxes with a read lock
+func (bs *BoxStore) ForEach(fn func(api.Box) bool) {
+	bs.mu.RLock()
+	defer bs.mu.RUnlock()
+
+	for _, box := range bs.boxes {
+		if !fn(box) {
+			break
+		}
+	}
+}
+
+// Len returns the number of boxes (thread-safe read)
+func (bs *BoxStore) Len() int {
+	bs.mu.RLock()
+	defer bs.mu.RUnlock()
+	return len(bs.boxes)
+}
+
+// sortUnsafe sorts boxes (must be called with lock held)
+func (bs *BoxStore) sortUnsafe() {
+	Size := func(p1, p2 *api.Box) bool {
+		if p1.Size == p2.Size {
+			return p1.Name < p2.Name
+		}
+		return int(p1.Size) > int(p2.Size)
+	}
+	by(Size).Sort(bs.boxes)
+}
 
 type by func(p1, p2 *api.Box) bool
 
@@ -46,20 +185,22 @@ func addBox(box api.Box) (id string, err error) {
 	t := time.Now()
 
 	if box.ID != "" {
-		if testBoxID(box.ID) {
+		if boxStore.Exists(box.ID) {
 			err = fmt.Errorf("a box already exists with that ID: %s", box.ID)
 			return "", err
 		}
 	} else {
-		for box.ID == "" || testBoxID(box.ID) {
+		for box.ID == "" || boxStore.Exists(box.ID) {
 			box.ID = randStringBytes(10)
 		}
-
 	}
-	box.LastUpdate = t
-	boxes = append(boxes, box)
 
-	sortBoxes()
+	box.LastUpdate = t
+
+	// Add to store (thread-safe)
+	if err := boxStore.Add(box); err != nil {
+		return "", err
+	}
 
 	logger.Info("creating a new box", zap.String("id", box.ID))
 	logger.Debug("box detail", logStructDetails(box)...)
@@ -68,19 +209,23 @@ func addBox(box api.Box) (id string, err error) {
 	event.Type = "createBox"
 	event.Box = &box
 
-	i, err := findBoxByID(box.ID)
+	i, err := boxStore.FindIndexByID(box.ID)
 	if err != nil {
 		logger.Error(err.Error())
 	}
 	if i == 0 {
 		event.After = "status-bar"
 	} else {
-		event.After = boxes[i-1].ID
+		// Get the box before this one
+		allBoxes := boxStore.GetAll()
+		if i > 0 && i <= len(allBoxes) {
+			event.After = allBoxes[i-1].ID
+		}
 	}
 
 	stringData, err := json.Marshal(event)
 	if err != nil {
-		return "", (err)
+		return "", err
 	}
 	events.messages <- string(stringData)
 
@@ -88,21 +233,14 @@ func addBox(box api.Box) (id string, err error) {
 }
 
 func deleteBox(id string, sendEvent bool) (found bool, deletedBox api.Box) {
-	var newBoxes []api.Box
+	// Delete from store (thread-safe)
+	found, deletedBox = boxStore.Delete(id)
 
-	for _, box := range boxes {
-		if box.ID != id {
-			newBoxes = append(newBoxes, box)
-		} else {
-			logger.Info("deleting box", zap.String("id", box.ID), zap.String("name", box.Name))
-			deletedBox = box
-			found = true
-		}
+	if found {
+		logger.Info("deleting box", zap.String("id", deletedBox.ID), zap.String("name", deletedBox.Name))
 	}
 
-	boxes = newBoxes
-
-	if sendEvent {
+	if sendEvent && found {
 		event := api.Event{Type: "deleteBox", ID: id}
 		if stringData, err := json.Marshal(event); err != nil {
 			logger.Error(err.Error())
@@ -124,27 +262,20 @@ func maintainBoxes(ctx context.Context) {
 	var err error
 	var lastSave time.Time
 	for {
-		for _, box := range boxes {
+		// Iterate over boxes with read lock
+		boxStore.ForEach(func(box api.Box) bool {
 			if box.LastUpdate.IsZero() {
-				continue
+				return true // continue
 			}
 
 			lastUpdate := box.LastUpdate
-
-			if err != nil {
-				logger.Error(err.Error())
-
-				continue
-			}
 
 			if box.ExpireAfter.Duration != 0 {
 				if time.Since(lastUpdate) > box.ExpireAfter.Duration {
 					logger.Info("deleting expired box", zap.String("id", box.ID))
 					deleteBox(box.ID, true)
-
-					continue
+					return true // continue
 				}
-
 			}
 
 			if box.MaxTBU.Duration != 0 {
@@ -156,11 +287,11 @@ func maintainBoxes(ctx context.Context) {
 					event.Message = fmt.Sprintf("No new updates for %s.", box.MaxTBU)
 					event.Type = api.NoUpdate.String()
 					update(event)
-
-					continue
+					return true // continue
 				}
 			}
-		}
+			return true // continue
+		})
 		// Write json
 		if time.Since(lastSave) > time.Duration(1*time.Minute) {
 			logger.Info("Saving data file")
@@ -189,81 +320,55 @@ func maintainBoxes(ctx context.Context) {
 	}
 }
 
-// Find a box in the boxes array, supply the box ID, will return the array id
-func findBoxByID(id string) (int, error) {
-	for i, box := range boxes {
-		if box.ID == id {
-			return i, nil
-		}
-	}
-
-	return -1, fmt.Errorf("could not find %s", id)
-}
-
-func sortBoxes() {
-	Size := func(p1, p2 *api.Box) bool {
-		if p1.Size == p2.Size {
-			return p1.Name < p2.Name
-		}
-
-		return int(p1.Size) > int(p2.Size)
-	}
-
-	by(Size).Sort(boxes)
-}
-
-func testBoxID(id string) bool {
-	for _, box := range boxes {
-		if box.ID == id {
-			return true
-		}
-	}
-
-	return false
-}
-
 func update(event api.Event) {
 	t := time.Now()
-	i, err := findBoxByID(event.ID)
+	const maxMessages = 30
+
+	// Update box in store (thread-safe)
+	err := boxStore.Update(event.ID, func(box *api.Box) {
+		box.LastMessage = event.Message
+
+		// Prepend new message
+		box.Messages = append(
+			[]api.Message{
+				{
+					Message:   event.Message,
+					Status:    event.Status.String(),
+					TimeStamp: t,
+				},
+			},
+			box.Messages...,
+		)
+
+		// Trim to max messages
+		if len(box.Messages) > maxMessages {
+			box.Messages = box.Messages[:maxMessages]
+		}
+
+		if event.Type != api.NoUpdate.String() {
+			box.LastUpdate = t
+		}
+
+		box.Status = event.Status
+		if event.MaxTBU.Set {
+			box.MaxTBU = event.MaxTBU
+		}
+
+		if event.ExpireAfter.Set {
+			box.ExpireAfter = event.ExpireAfter
+		}
+	})
 
 	if err != nil {
 		logger.Error(err.Error())
-
 		return
 	}
 
-	boxes[i].LastMessage = event.Message
-
-	boxes[i].Messages = append(
-		[]api.Message{
-			{
-				Message:   event.Message,
-				Status:    event.Status.String(),
-				TimeStamp: t,
-			},
-		},
-		boxes[i].Messages...,
-	)
-
-	m := 30
-	if len(boxes[i].Messages) > m {
-		boxes[i].Messages = boxes[i].Messages[:m]
-	}
-
-	if event.Type != api.NoUpdate.String() {
-		boxes[i].LastUpdate = t
-	}
-
-	boxes[i].Status = event.Status
-	if event.MaxTBU.Set {
-		boxes[i].MaxTBU = event.MaxTBU
-	}
-
-	if event.ExpireAfter.Set {
-		boxes[i].ExpireAfter = event.ExpireAfter
-	}
-
 	event.Type = "updateBox"
-	dataString, _ := json.Marshal(event)
-	events.messages <- fmt.Sprint(string(dataString))
+	dataString, err := json.Marshal(event)
+	if err != nil {
+		logger.Error("failed to marshal update event", zap.Error(err))
+		return
+	}
+	events.messages <- string(dataString)
 }
