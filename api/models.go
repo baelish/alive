@@ -171,11 +171,16 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 	}
 	switch value := v.(type) {
 	case float64:
-		d.Duration = time.Duration(value)
+		// If it's a small number (< 1 million), treat as seconds (intuitive)
+		// If it's huge (>= 1 million), treat as nanoseconds (Go-marshaled duration)
+		if value < 1000000 {
+			d.Duration = time.Duration(value) * time.Second
+		} else {
+			d.Duration = time.Duration(value) // nanoseconds
+		}
 		d.Set = true
 		return nil
 	case string:
-		var err error
 		if value == "" {
 			d.Duration = 0
 			d.Set = false
@@ -183,6 +188,7 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 		}
 		d.Duration, err = time.ParseDuration(value)
 		if err != nil {
+			// Backward compatible: treat plain number string as seconds
 			i, err2 := strconv.Atoi(value)
 			if err2 != nil {
 				return errors.Join(err, err2)
