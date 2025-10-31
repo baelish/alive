@@ -396,6 +396,12 @@ func runDemo(ctx context.Context) {
 	if options.Debug {
 		logger.Info("Starting demo routine")
 	}
+
+	const (
+		minDemoBoxes = 10
+		maxDemoBoxes = 60
+		pause        = time.Duration(50 * time.Millisecond)
+	)
 	// Generate a constant stream of events that get pushed
 	// into the Broker's messages channel and are then broadcast
 	// out to any clients that are attached.
@@ -409,19 +415,20 @@ func runDemo(ctx context.Context) {
 
 	for {
 		boxCount := boxStore.Len()
+		// Get all boxes once per iteration to avoid repeated allocations
+		allBoxes := boxStore.GetAll()
 		max := boxCount - 1
 		if max < 1 {
 			max = 1
 		}
 		switch e := rand.Intn(100); {
 		case e < 5: // Create a box
-			if boxCount < 60 {
+			if boxCount < maxDemoBoxes {
 				createRandomBox()
 			}
 		case e < 10: // Delete a box
-			if boxCount > 10 {
+			if boxCount > minDemoBoxes {
 				// Get a random box to delete
-				allBoxes := boxStore.GetAll()
 				if len(allBoxes) > 0 {
 					deleteBox(allBoxes[rand.Intn(len(allBoxes))].ID, true)
 				}
@@ -441,7 +448,6 @@ func runDemo(ctx context.Context) {
 				event.Message = "Meh not sure what to do now...."
 			}
 
-			allBoxes := boxStore.GetAll()
 			if y < len(allBoxes) {
 				event.ID = allBoxes[y].ID
 				update(event)
@@ -451,7 +457,6 @@ func runDemo(ctx context.Context) {
 			event.ExpireAfter.Duration = 0
 			event.Message = "Adding 4s MaxTBU"
 			event.Status = api.Green
-			allBoxes := boxStore.GetAll()
 			if len(allBoxes) > 0 {
 				event.ID = allBoxes[rand.Intn(max)].ID
 				update(event)
@@ -462,14 +467,12 @@ func runDemo(ctx context.Context) {
 			event.ExpireAfter.Duration = 5 * time.Second
 			event.Message = "Expiring box in 5s"
 			event.Status = api.Grey
-			allBoxes := boxStore.GetAll()
 			if len(allBoxes) > 0 {
 				event.ID = allBoxes[rand.Intn(max)].ID
 				update(event)
 			}
 		default:
 			x++
-			allBoxes := boxStore.GetAll()
 			if x >= len(allBoxes) {
 				x = 0
 			}
@@ -493,7 +496,7 @@ func runDemo(ctx context.Context) {
 		case <-ctx.Done():
 			return
 
-		case <-time.After(time.Duration(500 * time.Millisecond)):
+		case <-time.After(pause):
 		}
 	}
 }
