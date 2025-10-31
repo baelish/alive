@@ -94,7 +94,7 @@ func TestAssetFunctions(t *testing.T) {
 	// We can test that they exist and are callable
 
 	t.Run("AssetNames returns a list", func(t *testing.T) {
-		names := AssetNames()
+		names := embeddedAssetNames()
 
 		// Should return a slice (may be empty or populated depending on assets)
 		if names == nil {
@@ -110,7 +110,7 @@ func TestAssetFunctions(t *testing.T) {
 
 		// Try to restore to a temp directory
 		// This will fail if there are no assets, but shouldn't panic
-		err := RestoreAsset(tempDir, "nonexistent.txt")
+		err := restoreEmbeddedAsset(tempDir, "nonexistent.txt")
 
 		// We don't care if it fails (no assets embedded in tests)
 		// We just verify it returns an error or nil without panicking
