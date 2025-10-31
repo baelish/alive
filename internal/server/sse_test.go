@@ -11,6 +11,9 @@ import (
 )
 
 func TestBroker_Start(t *testing.T) {
+	// Initialize logger to avoid nil pointer panics (pre-existing bug fix)
+	initTestLogger()
+
 	t.Run("adds new clients", func(t *testing.T) {
 		broker := &Broker{
 			clients:        make(map[chan string]bool),
@@ -156,16 +159,15 @@ func TestBroker_Start(t *testing.T) {
 	})
 }
 
-// testResponseWriter implements http.ResponseWriter, http.Flusher, and http.CloseNotifier
+// testResponseWriter implements http.ResponseWriter and http.Flusher
 // for testing SSE functionality
 type testResponseWriter struct {
-	mu sync.Mutex
-	header http.Header
-	body   []byte
-	statusCode  int
-	closeNotify chan bool
-	flushed     bool
-	wroteOnce   chan struct{} // Signals when first write occurs (headers are done)
+	mu         sync.Mutex
+	header     http.Header
+	body       []byte
+	statusCode int
+	flushed    bool
+	wroteOnce  chan struct{} // Signals when first write occurs (headers are done)
 }
 
 func (w *testResponseWriter) Header() http.Header {
@@ -216,13 +218,6 @@ func (w *testResponseWriter) Flush() {
 	w.flushed = true
 }
 
-func (w *testResponseWriter) CloseNotify() <-chan bool {
-	if w.closeNotify == nil {
-		w.closeNotify = make(chan bool)
-	}
-	return w.closeNotify
-}
-
 // GetBody returns a thread-safe copy of the body
 func (w *testResponseWriter) GetBody() []byte {
 	w.mu.Lock()
@@ -233,6 +228,9 @@ func (w *testResponseWriter) GetBody() []byte {
 }
 
 func TestBroker_ServeHTTP(t *testing.T) {
+	// Initialize logger to avoid nil pointer panics
+	initTestLogger()
+
 	t.Run("sets correct SSE headers", func(t *testing.T) {
 		broker := &Broker{
 			clients:        make(map[chan string]bool),
@@ -372,6 +370,8 @@ func TestRunSSE(t *testing.T) {
 	originalOptions := options
 	defer func() { options = originalOptions }()
 
+	initTestLogger()
+
 	// Note: runSSE registers a global HTTP handler at /events/
 	// This can only be done once, so we test it in a single test
 	// Set debug mode off to avoid log output
@@ -417,6 +417,8 @@ func TestRunKeepalives(t *testing.T) {
 		options = originalOptions
 		events = originalEvents
 	}()
+
+	initTestLogger()
 
 	t.Run("sends keepalive messages", func(t *testing.T) {
 		options.Debug = false
