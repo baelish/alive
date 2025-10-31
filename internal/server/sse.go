@@ -28,6 +28,9 @@ type Broker struct {
 	// Channel into which messages are pushed to be broadcast out
 	// to attached clients.
 	messages chan string
+
+	// Channel to query client count (for testing)
+	clientCount chan int
 }
 
 // Start method, this Broker method starts a new goroutine.  It handles
@@ -64,6 +67,9 @@ func (b *Broker) Start(ctx context.Context) {
 
 				logger.Info("Removed client", zap.Int("currentClientCount", len(b.clients)))
 
+			case b.clientCount <- len(b.clients):
+				// Respond to client count query (non-blocking send from caller's perspective)
+
 			case msg := <-b.messages:
 
 				// There is a new message to send.  For each
@@ -75,6 +81,11 @@ func (b *Broker) Start(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+// ClientCount returns the current number of connected clients (thread-safe)
+func (b *Broker) ClientCount() int {
+	return <-b.clientCount
 }
 
 // This Broker method handles and HTTP request at the "/events/" URL.
@@ -167,10 +178,11 @@ func runSSE(ctx context.Context) (b *Broker) {
 
 	// Make a new Broker instance
 	b = &Broker{
-		make(map[chan string]bool),
-		make(chan (chan string)),
-		make(chan (chan string)),
-		make(chan string),
+		clients:        make(map[chan string]bool),
+		newClients:     make(chan (chan string)),
+		defunctClients: make(chan (chan string)),
+		messages:       make(chan string),
+		clientCount:    make(chan int),
 	}
 
 	// Start processing events
