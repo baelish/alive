@@ -76,7 +76,15 @@ func (b *Broker) Start(ctx context.Context) {
 				// attached client, push the new message
 				// into the client's message channel.
 				for s := range b.clients {
-					s <- msg
+					// Non-blocking send to prevent slow clients from blocking broker
+					select {
+					case s <- msg:
+						// Message sent successfully
+					default:
+						// Client's buffer is full, drop the message
+						// This prevents one slow client from blocking all others
+						logger.Warn("Dropped message for slow client")
+					}
 				}
 			}
 		}
@@ -100,7 +108,8 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new channel, over which the broker can
 	// send this client messages.
-	messageChan := make(chan string)
+	// Buffered to prevent slow clients from blocking the broker
+	messageChan := make(chan string, 100)
 
 	// Add this client to the map of those that should
 	// receive updates
