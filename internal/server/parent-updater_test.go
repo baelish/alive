@@ -43,10 +43,15 @@ func TestParentUpdater(t *testing.T) {
 		defer cancel()
 
 		// Should not panic with debug enabled
-		go parentUpdater(ctx)
+		done := make(chan bool)
+		go func() {
+			parentUpdater(ctx)
+			done <- true
+		}()
 
 		<-ctx.Done()
-		time.Sleep(10 * time.Millisecond)
+		// Wait for goroutine to fully exit before modifying options
+		<-done
 
 		// Reset
 		options.Debug = false
@@ -59,32 +64,24 @@ func TestParentUpdater(t *testing.T) {
 		defer cancel()
 
 		// Start the updater
-		started := make(chan bool)
+		done := make(chan bool)
 		go func() {
-			started <- true
 			parentUpdater(ctx)
+			done <- true
 		}()
-
-		// Wait for it to start
-		<-started
 
 		// Let it run for a short time
 		time.Sleep(100 * time.Millisecond)
 
 		// Cancel and verify it exits
 		cancel()
-		time.Sleep(50 * time.Millisecond)
 
-		// If we get here without hanging, the test passes
-	})
-
-	t.Run("waits 3 seconds between updates", func(t *testing.T) {
-		// The updater uses time.After(3 * time.Second)
-		// We can't easily test the exact timing without mocking time,
-		// but we can verify the constant
-		expectedDelay := 3 * time.Second
-		if expectedDelay != 3*time.Second {
-			t.Errorf("expected delay of 3 seconds")
+		// Wait for goroutine to exit
+		select {
+		case <-done:
+			// Successfully exited
+		case <-time.After(100 * time.Millisecond):
+			t.Error("parentUpdater did not exit after context cancellation")
 		}
 	})
 }
