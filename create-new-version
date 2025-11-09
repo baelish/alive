@@ -22,7 +22,12 @@
 #   # and latest and push the images.
 #   ./create-new-version -t v0.5.1 -g -a latest --push
 #
+#   # Create a new git tag v0.6.3, build a new docker image, tag it with v0.6.3
+#   # and v0.6 and push the images. Supplying patch as we're not on master and
+#   # are patching an older but still in use version.
+#   ./create-new-version -t v0.6.3 -g -a v0.6 --patch --push
 #
+
 
 
 
@@ -70,6 +75,10 @@ processOptions() {
         shift
       ;;
 
+      --patch)
+        patch="true"
+        shift
+      ;;
       --push|-p)
         pushImages="true"
         shift
@@ -132,8 +141,8 @@ main() {
 
   # Check that we're on master and no changes are outstanding
   currentBranch="$(git rev-parse --abbrev-ref HEAD)"
-  if [[ "${testing:-}" != "true" && "$currentBranch" != "master" ]]; then
-    log "ERROR" "Not on master branch ($currentBranch), aborting."
+  if [[ "${testing:-}" != "true" && "$currentBranch" != "master" && "${patch:-}" != "true" ]]; then
+    log "ERROR" "Not testing or patching and not on master branch ($currentBranch), aborting."
 
     return 1
   fi
