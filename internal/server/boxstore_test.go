@@ -101,9 +101,9 @@ func TestBoxStore_GetByID(t *testing.T) {
 	boxStore.Add(api.Box{ID: "box-2", Name: "Box 2", Size: api.Large})
 
 	tests := []struct {
-		name        string
-		id          string
-		expectError bool
+		name         string
+		id           string
+		expectError  bool
 		expectedName string
 	}{
 		{
@@ -377,5 +377,107 @@ func TestBoxStore_Concurrency(t *testing.T) {
 	// Verify all boxes were added
 	if boxStore.Len() != 10 {
 		t.Errorf("expected 10 boxes, got %d", boxStore.Len())
+	}
+}
+
+func TestMaintainBoxes_NoDeadlock(t *testing.T) {
+	// This test verifies that the maintenance routine doesn't deadlock
+	// by calling delete/update while holding the ForEach lock
+
+	// Save original state
+	originalBoxes := boxStore.GetAll()
+	defer func() {
+		boxStore.mu.Lock()
+		boxStore.boxes = originalBoxes
+		boxStore.mu.Unlock()
+	}()
+
+	resetBoxStore()
+
+	// Add multiple boxes with different expiration states
+	boxes := []api.Box{
+		{
+			ID:         "expire-1",
+			Name:       "Expire 1",
+			Status:     api.Green,
+			Size:       api.Small,
+			LastUpdate: time.Now().Add(-2 * time.Second),
+			ExpireAfter: api.Duration{
+				Duration: 1 * time.Second,
+				Set:      true,
+			},
+		},
+		{
+			ID:         "maxtbu-1",
+			Name:       "MaxTBU 1",
+			Status:     api.Green,
+			Size:       api.Small,
+			LastUpdate: time.Now().Add(-2 * time.Second),
+			MaxTBU: api.Duration{
+				Duration: 1 * time.Second,
+				Set:      true,
+			},
+		},
+		{
+			ID:         "normal-1",
+			Name:       "Normal 1",
+			Status:     api.Green,
+			Size:       api.Small,
+			LastUpdate: time.Now(),
+		},
+	}
+
+	for _, box := range boxes {
+		if err := boxStore.Add(box); err != nil {
+			t.Fatalf("failed to add box: %v", err)
+		}
+	}
+
+	// Run maintenance routine logic with timeout to detect deadlock
+	done := make(chan bool, 1)
+	go func() {
+		// Use the actual maintenance check function
+		boxesToDelete, boxesToUpdate := maintainBoxes()
+
+		// Now perform actions outside the lock - this should NOT deadlock
+		for _, id := range boxesToDelete {
+			boxStore.Delete(id) // This needs a write lock
+		}
+
+		for _, event := range boxesToUpdate {
+			boxStore.Update(event.ID, func(box *api.Box) {
+				box.Status = event.Status
+			}) // This needs a write lock
+		}
+
+		done <- true
+	}()
+
+	// Wait for completion with timeout
+	select {
+	case <-done:
+		// Success - no deadlock
+	case <-time.After(2 * time.Second):
+		t.Fatal("maintenance routine deadlocked - timeout waiting for completion")
+	}
+
+	// Verify expected results
+	// expire-1 should be deleted
+	if _, err := boxStore.GetByID("expire-1"); err == nil {
+		t.Error("expire-1 should have been deleted")
+	}
+
+	// maxtbu-1 should exist with NoUpdate status
+	if box, err := boxStore.GetByID("maxtbu-1"); err != nil {
+		t.Error("maxtbu-1 should still exist")
+	} else if box.Status != api.NoUpdate {
+		t.Errorf("maxtbu-1 should have NoUpdate status, got %v", box.Status)
+	}
+
+	// normal-1 should exist unchanged
+	if box, err := boxStore.GetByID("normal-1"); err != nil {
+		t.Error("normal-1 should still exist")
+	} else if box.Status != api.Green {
+		t.Errorf("normal-1 should have Green status, got %v", box.Status)
 	}
 }
