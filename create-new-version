@@ -147,6 +147,20 @@ main() {
     return 1
   fi
 
+  # Check that local branch is up-to-date with origin (only when on master, not when patching)
+  if [[ "${testing:-}" != "true" && "$currentBranch" == "master" ]]; then
+    git fetch origin master
+
+    local_commit="$(git rev-parse HEAD)"
+    remote_commit="$(git rev-parse origin/master)"
+
+    if [[ "$local_commit" != "$remote_commit" ]]; then
+      log "ERROR" "Local master is not up-to-date with origin/master. Please pull or push changes first."
+
+      return 1
+    fi
+  fi
+
   if [[ "${testing:-}" != "true" ]] && ! git diff-index --quiet HEAD --; then
     log "ERROR" "Uncommitted files are present, aborting."
 
