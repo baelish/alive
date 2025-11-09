@@ -252,46 +252,66 @@ func deleteBox(id string, sendEvent bool) (found bool, deletedBox api.Box) {
 	return found, deletedBox
 }
 
+// maintainBoxes examines boxes and returns lists of boxes to delete and update.
+// This function is extracted to be testable and avoid deadlocks by not modifying
+// the store while iterating.
+func maintainBoxes() (boxesToDelete []string, boxesToUpdate []api.Event) {
+	boxStore.ForEach(func(box api.Box) bool {
+		if box.LastUpdate.IsZero() {
+			return true // continue
+		}
+
+		lastUpdate := box.LastUpdate
+
+		if box.ExpireAfter.Duration != 0 {
+			if time.Since(lastUpdate) > box.ExpireAfter.Duration {
+				if logger != nil {
+					logger.Info("marking expired box for deletion", zap.String("id", box.ID))
+				}
+				boxesToDelete = append(boxesToDelete, box.ID)
+				return true // continue
+			}
+		}
+
+		if box.MaxTBU.Duration != 0 {
+			if time.Since(lastUpdate) > box.MaxTBU.Duration && box.Status != api.NoUpdate {
+				if logger != nil {
+					logger.Warn("marking box for no-update event", zap.String("id", box.ID))
+				}
+				var event api.Event
+				event.ID = box.ID
+				event.Status = api.NoUpdate
+				event.Message = fmt.Sprintf("No new updates for %s.", box.MaxTBU)
+				event.Type = api.NoUpdate.String()
+				boxesToUpdate = append(boxesToUpdate, event)
+				return true // continue
+			}
+		}
+		return true // continue
+	})
+	return boxesToDelete, boxesToUpdate
+}
+
 // Find any boxes that have expired and delete them, find any boxes which have
 // not had timely updates and update their status. Also saves box file
 // periodically or on exit.
-func maintainBoxes(ctx context.Context) {
+func maintenanceRoutine(ctx context.Context) {
 	if options.Debug {
 		logger.Info("Starting box maintenance routine")
 	}
 	var err error
 	var lastSave time.Time
 	for {
-		// Iterate over boxes with read lock
-		boxStore.ForEach(func(box api.Box) bool {
-			if box.LastUpdate.IsZero() {
-				return true // continue
-			}
+		// Check which boxes need maintenance
+		boxesToDelete, boxesToUpdate := maintainBoxes()
 
-			lastUpdate := box.LastUpdate
-
-			if box.ExpireAfter.Duration != 0 {
-				if time.Since(lastUpdate) > box.ExpireAfter.Duration {
-					logger.Info("deleting expired box", zap.String("id", box.ID))
-					deleteBox(box.ID, true)
-					return true // continue
-				}
-			}
-
-			if box.MaxTBU.Duration != 0 {
-				if time.Since(lastUpdate) > box.MaxTBU.Duration && box.Status != api.NoUpdate {
-					logger.Warn("no events for box", zap.String("id", box.ID))
-					var event api.Event
-					event.ID = box.ID
-					event.Status = api.NoUpdate
-					event.Message = fmt.Sprintf("No new updates for %s.", box.MaxTBU)
-					event.Type = api.NoUpdate.String()
-					update(event)
-					return true // continue
-				}
-			}
-			return true // continue
-		})
+		// Now perform actions outside of the ForEach lock
+		for _, id := range boxesToDelete {
+			deleteBox(id, true)
+		}
+		for _, event := range boxesToUpdate {
+			update(event)
+		}
 		// Write json
 		if time.Since(lastSave) > time.Duration(1*time.Minute) {
 			logger.Info("Saving data file")

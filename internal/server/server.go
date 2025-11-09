@@ -73,7 +73,7 @@ func Start() {
 	go runAPI(ctx)
 
 	go runKeepalives(ctx)
-	go maintainBoxes(ctx)
+	go maintenanceRoutine(ctx)
 
 	if options.ParentUrl != "" {
 		go parentUpdater(ctx)
