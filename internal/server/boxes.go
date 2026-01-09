@@ -340,7 +340,7 @@ func maintenanceRoutine(ctx context.Context) {
 	}
 }
 
-func update(event api.Event) {
+func update(event api.Event) error {
 	t := time.Now()
 	const maxMessages = 30
 
@@ -389,14 +389,14 @@ func update(event api.Event) {
 
 	if err != nil {
 		logger.Error(err.Error())
-		return
+		return err
 	}
 
 	event.Type = "updateBox"
 	dataString, err := json.Marshal(event)
 	if err != nil {
-		logger.Error("failed to marshal update event", zap.Error(err))
-		return
+		return err
 	}
 	events.messages <- string(dataString)
+	return nil
 }
