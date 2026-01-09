@@ -197,6 +197,14 @@ func addBox(box api.Box) (id string, err error) {
 
 	box.LastUpdate = t
 
+	if box.MaxTBU != nil && box.MaxTBU.Duration() == 0 {
+		box.MaxTBU = nil
+	}
+
+	if box.ExpireAfter != nil && box.ExpireAfter.Duration() == 0 {
+		box.ExpireAfter = nil
+	}
+
 	// Add to store (thread-safe)
 	if err := boxStore.Add(box); err != nil {
 		return "", err
