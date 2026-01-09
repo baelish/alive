@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/baelish/alive/api"
 
@@ -77,7 +78,17 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 	event.ID = chi.URLParam(r, "id")
 	event.Type = "updateBox"
 	logger.Debug("update event details", logStructDetails(event)...)
-	update(event)
+	err = update(event)
+	if err != nil {
+		if strings.Contains(err.Error(), "could not find box") {
+			handleApiErrorResponse(w, http.StatusNotFound, err, "box not found", true, false)
+		} else {
+			handleApiErrorResponse(w, http.StatusInternalServerError, err, "Internal server error", false, false)
+		}
+
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(event); err != nil {
 		logger.Error("failed to encode response: " + err.Error())
@@ -89,7 +100,7 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
-		handleApiErrorResponse(w, http.StatusBadRequest, err, "failed to decode data received", true, false)
+		handleApiErrorResponse(w, http.StatusBadRequest, err, "could not decode data received", true, false)
 
 		return
 	}
