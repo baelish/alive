@@ -380,6 +380,8 @@ var animals = [...]string{
 	"Zorilla",
 }
 
+func ptr[T any](v T) *T { return &v }
+
 func createRandomBox() {
 	var newBox api.Box
 	newBox.Name = animals[rand.Intn(len(animals))]
@@ -400,7 +402,7 @@ func runDemo(ctx context.Context) {
 	const (
 		minDemoBoxes = 10
 		maxDemoBoxes = 60
-		pause        = time.Duration(50 * time.Millisecond)
+		pause        = time.Duration(5000 * time.Millisecond)
 	)
 	// Generate a constant stream of events that get pushed
 	// into the Broker's messages channel and are then broadcast
@@ -452,9 +454,9 @@ func runDemo(ctx context.Context) {
 				event.ID = allBoxes[y].ID
 				update(event)
 			}
-		case e < 25: // Set Max TBU to small number
-			event.MaxTBU.Duration = time.Second * 4
-			event.ExpireAfter.Duration = 0
+		case e < 25: // Set Max TBU to small number and unset expiry
+			event.MaxTBU = ptr(2 * pause)
+			event.ExpireAfter = new(time.Duration)
 			event.Message = "Adding 4s MaxTBU"
 			event.Status = api.Green
 			if len(allBoxes) > 0 {
@@ -462,9 +464,9 @@ func runDemo(ctx context.Context) {
 				update(event)
 			}
 
-		case e < 30: // Set Max TBU to small number
-			event.MaxTBU.Duration = 0
-			event.ExpireAfter.Duration = 5 * time.Second
+		case e < 30: // Unset Max TBU and set expiry
+			event.MaxTBU = new(time.Duration)
+			event.ExpireAfter = ptr(5 * pause)
 			event.Message = "Expiring box in 5s"
 			event.Status = api.Grey
 			if len(allBoxes) > 0 {

@@ -152,120 +152,11 @@ func TestBoxSizeString(t *testing.T) {
 	}
 }
 
-// TestDurationMarshaling tests Duration custom marshaling
-func TestDurationMarshaling(t *testing.T) {
-	tests := []struct {
-		name     string
-		duration Duration
-		expected string
-	}{
-		{
-			name:     "set duration",
-			duration: Duration{Duration: 5 * time.Minute, Set: true},
-			expected: `"5m0s"`,
-		},
-		{
-			name:     "unset duration",
-			duration: Duration{Duration: 0, Set: false},
-			expected: `""`,
-		},
-		{
-			name:     "zero but set",
-			duration: Duration{Duration: 0, Set: true},
-			expected: `"0s"`,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			data, err := json.Marshal(tt.duration)
-			if err != nil {
-				t.Fatalf("failed to marshal duration: %v", err)
-			}
-
-			if string(data) != tt.expected {
-				t.Errorf("expected %s, got %s", tt.expected, string(data))
-			}
-		})
-	}
-}
-
-// TestDurationUnmarshaling tests Duration custom unmarshaling
-func TestDurationUnmarshaling(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       string
-		expectedDur time.Duration
-		expectedSet bool
-		shouldFail  bool
-	}{
-		{
-			name:        "empty string",
-			input:       `""`,
-			expectedDur: 0,
-			expectedSet: false,
-			shouldFail:  false,
-		},
-		{
-			name:        "duration string",
-			input:       `"5m"`,
-			expectedDur: 5 * time.Minute,
-			expectedSet: true,
-			shouldFail:  false,
-		},
-		{
-			name:        "seconds as number",
-			input:       `60`,
-			expectedDur: 60 * time.Second,
-			expectedSet: true,
-			shouldFail:  false,
-		},
-		{
-			name:        "seconds as string",
-			input:       `"120"`,
-			expectedDur: 120 * time.Second,
-			expectedSet: true,
-			shouldFail:  false,
-		},
-		{
-			name:        "complex duration",
-			input:       `"1h30m"`,
-			expectedDur: 90 * time.Minute,
-			expectedSet: true,
-			shouldFail:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var d Duration
-			err := json.Unmarshal([]byte(tt.input), &d)
-
-			if tt.shouldFail {
-				if err == nil {
-					t.Error("expected error, got nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			if d.Duration != tt.expectedDur {
-				t.Errorf("expected duration %v, got %v", tt.expectedDur, d.Duration)
-			}
-
-			if d.Set != tt.expectedSet {
-				t.Errorf("expected Set=%v, got %v", tt.expectedSet, d.Set)
-			}
-		})
-	}
-}
-
 // TestBoxMarshaling tests complete Box marshaling
 func TestBoxMarshaling(t *testing.T) {
 	info := map[string]string{"key": "value"}
+	expireTime := 15 * time.Minute
+	maxTBU := 5 * time.Minute
 	box := Box{
 		ID:          "test-123",
 		Name:        "Test Box",
@@ -282,8 +173,8 @@ func TestBoxMarshaling(t *testing.T) {
 			{Message: "Hello", Status: "ok", TimeStamp: time.Now()},
 		},
 		LastMessage: "Hello",
-		ExpireAfter: Duration{Duration: 5 * time.Minute, Set: true},
-		MaxTBU:      Duration{Duration: 10 * time.Minute, Set: true},
+		ExpireAfter: &expireTime,
+		MaxTBU:      &maxTBU,
 	}
 
 	data, err := json.Marshal(box)
@@ -317,6 +208,8 @@ func TestBoxMarshaling(t *testing.T) {
 // TestEventMarshaling tests Event marshaling
 func TestEventMarshaling(t *testing.T) {
 	box := Box{ID: "test", Name: "Test"}
+	expireTime := 15 * time.Minute
+	maxTBU := 5 * time.Minute
 	event := Event{
 		ID:          "event-123",
 		After:       "after-id",
@@ -324,8 +217,8 @@ func TestEventMarshaling(t *testing.T) {
 		Status:      Green,
 		Message:     "Test message",
 		Type:        "updateBox",
-		ExpireAfter: Duration{Duration: 5 * time.Minute, Set: true},
-		MaxTBU:      Duration{Duration: 10 * time.Minute, Set: true},
+		ExpireAfter: &expireTime,
+		MaxTBU:      &maxTBU,
 	}
 
 	data, err := json.Marshal(event)

@@ -81,7 +81,6 @@ const boxInfo = `
 <div id="{{ .ID }}" class="{{ .Status }} fullwidth info box">
   <h2>{{ .Name }}</h2>
   {{ if .Links }}{{ range .Links }}<a href="{{ .URL }}" target="_blank" rel="noopener noreferrer">{{ .Name }}</a><br />{{ end }}{{ end }}
-
   <table>
   <tr><th>ID:</th><td>{{ .ID }}</td></tr>
   {{ if .DisplayName }}<tr><th>Display name:</th><td>{{ .DisplayName }}</td></tr>{{ end }}
@@ -89,10 +88,9 @@ const boxInfo = `
   {{ if .Info }}{{ range $key, $value := .Info }}<tr><th>{{ $key }}:</th><td>{{ $value }}</td></tr>{{ end }}{{ end }}
   <tr><th>Last message:</th><td class="message">{{ .LastMessage }}</td></tr>
   <tr><th>Last updated:</th><td class="lastUpdated">{{ .LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
-  <tr class="maxTBU" {{ if eq .MaxTBU.Duration 0}}style="display: none;"{{ end }}><th>Max TBU:</th><td>{{ .MaxTBU }}</td></tr>
-  <tr class="expireAfter" {{ if eq .ExpireAfter.Duration 0 }}style="display: none;"{{ end }}><th>Expires after:</th><td>{{ .ExpireAfter }}</td></tr>
+  {{ if .MaxTBU }}<tr class="maxTBU"><th>Max TBU:</th><td>{{ .MaxTBU.String }}</td></tr>{{ end }}
+  {{ if .ExpireAfter }}<tr class="expireAfter"><th>Expires after:</th><td>{{ .ExpireAfter.String }}</td></tr>{{ end }}
   <tr><th>Previous Messages:</th><td><ul class="previousMessages">{{ range $m := .Messages }}<li>{{ $m.TimeStamp.Format "2006-01-02T15:04:05.000Z07:00" }}: {{ $m.Status | ToUpper }} ({{ $m.Message }})</li>{{ end }}</ul></td></tr>
-
 </div>
 {{ end }}`
 

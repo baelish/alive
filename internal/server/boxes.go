@@ -263,8 +263,8 @@ func maintainBoxes() (boxesToDelete []string, boxesToUpdate []api.Event) {
 
 		lastUpdate := box.LastUpdate
 
-		if box.ExpireAfter.Duration != 0 {
-			if time.Since(lastUpdate) > box.ExpireAfter.Duration {
+		if box.ExpireAfter != nil {
+			if time.Since(lastUpdate) > *box.ExpireAfter {
 				if logger != nil {
 					logger.Info("marking expired box for deletion", zap.String("id", box.ID))
 				}
@@ -273,8 +273,8 @@ func maintainBoxes() (boxesToDelete []string, boxesToUpdate []api.Event) {
 			}
 		}
 
-		if box.MaxTBU.Duration != 0 {
-			if time.Since(lastUpdate) > box.MaxTBU.Duration && box.Status != api.NoUpdate {
+		if box.MaxTBU != nil {
+			if time.Since(lastUpdate) > *box.MaxTBU && box.Status != api.NoUpdate {
 				if logger != nil {
 					logger.Warn("marking box for no-update event", zap.String("id", box.ID))
 				}
@@ -370,12 +370,20 @@ func update(event api.Event) {
 		}
 
 		box.Status = event.Status
-		if event.MaxTBU.Set {
-			box.MaxTBU = event.MaxTBU
+		if event.MaxTBU != nil {
+			if *event.MaxTBU == time.Duration(0) {
+				box.MaxTBU = nil
+			} else {
+				box.MaxTBU = event.MaxTBU
+			}
 		}
 
-		if event.ExpireAfter.Set {
-			box.ExpireAfter = event.ExpireAfter
+		if event.ExpireAfter != nil {
+			if *event.ExpireAfter == time.Duration(0) {
+				box.ExpireAfter = nil
+			} else {
+				box.ExpireAfter = event.ExpireAfter
+			}
 		}
 	})
 

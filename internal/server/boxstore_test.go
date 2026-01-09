@@ -395,17 +395,16 @@ func TestMaintainBoxes_NoDeadlock(t *testing.T) {
 	resetBoxStore()
 
 	// Add multiple boxes with different expiration states
+	maxTBU := 1 * time.Second
+	expireTime := 1 * time.Second
 	boxes := []api.Box{
 		{
-			ID:         "expire-1",
-			Name:       "Expire 1",
-			Status:     api.Green,
-			Size:       api.Small,
-			LastUpdate: time.Now().Add(-2 * time.Second),
-			ExpireAfter: api.Duration{
-				Duration: 1 * time.Second,
-				Set:      true,
-			},
+			ID:          "expire-1",
+			Name:        "Expire 1",
+			Status:      api.Green,
+			Size:        api.Small,
+			LastUpdate:  time.Now().Add(-2 * time.Second),
+			ExpireAfter: &expireTime,
 		},
 		{
 			ID:         "maxtbu-1",
@@ -413,10 +412,7 @@ func TestMaintainBoxes_NoDeadlock(t *testing.T) {
 			Status:     api.Green,
 			Size:       api.Small,
 			LastUpdate: time.Now().Add(-2 * time.Second),
-			MaxTBU: api.Duration{
-				Duration: 1 * time.Second,
-				Set:      true,
-			},
+			MaxTBU:     &maxTBU,
 		},
 		{
 			ID:         "normal-1",
