@@ -14,16 +14,29 @@ type ErrorResponse struct {
 	Error   string `json:"error,omitempty"`
 }
 
+type Duration time.Duration
+
+func (d Duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d *Duration) Duration() time.Duration {
+	if d == nil {
+		return 0
+	}
+	return time.Duration(*d)
+}
+
 // Event struct is used to stream events to dashboard.
 type Event struct {
-	ID          string   `json:"id,omitempty"`
-	After       string   `json:"after,omitempty"`
-	Box         *Box     `json:"box,omitempty"`
-	Status      Status   `json:"status,omitempty"`
-	Message     string   `json:"lastMessage,omitempty"`
-	ExpireAfter Duration `json:"expireAfter"`
-	MaxTBU      Duration `json:"maxTBU"`
-	Type        string   `json:"type"`
+	ID          string    `json:"id,omitempty"`
+	After       string    `json:"after,omitempty"`
+	Box         *Box      `json:"box,omitempty"`
+	Status      Status    `json:"status,omitempty"`
+	Message     string    `json:"lastMessage,omitempty"`
+	ExpireAfter *Duration `json:"expireAfter"`
+	MaxTBU      *Duration `json:"maxTBU"`
+	Type        string    `json:"type"`
 }
 
 // Links describes a URL with a name.
@@ -156,11 +169,6 @@ func (bs BoxSize) MarshalJSON() ([]byte, error) {
 	return json.Marshal(bs.String())
 }
 
-type Duration struct {
-	time.Duration
-	Set bool
-}
-
 // This is a custom UnmarshalJSON() for a time.Duration that can have a null
 // value ("") as well as being backward compatible with supplying a string with
 // the number of seconds.
@@ -173,31 +181,31 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 	case float64:
 		// If it's a small number (< 1 million), treat as seconds (intuitive)
 		// If it's huge (>= 1 million), treat as nanoseconds (Go-marshaled duration)
-		if value < 1000000 {
-			d.Duration = time.Duration(value) * time.Second
-		} else {
-			d.Duration = time.Duration(value) // nanoseconds
+		if value == 0 {
+			d = nil
 		}
-		d.Set = true
+		if value < 1000000 {
+			*d = Duration(time.Duration(value) * time.Second)
+		} else {
+			*d = Duration(time.Duration(value)) // nanoseconds
+		}
 		return nil
 	case string:
 		if value == "" {
-			d.Duration = 0
-			d.Set = false
+			d = nil
 			return nil
 		}
-		d.Duration, err = time.ParseDuration(value)
+		x, err := time.ParseDuration(value)
+		*d = Duration(x)
 		if err != nil {
 			// Backward compatible: treat plain number string as seconds
 			i, err2 := strconv.Atoi(value)
 			if err2 != nil {
 				return errors.Join(err, err2)
 			}
-			d.Duration = time.Duration(i) * time.Second
-			d.Set = true
+			*d = Duration(time.Duration(i) * time.Second)
 			return nil
 		} else {
-			d.Set = true
 			return nil
 		}
 	default:
@@ -208,11 +216,7 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 // This is a custom MarshalJSON() for a time.Duration that can have a null value
 // ("")
 func (d Duration) MarshalJSON() (b []byte, err error) {
-	if d.Set {
-		return []byte(fmt.Sprintf(`"%s"`, d.String())), nil
-	} else {
-		return []byte(`""`), nil
-	}
+	return json.Marshal(d.String())
 }
 
 // Box represents a single item on our monitoring screen.
@@ -225,8 +229,8 @@ type Box struct {
 	Parent      string             `json:"parent,omitempty"`
 	Size        BoxSize            `json:"size"`
 	Status      Status             `json:"status"`
-	ExpireAfter Duration           `json:"expireAfter,omitempty"`
-	MaxTBU      Duration           `json:"maxTBU,omitempty"`
+	ExpireAfter *Duration          `json:"expireAfter,omitempty"`
+	MaxTBU      *Duration          `json:"maxTBU,omitempty"`
 	Messages    []Message          `json:"messages"`
 	LastUpdate  time.Time          `json:"lastUpdate"`
 	LastMessage string             `json:"lastMessage"`

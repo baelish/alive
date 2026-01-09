@@ -263,8 +263,8 @@ func maintainBoxes() (boxesToDelete []string, boxesToUpdate []api.Event) {
 
 		lastUpdate := box.LastUpdate
 
-		if box.ExpireAfter.Duration != 0 {
-			if time.Since(lastUpdate) > box.ExpireAfter.Duration {
+		if box.ExpireAfter != nil {
+			if time.Since(lastUpdate) > box.ExpireAfter.Duration() {
 				if logger != nil {
 					logger.Info("marking expired box for deletion", zap.String("id", box.ID))
 				}
@@ -273,15 +273,15 @@ func maintainBoxes() (boxesToDelete []string, boxesToUpdate []api.Event) {
 			}
 		}
 
-		if box.MaxTBU.Duration != 0 {
-			if time.Since(lastUpdate) > box.MaxTBU.Duration && box.Status != api.NoUpdate {
+		if box.MaxTBU != nil {
+			if time.Since(lastUpdate) > box.MaxTBU.Duration() && box.Status != api.NoUpdate {
 				if logger != nil {
 					logger.Warn("marking box for no-update event", zap.String("id", box.ID))
 				}
 				var event api.Event
 				event.ID = box.ID
 				event.Status = api.NoUpdate
-				event.Message = fmt.Sprintf("No new updates for %s.", box.MaxTBU)
+				event.Message = fmt.Sprintf("No new updates for %s.", *box.MaxTBU)
 				event.Type = api.NoUpdate.String()
 				boxesToUpdate = append(boxesToUpdate, event)
 				return true // continue
@@ -313,7 +313,7 @@ func maintenanceRoutine(ctx context.Context) {
 			update(event)
 		}
 		// Write json
-		if time.Since(lastSave) > time.Duration(1*time.Minute) {
+		if time.Since(lastSave) > 1*time.Minute {
 			logger.Info("Saving data file")
 			err = saveBoxFile()
 			if err != nil {
@@ -335,7 +335,7 @@ func maintenanceRoutine(ctx context.Context) {
 
 			return
 
-		case <-time.After(time.Duration(1 * time.Second)):
+		case <-time.After(1 * time.Second):
 		}
 	}
 }
@@ -370,12 +370,20 @@ func update(event api.Event) {
 		}
 
 		box.Status = event.Status
-		if event.MaxTBU.Set {
-			box.MaxTBU = event.MaxTBU
+		if event.MaxTBU != nil {
+			if *event.MaxTBU == api.Duration(0) {
+				box.ExpireAfter = nil
+			} else {
+				box.MaxTBU = event.MaxTBU
+			}
 		}
 
-		if event.ExpireAfter.Set {
-			box.ExpireAfter = event.ExpireAfter
+		if event.ExpireAfter != nil {
+			if *event.ExpireAfter == api.Duration(0) {
+				box.ExpireAfter = nil
+			} else {
+				box.ExpireAfter = event.ExpireAfter
+			}
 		}
 	})
 

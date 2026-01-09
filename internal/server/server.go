@@ -87,7 +87,7 @@ func Start() {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Duration(1 * time.Second)):
+		case <-time.After(1 * time.Second):
 		}
 	}
 }
