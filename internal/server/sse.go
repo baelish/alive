@@ -171,7 +171,7 @@ func runKeepalives(ctx context.Context) {
 			}
 			return
 
-		case <-time.After(time.Duration(3 * time.Second)):
+		case <-time.After(3 * time.Second):
 		}
 
 		// Send a keepalive

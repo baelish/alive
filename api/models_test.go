@@ -6,6 +6,54 @@ import (
 	"time"
 )
 
+func ptr[T any](v T) *T { return &v }
+
+func TestDurationMethods(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   *Duration
+		wantStr string
+		wantDur time.Duration
+	}{
+		{
+			name:    "nil pointer",
+			input:   nil,
+			wantStr: "<nil>", // String() is on value, so nil pointer can't call it; skip
+			wantDur: 0,
+		},
+		{
+			name:    "5 minutes",
+			input:   func() *Duration { d := Duration(5 * time.Minute); return &d }(),
+			wantStr: "5m0s",
+			wantDur: 5 * time.Minute,
+		},
+		{
+			name:    "zero duration",
+			input:   func() *Duration { d := Duration(0); return &d }(),
+			wantStr: "0s",
+			wantDur: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.input != nil {
+				// Test String() on value
+				gotStr := (*tt.input).String()
+				if gotStr != tt.wantStr {
+					t.Errorf("String() = %q; want %q", gotStr, tt.wantStr)
+				}
+			}
+
+			// Test Duration() on pointer
+			gotDur := tt.input.Duration()
+			if gotDur != tt.wantDur {
+				t.Errorf("Duration() = %v; want %v", gotDur, tt.wantDur)
+			}
+		})
+	}
+}
+
 // TestStatusMarshaling tests Status JSON marshaling and unmarshaling
 func TestStatusMarshaling(t *testing.T) {
 	tests := []struct {
@@ -156,22 +204,22 @@ func TestBoxSizeString(t *testing.T) {
 func TestDurationMarshaling(t *testing.T) {
 	tests := []struct {
 		name     string
-		duration Duration
+		duration *Duration
 		expected string
 	}{
 		{
 			name:     "set duration",
-			duration: Duration{Duration: 5 * time.Minute, Set: true},
+			duration: ptr(Duration(5 * time.Minute)),
 			expected: `"5m0s"`,
 		},
 		{
 			name:     "unset duration",
-			duration: Duration{Duration: 0, Set: false},
-			expected: `""`,
+			duration: nil,
+			expected: `null`,
 		},
 		{
 			name:     "zero but set",
-			duration: Duration{Duration: 0, Set: true},
+			duration: ptr(Duration(0)),
 			expected: `"0s"`,
 		},
 	}
@@ -194,70 +242,96 @@ func TestDurationMarshaling(t *testing.T) {
 func TestDurationUnmarshaling(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       string
+		input       []byte
 		expectedDur time.Duration
 		expectedSet bool
 		shouldFail  bool
 	}{
 		{
-			name:        "empty string",
-			input:       `""`,
+			name:        "null",
+			input:       []byte(`null`),
 			expectedDur: 0,
 			expectedSet: false,
 			shouldFail:  false,
 		},
 		{
+			name:        "empty string",
+			input:       []byte(`""`),
+			expectedDur: 0,
+			expectedSet: true,
+			shouldFail:  false,
+		},
+		{
 			name:        "duration string",
-			input:       `"5m"`,
+			input:       []byte(`"5m"`),
 			expectedDur: 5 * time.Minute,
 			expectedSet: true,
 			shouldFail:  false,
 		},
 		{
 			name:        "seconds as number",
-			input:       `60`,
+			input:       []byte(`60`),
 			expectedDur: 60 * time.Second,
 			expectedSet: true,
 			shouldFail:  false,
 		},
 		{
 			name:        "seconds as string",
-			input:       `"120"`,
+			input:       []byte(`"120"`),
 			expectedDur: 120 * time.Second,
 			expectedSet: true,
 			shouldFail:  false,
 		},
 		{
+			name:        "nano seconds as number",
+			input:       []byte(`60000000000`),
+			expectedDur: 1 * time.Minute,
+			expectedSet: true,
+			shouldFail:  false,
+		},
+		{
 			name:        "complex duration",
-			input:       `"1h30m"`,
+			input:       []byte(`"1h30m"`),
 			expectedDur: 90 * time.Minute,
 			expectedSet: true,
 			shouldFail:  false,
+		},
+		{
+			name:        "nonsense",
+			input:       []byte(`"nonsense"`),
+			expectedDur: 0,
+			expectedSet: false,
+			shouldFail:  true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var d Duration
-			err := json.Unmarshal([]byte(tt.input), &d)
+			var d *Duration
+			err := json.Unmarshal(tt.input, &d)
 
 			if tt.shouldFail {
 				if err == nil {
-					t.Error("expected error, got nil")
+					t.Errorf("%s: expected error, got nil", tt.name)
 				}
 				return
 			}
 
 			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+				t.Fatalf("%s: unexpected error: %v", tt.name, err)
 			}
 
-			if d.Duration != tt.expectedDur {
-				t.Errorf("expected duration %v, got %v", tt.expectedDur, d.Duration)
-			}
-
-			if d.Set != tt.expectedSet {
-				t.Errorf("expected Set=%v, got %v", tt.expectedSet, d.Set)
+			if d != nil {
+				if !tt.expectedSet {
+					t.Fatalf("%s: expected nil, got %s", tt.name, *d)
+				}
+				if *d != Duration(tt.expectedDur) {
+					t.Errorf("%s: expected duration %s, got %s", tt.name, tt.expectedDur, *d)
+				}
+			} else {
+				if tt.expectedSet {
+					t.Errorf("%s: expected duration %s, but var was not set", tt.name, tt.expectedDur)
+				}
 			}
 		})
 	}
@@ -282,8 +356,8 @@ func TestBoxMarshaling(t *testing.T) {
 			{Message: "Hello", Status: "ok", TimeStamp: time.Now()},
 		},
 		LastMessage: "Hello",
-		ExpireAfter: Duration{Duration: 5 * time.Minute, Set: true},
-		MaxTBU:      Duration{Duration: 10 * time.Minute, Set: true},
+		ExpireAfter: ptr(Duration(5 * time.Minute)),
+		MaxTBU:      ptr(Duration(10 * time.Minute)),
 	}
 
 	data, err := json.Marshal(box)
@@ -306,12 +380,42 @@ func TestBoxMarshaling(t *testing.T) {
 	}
 
 	if unmarshaled.Status != box.Status {
-		t.Errorf("expected Status %v, got %v", box.Status, unmarshaled.Status)
+		t.Errorf("expected Status %s, got %s", box.Status, unmarshaled.Status)
 	}
 
 	if unmarshaled.Size != box.Size {
-		t.Errorf("expected Size %v, got %v", box.Size, unmarshaled.Size)
+		t.Errorf("expected Size %s, got %s", box.Size, unmarshaled.Size)
 	}
+
+	if *unmarshaled.MaxTBU != *box.MaxTBU {
+		t.Errorf("expected MaxTBU %s, got %s", *box.MaxTBU, *unmarshaled.MaxTBU)
+	}
+
+	if *unmarshaled.ExpireAfter != *box.ExpireAfter {
+		t.Errorf("expected ExpireAfter %s, got %s", *box.ExpireAfter, *unmarshaled.ExpireAfter)
+	}
+
+	box.MaxTBU = nil
+	box.ExpireAfter = nil
+	data, err = json.Marshal(box)
+	if err != nil {
+		t.Fatalf("failed to marshal box: %v", err)
+	}
+
+	unmarshaled = Box{}
+	err = json.Unmarshal(data, &unmarshaled)
+	if err != nil {
+		t.Fatalf("failed to unmarshal box: %v", err)
+	}
+
+	if unmarshaled.MaxTBU != nil {
+		t.Errorf("expected MaxTBU to be nil, got %s", *unmarshaled.MaxTBU)
+	}
+
+	if unmarshaled.ExpireAfter != nil {
+		t.Errorf("expected ExpireAfter to be nil, got %s", *unmarshaled.ExpireAfter)
+	}
+
 }
 
 // TestEventMarshaling tests Event marshaling
@@ -324,8 +428,8 @@ func TestEventMarshaling(t *testing.T) {
 		Status:      Green,
 		Message:     "Test message",
 		Type:        "updateBox",
-		ExpireAfter: Duration{Duration: 5 * time.Minute, Set: true},
-		MaxTBU:      Duration{Duration: 10 * time.Minute, Set: true},
+		ExpireAfter: ptr(Duration(5 * time.Minute)),
+		MaxTBU:      ptr(Duration(10 * time.Minute)),
 	}
 
 	data, err := json.Marshal(event)
@@ -350,6 +454,36 @@ func TestEventMarshaling(t *testing.T) {
 	if unmarshaled.Status != event.Status {
 		t.Errorf("expected Status %v, got %v", event.Status, unmarshaled.Status)
 	}
+
+	if *unmarshaled.MaxTBU != *event.MaxTBU {
+		t.Errorf("expected MaxTBU %s, got %s", *event.MaxTBU, *unmarshaled.MaxTBU)
+	}
+
+	if *unmarshaled.ExpireAfter != *event.ExpireAfter {
+		t.Errorf("expected ExpireAfter %s, got %s", *event.ExpireAfter, *unmarshaled.ExpireAfter)
+	}
+
+	event.MaxTBU = nil
+	event.ExpireAfter = nil
+	data, err = json.Marshal(event)
+	if err != nil {
+		t.Fatalf("failed to marshal event: %v", err)
+	}
+
+	unmarshaled = Event{}
+	err = json.Unmarshal(data, &unmarshaled)
+	if err != nil {
+		t.Fatalf("failed to unmarshal event: %v", err)
+	}
+
+	if unmarshaled.MaxTBU != nil {
+		t.Errorf("expected MaxTBU to be nil, got %s", *unmarshaled.MaxTBU)
+	}
+
+	if unmarshaled.ExpireAfter != nil {
+		t.Errorf("expected ExpireAfter to be nil, got %s", *unmarshaled.ExpireAfter)
+	}
+
 }
 
 // TestErrorResponse tests ErrorResponse struct
