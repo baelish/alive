@@ -68,6 +68,9 @@ func Start() {
 	getBoxesFromDataFile()
 
 	events = runSSE(ctx)
+	if events == nil || events.messages == nil {
+		logger.Fatal("events not started correctly")
+	}
 
 	go runDashboard(ctx)
 	go runAPI(ctx)
