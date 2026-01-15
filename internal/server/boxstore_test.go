@@ -1,11 +1,30 @@
 package server
 
 import (
+	"os"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/baelish/alive/api"
+	"go.uber.org/zap"
 )
+
+func TestMain(m *testing.M) {
+	logger = zap.NewNop()
+
+	// Prevent nil deref / blocking when tests call update/addBox directly.
+	if events == nil || events.messages == nil {
+		events = &Broker{messages: make(chan string, 1000)}
+		go func() {
+			for range events.messages {
+			}
+		}()
+	}
+
+	os.Exit(m.Run())
+
+}
 
 // Helper to reset boxStore state between tests
 func resetBoxStore() {
@@ -474,4 +493,100 @@ func TestMaintainBoxes_NoDeadlock(t *testing.T) {
 	} else if box.Status != api.Green {
 		t.Errorf("normal-1 should have Green status, got %v", box.Status)
 	}
+}
+
+func TestEvent_Update(t *testing.T) {
+	originalBoxes := boxStore.GetAll()
+	defer func() {
+		boxStore.mu.Lock()
+		boxStore.boxes = originalBoxes
+		boxStore.mu.Unlock()
+	}()
+
+	resetBoxStore()
+
+	id := "test-box"
+	boxStore.Add(api.Box{
+		ID:     id,
+		Name:   "Original Name",
+		Status: api.Grey,
+	})
+
+	tests := []struct {
+		event          api.Event
+		expectedMaxTBU *api.Duration
+		expectedExpiry *api.Duration
+	}{
+		{
+			event: api.Event{
+				ID:      id,
+				Message: "Green TBU 30s",
+				Status:  api.Green,
+				MaxTBU:  ptr(api.Duration(time.Second * 30)),
+			},
+			expectedMaxTBU: ptr(api.Duration(time.Second * 30)),
+		},
+		{
+			event: api.Event{
+				ID:          id,
+				Message:     "Red Expiry 24h",
+				Status:      api.Red,
+				ExpireAfter: ptr(api.Duration(24 * time.Hour)),
+			},
+			expectedExpiry: ptr(api.Duration(24 * time.Hour)),
+			expectedMaxTBU: ptr(api.Duration(time.Second * 30)),
+		},
+		{
+			event: api.Event{
+				ID:      id,
+				Message: "Amber, TBU 0s",
+				Status:  api.Amber,
+				MaxTBU:  ptr(api.Duration(0)),
+			},
+			expectedExpiry: ptr(api.Duration(24 * time.Hour)),
+		},
+		{
+			event: api.Event{
+				ID:          id,
+				Message:     "Grey, TBU 30s, Expiry 0s",
+				Status:      api.Grey,
+				MaxTBU:      ptr(api.Duration(time.Second * 30)),
+				ExpireAfter: ptr(api.Duration(0)),
+			},
+			expectedMaxTBU: ptr(api.Duration(time.Second * 30)),
+		},
+		{
+			event: api.Event{
+				ID:          id,
+				Message:     "Green, TBU 45s, Expiry 48h",
+				Status:      api.Green,
+				MaxTBU:      ptr(api.Duration(time.Second * 45)),
+				ExpireAfter: ptr(api.Duration(time.Hour * 48)),
+			},
+			expectedMaxTBU: ptr(api.Duration(time.Second * 45)),
+			expectedExpiry: ptr(api.Duration(time.Hour * 48)),
+		},
+	}
+
+	for _, test := range tests {
+		if err := update(test.event); err != nil {
+			t.Errorf("failed to send update, %s", err.Error())
+		}
+		b, err := boxStore.GetByID(id)
+		if err != nil {
+			t.Errorf("unable to get expected box %s (%s)", id, err.Error())
+		} else {
+			t.Log(test.event.Message)
+			expectEqual(t, b.Status, test.event.Status)
+			expectEqual(t, b.LastMessage, test.event.Message)
+			expectEqual(t, b.MaxTBU, test.expectedMaxTBU)
+			expectEqual(t, b.ExpireAfter, test.expectedExpiry)
+		}
+	}
+}
+func expectEqual(t *testing.T, actual any, expected any) {
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("expected %v, got %v", expected, actual)
+	}
+
 }

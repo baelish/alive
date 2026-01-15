@@ -235,6 +235,7 @@ func addBox(box api.Box) (id string, err error) {
 	if err != nil {
 		return "", err
 	}
+
 	events.messages <- string(stringData)
 
 	return box.ID, nil
@@ -380,7 +381,7 @@ func update(event api.Event) error {
 		box.Status = event.Status
 		if event.MaxTBU != nil {
 			if *event.MaxTBU == api.Duration(0) {
-				box.ExpireAfter = nil
+				box.MaxTBU = nil
 			} else {
 				box.MaxTBU = event.MaxTBU
 			}
@@ -405,6 +406,8 @@ func update(event api.Event) error {
 	if err != nil {
 		return err
 	}
+
 	events.messages <- string(dataString)
+
 	return nil
 }
