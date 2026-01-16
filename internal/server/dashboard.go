@@ -88,7 +88,7 @@ const boxInfo = `
   <tr><th>ID:</th><td>{{ .ID }}</td></tr>
   <tr><th>Status:</th><td>{{ .Status }}</td></tr>
   <tr><th>Size:</th><td>{{ .Size }}</td></tr>
-  {{ if .Info }}<tr><th>Info:</th><td><table>{{ range $key, $value := .Info }}<tr><th>{{ $key }}:</th><td>{{ $value }}</td></tr>{{ end }}{{ end }}</table></td></tr>
+  {{ if .Info }}<tr><th>Info:</th><td><table>{{ range $key, $value := .Info }}<tr><th>{{ $key }}:</th><td>{{ $value }}</td></tr>{{ end }}</table></td></tr>{{ end }}
   <tr><th>Last message:</th><td class="message">{{ .LastMessage }}</td></tr>
   <tr><th>Last updated:</th><td class="lastUpdated">{{ .LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
   <tr class="maxTBU" {{ if not .MaxTBU }}style="display: none;"{{ end }}><th>Max TBU:</th><td>{{ .MaxTBU }}</td></tr>
