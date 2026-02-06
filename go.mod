@@ -3,7 +3,7 @@ module github.com/baelish/alive
 go 1.25
 
 require (
-	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/jessevdk/go-flags v1.6.1
 	go.uber.org/zap v1.27.1
 )
