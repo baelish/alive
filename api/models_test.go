@@ -512,3 +512,67 @@ func TestErrorResponse(t *testing.T) {
 		t.Errorf("expected Error %s, got %s", errResp.Error, unmarshaled.Error)
 	}
 }
+
+// TestBoxSanitisation tests that a zero value is changed into nil and any other
+// valid value is unchanged.
+func TestBoxSanitisation(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   Box
+		wantMax *Duration
+		wantExp *Duration
+	}{
+		{
+			name: "Convert zero durations to nil",
+			input: Box{
+				MaxTBU:      ptr(Duration(0)),
+				ExpireAfter: ptr(Duration(0)),
+			},
+			wantMax: nil,
+			wantExp: nil,
+		},
+		{
+			name: "Keep positive durations",
+			input: Box{
+				MaxTBU:      ptr(Duration(10 * time.Second)),
+				ExpireAfter: ptr(Duration(1 * time.Hour)),
+			},
+			wantMax: ptr(Duration(10 * time.Second)),
+			wantExp: ptr(Duration(1 * time.Hour)),
+		},
+		{
+			name: "Handle mixed nil and zero",
+			input: Box{
+				MaxTBU:      nil,
+				ExpireAfter: ptr(Duration(0)),
+			},
+			wantMax: nil,
+			wantExp: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.input.Sanitise()
+
+			if !compareDurationPtr(tt.input.MaxTBU, tt.wantMax) {
+				t.Errorf("%s: MaxTBU = %v, want %v", tt.name, tt.input.MaxTBU, tt.wantMax)
+			}
+
+			if !compareDurationPtr(tt.input.ExpireAfter, tt.wantExp) {
+				t.Errorf("%s: ExpireAfter = %v, want %v", tt.name, tt.input.ExpireAfter, tt.wantExp)
+			}
+		})
+	}
+}
+
+// Check Duration pointers are as expected
+func compareDurationPtr(got, want *Duration) bool {
+	if got == nil && want == nil {
+		return true
+	}
+	if got != nil && want != nil {
+		return *got == *want
+	}
+	return false
+}

@@ -236,3 +236,29 @@ type Box struct {
 	LastMessage string             `json:"lastMessage"`
 	Links       []Links            `json:"links"`
 }
+
+func (b *Box) Sanitise() {
+	if b.MaxTBU != nil && *b.MaxTBU == 0 {
+		b.MaxTBU = nil
+	}
+	if b.ExpireAfter != nil && *b.ExpireAfter == 0 {
+		b.ExpireAfter = nil
+	}
+}
+
+func (b *Box) UnmarshalJSON(data []byte) error {
+	type Alias Box
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(b),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	b.Sanitise()
+
+	return nil
+}
