@@ -1,0 +1,25 @@
+FROM golang:alpine AS builder
+COPY ./ /workdir/
+RUN apk add git
+RUN go build -C /workdir -o /workdir/mc-alive ./
+
+FROM alpine:latest
+
+ARG BUILD_COMMIT
+ARG BUILD_DATE
+ARG BUILD_IMAGE
+ARG BUILD_VERSION
+
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.build-date="$BUILD_DATE"
+LABEL org.label-schema.name="$BUILD_IMAGE"
+LABEL org.label-schema.vcs-url="https://github.com/baelish/alive/examples/mc-alive-sidecar"
+LABEL org.label-schema.vcs-ref="$BUILD_COMMIT"
+LABEL org.label-schema.version="$BUILD_VERSION"
+
+RUN mkdir /app
+WORKDIR /app
+COPY --from=builder /workdir/mc-alive .
+RUN addgroup -g 9001 alive && adduser -D -u 9001 -G alive alive
+USER alive:alive
+ENTRYPOINT [ "./mc-alive" ]
