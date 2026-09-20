@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+apiUrl="${ALIVE_API_URL:-http://127.0.0.1:8081}"
+boxCount="${1:-200}"
+minEvents="${2:-10}"
+maxEvents="${3:-30}"
+maxExpireAfter="${4:-60}"
+runId="${STRESS_RUN_ID:-$(date +%s)}"
+
+sizes=(small medium micro)
+statuses=(green grey)
+
+randomBetween() {
+  local minimum maximum
+  minimum="$1"
+  maximum="$2"
+  echo $(( minimum + RANDOM % (maximum - minimum + 1) ))
+}
+
+checkArguments() {
+  if ! [[ "$boxCount" =~ ^[0-9]+$ && "$minEvents" =~ ^[0-9]+$ && "$maxEvents" =~ ^[0-9]+$ ]] || (( minEvents > maxEvents )); then
+    echo "usage: $0 [box-count] [min-events] [max-events] [max-expiry-seconds]" >&2
+
+    return 2
+  fi
+
+  if ! [[ "$maxExpireAfter" =~ ^[0-9]+$ ]] || (( maxExpireAfter < 1 )); then
+    echo "max-expiry-seconds must be a positive number of seconds, for example: 60" >&2
+
+    return 2
+  fi
+}
+
+checkApi() {
+  local healthStatus
+
+  if ! healthStatus="$(curl -sS -o /dev/null -w '%{http_code}' "$apiUrl/health")"; then
+    echo "could not reach Alive API at $apiUrl" >&2
+
+    return 1
+  fi
+
+  if [[ "$healthStatus" != "200" ]]; then
+    echo "Alive API at $apiUrl returned HTTP $healthStatus" >&2
+    echo "For the local server, run: ALIVE_API_URL=http://127.0.0.1:8081 $0 $boxCount $minEvents $maxEvents $maxExpireAfter" >&2
+
+    return 1
+  fi
+}
+
+postEvent() {
+  local boxId eventIndex message status
+  boxId="$1"
+  eventIndex="$2"
+  status="${statuses[$((RANDOM % ${#statuses[@]}))]}"
+  message="stress event $eventIndex for $boxId"
+
+  curl -fsS -X POST "$apiUrl/api/v1/boxes/$boxId/events" \
+    -H "Content-Type: application/json" \
+    -d "{\"status\":\"$status\",\"lastMessage\":\"$message\"}" \
+      >/dev/null || :
+}
+
+createBox() {
+  local boxId boxIndex boxName boxSize eventCount eventIndex expireAfter maxTbu
+  boxIndex="$1"
+  boxId="stress-${runId}-$(printf '%04d' "$boxIndex")"
+  boxName="Stress box $boxIndex"
+  boxSize="${sizes[$((RANDOM % ${#sizes[@]}))]}"
+  expireAfter="$(randomBetween 1 "$maxExpireAfter")s"
+  maxTbu="$(randomBetween 20 45)s"
+  eventCount="$(randomBetween "$minEvents" "$maxEvents")"
+
+  curl -fsS -X POST "$apiUrl/api/v1/boxes" \
+    -H "Content-Type: application/json" \
+    -d "{\"id\":\"$boxId\",\"name\":\"$boxName\",\"size\":\"$boxSize\",\"status\":\"grey\",\"expireAfter\":\"$expireAfter\",\"maxTBU\":\"$maxTbu\"}" \
+    >/dev/null || :
+
+  for ((eventIndex = 1; eventIndex <= eventCount; eventIndex++)); do
+    postEvent "$boxId" "$eventIndex"
+  done
+}
+
+main() {
+  local boxIndex
+  checkArguments
+  checkApi
+
+  echo "Creating $boxCount boxes with $minEvents-$maxEvents random events and up to ${maxExpireAfter}s expiry via $apiUrl"
+
+  for ((boxIndex = 1; boxIndex <= boxCount; boxIndex++)); do
+    createBox "$boxIndex"
+
+    if (( boxIndex % 10 == 0 || boxIndex == boxCount )); then
+      echo "Completed $boxIndex/$boxCount boxes"
+    fi
+  done
+
+  echo "Done. Stress boxes use the 'stress-' prefix and will expire within ${maxExpireAfter}s after their last update."
+}
+
+main "$@"
