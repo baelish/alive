@@ -1,15 +1,20 @@
 # alive
 
-A real-time status dashboard. Track the health of services, cron jobs, or anything you can script a health check for — displayed as a live, auto-updating grid of coloured tiles in a browser.
+A real-time status dashboard. Track the health of services, cron jobs,
+or anything you can script a health check for — displayed as a live, auto-updating
+grid of coloured tiles in a browser.
 
 ## How it works
 
-Everything on the dashboard is a **box** — a coloured tile representing one thing you want to monitor. External scripts post status updates to the REST API; the dashboard updates instantly in any open browser via server-sent events (SSE), with no polling or page refresh required.
+Everything on the dashboard is a **box** — a coloured tile representing one thing
+you want to monitor. External scripts post status updates to the REST API;
+the dashboard updates instantly in any open browser via server-sent events (SSE),
+with no polling or page refresh required.
 
 ### Box statuses
 
 | Status | Meaning |
-|--------|---------|
+| :----: | :------ |
 | `grey` | Unknown |
 | `green` | OK |
 | `amber` | Warning |
@@ -18,16 +23,17 @@ Everything on the dashboard is a **box** — a coloured tile representing one th
 
 ### Box sizes
 
-Boxes can be sized from smallest to largest: `dot`, `micro`, `dmicro`, `small`, `dsmall`, `medium`, `dmedium`, `large`, `dlarge`, `xlarge`.
+Boxes can be sized from smallest to largest:
+`dot`, `micro`, `dmicro`, `small`, `dsmall`, `medium`, `dmedium`, `large`, `dlarge`, `xlarge`.
 
 ## Running
 
-```
+```bash
 alive [OPTIONS]
 ```
 
 | Flag | Default | Description |
-|------|---------|-------------|
+| :--: | :-----: | :---------- |
 | `--port` / `-p` | `8080` | Dashboard port |
 | `--api-port` | `8081` | API port |
 | `--data-path` / `-d` | `$HOME/.alive/data` | Where box state is persisted |
@@ -38,14 +44,52 @@ alive [OPTIONS]
 
 ### Docker
 
+Build the image without reusing Docker build layers:
+
+```bash
+docker build --no-cache -t alive:latest .
 ```
-docker build -t alive .
-docker run -p 8080:8080 -p 8081:8081 alive
+
+Run it with a named volume for persisted box data. The `--rm` flag removes the
+container automatically when it stops; it does not remove the image or the
+named data volume.
+
+```bash
+docker run --rm --name alive \
+  -p 8080:8080 \
+  -p 8081:8081 \
+  -v alive-data:/data \
+  alive:latest
+```
+
+The Docker image enables `--default-static` by default, so the CSS and
+JavaScript embedded during the image build are copied into the container's
+static directory and current frontend changes are used after rebuilding.
+
+Check the running container and endpoints:
+
+```bash
+docker ps
+curl http://localhost:8081/health
+curl http://localhost:8081/api/v1/boxes
+```
+
+To stop and remove an existing container before recreating it:
+
+```bash
+docker rm -f alive
+```
+
+To remove stopped containers and unused images later:
+
+```bash
+docker container prune
+docker image prune
 ```
 
 ### Demo mode
 
-```
+```bash
 alive --run-demo
 ```
 
@@ -58,7 +102,7 @@ The API listens on port `8081` by default.
 ### Boxes
 
 | Method | Path | Description |
-|--------|------|-------------|
+| :----: | :--: | :---------- |
 | `GET` | `/api/v1/boxes` | List all boxes |
 | `POST` | `/api/v1/boxes` | Create a box |
 | `GET` | `/api/v1/boxes/{id}` | Get a specific box |
@@ -84,7 +128,7 @@ curl -X POST http://localhost:8081/api/v1/boxes \
 Box fields:
 
 | Field | Type | Description |
-|-------|------|-------------|
+| :---: | :--: | :---------- |
 | `id` | string | Unique ID (auto-generated if omitted) |
 | `name` | string | Display name |
 | `displayName` | string | Alternative display name shown on the tile |
@@ -124,8 +168,10 @@ c.DeleteBox("my-service")
 
 ## State persistence
 
-Box state is saved to disk every minute and on shutdown. On startup, state is restored from the data file so boxes survive restarts.
+Box state is saved to disk every minute and on shutdown. On startup,
+state is restored from the data file so boxes survive restarts.
 
 ## Examples
 
-The `examples/` directory contains shell scripts showing common usage patterns including SSL certificate checks, DNS tests, connectivity checks, and ad-hoc job monitoring.
+The `examples/` directory contains shell scripts showing common usage patterns
+including SSL certificate checks, DNS tests, connectivity checks, and ad-hoc job monitoring.

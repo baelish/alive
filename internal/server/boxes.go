@@ -357,17 +357,21 @@ func update(event api.Event) error {
 	err := boxStore.Update(event.ID, func(box *api.Box) {
 		box.LastMessage = event.Message
 
+		// Create message with metadata only if provided in event
+		newMessage := api.Message{
+			Message:   event.Message,
+			Status:    event.Status.String(),
+			TimeStamp: t,
+		}
+		if event.MaxTBU != nil {
+			newMessage.MaxTBU = event.MaxTBU
+		}
+		if event.ExpireAfter != nil {
+			newMessage.ExpireAfter = event.ExpireAfter
+		}
+
 		// Prepend new message
-		box.Messages = append(
-			[]api.Message{
-				{
-					Message:   event.Message,
-					Status:    event.Status.String(),
-					TimeStamp: t,
-				},
-			},
-			box.Messages...,
-		)
+		box.Messages = append([]api.Message{newMessage}, box.Messages...)
 
 		// Trim to max messages
 		if len(box.Messages) > maxMessages {
@@ -401,6 +405,8 @@ func update(event api.Event) error {
 		return err
 	}
 
+	// Broadcast event with only the metadata that was provided
+	// (don't populate with current box values)
 	event.Type = "updateBox"
 	dataString, err := json.Marshal(event)
 	if err != nil {

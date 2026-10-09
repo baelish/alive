@@ -22,4 +22,4 @@ WORKDIR /app
 COPY --from=builder /workdir/alive .
 RUN addgroup -g 9001 alive && adduser -h /data -D -u 9001 -G alive alive
 USER alive:alive
-ENTRYPOINT [ "./alive", "--data-path=/data" , "--static-path=/data/static" ]
+ENTRYPOINT [ "./alive", "--data-path=/data", "--static-path=/data/static", "--default-static" ]
