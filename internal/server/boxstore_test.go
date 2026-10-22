@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"os"
 	"reflect"
 	"testing"
@@ -584,6 +585,91 @@ func TestEvent_Update(t *testing.T) {
 		}
 	}
 }
+
+func TestBoxEventMetadata(t *testing.T) {
+	originalStore, originalEvents := boxStore, events
+	t.Cleanup(func() { boxStore, events = originalStore, originalEvents })
+	boxStore = &BoxStore{}
+	events = &Broker{messages: make(chan string, 10)}
+
+	readEvent := func() api.Event {
+		t.Helper()
+		var event api.Event
+		select {
+		case data := <-events.messages:
+			if err := json.Unmarshal([]byte(data), &event); err != nil {
+				t.Fatal(err)
+			}
+		default:
+			t.Fatal("expected a broadcast event")
+		}
+		return event
+	}
+
+	maxTBU, expiry := ptr(api.Duration(30*time.Second)), ptr(api.Duration(time.Minute))
+	id, err := addBox(api.Box{
+		ID: "event-metadata", Status: api.Grey, MaxTBU: maxTBU, ExpireAfter: expiry,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	created := readEvent()
+	if created.Box == nil || len(created.Box.Messages) != 1 {
+		t.Fatal("creation must include an initial history entry")
+	}
+	expectEqual(t, created.Box.Messages[0].MaxTBU, maxTBU)
+	expectEqual(t, created.Box.Messages[0].ExpireAfter, expiry)
+	expectEqual(t, created.Box.Messages[0].TimeStamp, created.Box.LastUpdate)
+
+	for _, tc := range []struct {
+		name       string
+		maxTBU     *api.Duration
+		expiry     *api.Duration
+		wantMaxTBU *api.Duration
+		wantExpiry *api.Duration
+	}{
+		{"status only", nil, nil, maxTBU, expiry},
+		{"partial change", ptr(api.Duration(time.Minute)), nil, ptr(api.Duration(time.Minute)), expiry},
+		{"clear expiry", nil, ptr(api.Duration(0)), ptr(api.Duration(time.Minute)), nil},
+		{"clear max TBU", ptr(api.Duration(0)), nil, nil, nil},
+		{"remain disabled", nil, nil, nil, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := update(api.Event{ID: id, Status: api.Green, Message: tc.name, MaxTBU: tc.maxTBU, ExpireAfter: tc.expiry}); err != nil {
+				t.Fatal(err)
+			}
+			broadcast := readEvent()
+			expectEqual(t, broadcast.MaxTBU, tc.maxTBU)
+			expectEqual(t, broadcast.ExpireAfter, tc.expiry)
+			stored, err := boxStore.GetByID(id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expectEqual(t, stored.MaxTBU, tc.wantMaxTBU)
+			expectEqual(t, stored.ExpireAfter, tc.wantExpiry)
+			expectEqual(t, stored.Messages[0].MaxTBU, tc.maxTBU)
+			expectEqual(t, stored.Messages[0].ExpireAfter, tc.expiry)
+			initial := stored.Messages[len(stored.Messages)-1]
+			expectEqual(t, initial.MaxTBU, maxTBU)
+			expectEqual(t, initial.ExpireAfter, expiry)
+		})
+	}
+
+	stored, err := boxStore.GetByID(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantHistory := stored.Messages
+	if _, err := addBox(api.Box{ID: "preserved-history", Messages: wantHistory}); err != nil {
+		t.Fatal(err)
+	}
+	preserved, err := boxStore.GetByID("preserved-history")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectEqual(t, preserved.Messages, wantHistory)
+}
+
 func expectEqual(t *testing.T, actual any, expected any) {
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("expected %v, got %v", expected, actual)

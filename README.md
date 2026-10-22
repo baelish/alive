@@ -26,6 +26,13 @@ with no polling or page refresh required.
 Boxes can be sized from smallest to largest:
 `dot`, `micro`, `dmicro`, `small`, `dsmall`, `medium`, `dmedium`, `large`, `dlarge`, `xlarge`.
 
+### Box details
+
+Click a tile to open its details drawer. Status Details shows the box's current
+settings; Latest update and Event log show only timing fields supplied with
+each request. See [drawer behaviour](docs/dashboard-drawer.md) for examples,
+the creation-history rationale, and verification notes.
+
 ## Running
 
 ```bash

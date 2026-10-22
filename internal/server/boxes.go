@@ -205,6 +205,17 @@ func addBox(box api.Box) (id string, err error) {
 		box.ExpireAfter = nil
 	}
 
+	// The drawer reads creation details from history, including after a reload.
+	if len(box.Messages) == 0 {
+		box.Messages = []api.Message{{
+			Message:     box.LastMessage,
+			Status:      box.Status.String(),
+			TimeStamp:   t,
+			MaxTBU:      box.MaxTBU,
+			ExpireAfter: box.ExpireAfter,
+		}}
+	}
+
 	// Add to store (thread-safe)
 	if err := boxStore.Add(box); err != nil {
 		return "", err

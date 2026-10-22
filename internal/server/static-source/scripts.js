@@ -332,7 +332,7 @@ function clearDashboardBoxes() {
   detail.id = `box-detail-${box.id}`;
   const maxTBU = hasMetadataValue(box.maxTBU) ? `<dt class="drawer-max-tbu-label">Max TBU</dt><dd class="drawer-max-tbu">${metadataIcon("activity", "Max TBU")}<span class="drawer-metadata-value">${box.maxTBU}</span></dd>` : '';
   const expireAfter = hasMetadataValue(box.expireAfter) ? `<dt class="drawer-expire-after-label">Expires after</dt><dd class="drawer-expire-after">${metadataIcon("trash-2", "Expires after")}<span class="drawer-metadata-value">${box.expireAfter}</span></dd>` : '';
-  // Latest update indicators: only show if latest message has metadata
+  // Latest update shows only timing fields supplied with that message.
   const latestMessage = box.messages && box.messages.length > 0 ? box.messages[0] : null;
   const latestMaxTBU = latestMessage ? latestMessage.maxTBU : null;
   const latestExpireAfter = latestMessage ? latestMessage.expireAfter : null;
@@ -544,11 +544,11 @@ function deleteBox(id) {
     if (message) message.textContent = event.lastMessage;
     if (updated) updated.textContent = myTime();
 
-    // Only update Status Details metadata if event explicitly changes them
-    if (event.maxTBU !== undefined) {
+    // Omitted timing fields leave the box's current settings unchanged.
+    if (event.maxTBU != null) {
       updateOptionalMetadata(content, "maxTBU", "Max TBU", "drawer-max-tbu-label", "drawer-max-tbu", event.maxTBU);
     }
-    if (event.expireAfter !== undefined) {
+    if (event.expireAfter != null) {
       updateOptionalMetadata(content, "expireAfter", "Expires after", "drawer-expire-after-label", "drawer-expire-after", event.expireAfter);
     }
 
@@ -609,7 +609,7 @@ function deleteBox(id) {
     let valueElement = content.querySelector(`.${valueClass}`);
     let labelElement = content.querySelector(`.${labelClass}`);
 
-    if (!hasMetadataValue(value)) {
+    if (!hasMetadataValue(value) || value === "0s") {
       if (valueElement) valueElement.remove();
       if (labelElement) labelElement.remove();
       return;

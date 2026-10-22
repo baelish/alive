@@ -64,6 +64,7 @@
   --status-bar-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
   --status-live: #10B981;
   --status-stale: #D11A4F;
+}
 
 /* setting default font family */
 p, body, table {
@@ -73,6 +74,10 @@ p, body, table {
 /* hide scroll bars */
 ::-webkit-scrollbar {
   display: none
+}
+
+html {
+  scrollbar-width: none;
 }
 
 body {
@@ -433,7 +438,6 @@ div#status-bar .lastUpdated {
 .dashboard-viewport {
     display: flex;
     max-width: 100vw;
-    min-height: calc(100vh - 30px);
     overflow-x: hidden;
     width: 100%;
 }
@@ -447,10 +451,6 @@ div#status-bar .lastUpdated {
     padding: 0 8px;
     transition: width 220ms ease;
     width: 100%;
-}
-
-#boxes-grid > .box {
-    /* Grid handles sizing automatically */
 }
 
 #boxes-grid > template {
@@ -598,6 +598,7 @@ body.drawer-open #big-box {
     text-overflow: ellipsis;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
 .drawer-actions { align-items: center; display: flex; flex: 0 0 auto; gap: 6px; }
@@ -690,13 +691,6 @@ body.drawer-open #big-box {
     margin-bottom: 16px;
     overflow: hidden;
     padding: 16px 8px;
-}
-
-#drawer-tab-events .drawer-section.drawer-events {
-    display: flex;
-    flex-direction: column;
-    max-height: 700px;
-    overflow-y: auto;
 }
 
 .drawer-section > * { margin-left: 0; margin-right: 0; }
@@ -802,6 +796,10 @@ body.drawer-open #big-box {
 }
 
 #drawer-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
     min-width: 0;
     overflow-wrap: anywhere;
 }
@@ -883,7 +881,15 @@ body.drawer-open #big-box {
 .event-log-card.grey { border-left-color: var(--unknown); }
 .event-log-card.noUpdate { border-left-color: var(--failed); }
 .event-log-card small { color: var(--text-secondary); }
-.event-top { align-items: center; display: flex; justify-content: space-between; min-height: 20px; }
+.event-top { align-items: center; display: flex; justify-content: flex-end; }
+.event-status {
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
 .event-leading { align-items: center; display: flex; flex-direction: row; gap: 8px; }
 .event-indicator {
     align-items: center;
@@ -976,5 +982,4 @@ p.expireAfter {
     margin-block-start: auto;
     position: absolute;
     width: 100%;
-}
 }
