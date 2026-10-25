@@ -183,9 +183,6 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 	case float64:
 		// If it's a small number (< 1 million), treat as seconds (intuitive)
 		// If it's huge (>= 1 million), treat as nanoseconds (Go-marshaled duration)
-		if value == 0 {
-			d = nil
-		}
 		if value < 1000000 {
 			*d = Duration(time.Duration(value) * time.Second)
 		} else {
