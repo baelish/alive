@@ -104,59 +104,9 @@ Starts with example boxes pre-populated, using a temporary directory — no setu
 
 ## API
 
-The API listens on port `8081` by default.
-
-### Boxes
-
-| Method | Path | Description |
-| :----: | :--: | :---------- |
-| `GET` | `/api/v1/boxes` | List all boxes |
-| `POST` | `/api/v1/boxes` | Create a box |
-| `GET` | `/api/v1/boxes/{id}` | Get a specific box |
-| `PUT` | `/api/v1/boxes/{id}` | Replace a box (creates if not found) |
-| `DELETE` | `/api/v1/boxes/{id}` | Delete a box |
-| `POST` | `/api/v1/boxes/{id}/events` | Post a status update to a box |
-| `GET` | `/health` | Health check |
-
-### Create a box
-
-```bash
-curl -X POST http://localhost:8081/api/v1/boxes \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "my-service",
-    "name": "My Service",
-    "size": "medium",
-    "status": "grey",
-    "maxTBU": "6h"
-  }'
-```
-
-Box fields:
-
-| Field | Type | Description |
-| :---: | :--: | :---------- |
-| `id` | string | Unique ID (auto-generated if omitted) |
-| `name` | string | Display name |
-| `displayName` | string | Alternative display name shown on the tile |
-| `description` | string | Shown on the detail page |
-| `size` | string | Tile size (see sizes above) |
-| `status` | string | Initial status |
-| `maxTBU` | duration | Flip to `noUpdate` if no event arrives within this window (e.g. `"6h"`, `"30m"`) |
-| `expireAfter` | duration | Auto-delete the box after this duration without an update |
-| `links` | array | `[{"name": "...", "url": "..."}]` — shown on the detail page |
-| `info` | object | Arbitrary key/value pairs shown on the detail page |
-
-### Post a status update
-
-```bash
-curl -X POST http://localhost:8081/api/v1/boxes/my-service/events \
-  -H "Content-Type: application/json" \
-  -d '{
-    "status": "green",
-    "lastMessage": "All checks passed"
-  }'
-```
+See the [API reference](docs/api.md) for endpoint behavior, schemas, response
+codes, and request examples. The dashboard and API each expose `/health` on
+their own ports: dashboard `8080`, API `8081` by default.
 
 ## Go client
 
