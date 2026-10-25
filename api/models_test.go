@@ -276,6 +276,13 @@ func TestDurationUnmarshaling(t *testing.T) {
 			shouldFail:  false,
 		},
 		{
+			name:        "zero as number",
+			input:       []byte(`0`),
+			expectedDur: 0,
+			expectedSet: true,
+			shouldFail:  false,
+		},
+		{
 			name:        "seconds as string",
 			input:       []byte(`"120"`),
 			expectedDur: 120 * time.Second,
