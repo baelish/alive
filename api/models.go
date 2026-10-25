@@ -46,9 +46,11 @@ type Links struct {
 }
 
 type Message struct {
-	Message   string    `json:"message"`
-	Status    string    `json:"status"`
-	TimeStamp time.Time `json:"timeStamp"`
+	Message     string    `json:"message"`
+	Status      string    `json:"status"`
+	TimeStamp   time.Time `json:"timeStamp"`
+	MaxTBU      *Duration `json:"maxTBU,omitempty"`
+	ExpireAfter *Duration `json:"expireAfter,omitempty"`
 }
 
 type Status int
