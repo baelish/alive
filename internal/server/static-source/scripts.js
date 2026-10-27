@@ -13,6 +13,7 @@ const Dashboard = (function() {
 
   // Cached DOM references
   const elements = {
+    get tooltip() { return document.getElementById("tooltip"); },
     get bigBox() { return document.getElementById("big-box"); },
     get statusBar() { return document.getElementById("status-bar"); },
     get boxesGrid() { return document.getElementById("boxes-grid"); },
@@ -91,6 +92,21 @@ const Dashboard = (function() {
       }
     }
   };
+
+  // Box tooltip
+  function boxHover(tip) {
+    if (elements.tooltip) {
+      elements.tooltip.innerHTML = tip;
+      elements.tooltip.style.display = "block";
+    }
+  }
+
+  function boxOut() {
+    if (elements.tooltip) {
+      elements.tooltip.innerHTML = "";
+      elements.tooltip.style.display = "none";
+    }
+  }
 
   // Switch drawer tabs
   function switchDrawerTab(event, tabName) {
@@ -355,7 +371,7 @@ function clearDashboardBoxes() {
     const title = box.displayName || box.name;
 
     const divContent = `
-      <div onclick='boxClick(this.id)' id='${box.id}' class='${box.status} ${box.size} box'>
+      <div onclick='boxClick(this.id)' onmouseover='boxHover("${box.name}")' onmouseout='boxOut()' id='${box.id}' class='${box.status} ${box.size} box'>
         <p class='title'>${title}</p>
         <p class='box-id'>${box.id}</p>
         <p class='maxTBU'>${box.maxTBU || ''}</p>
@@ -376,7 +392,6 @@ function clearDashboardBoxes() {
     const newBox = document.getElementById(box.id);
     if (!newBox) return;
 
-    newBox.title = box.name;
     newBox.dataset.sortName = box.name;
 
     const oldDetail = document.getElementById(`box-detail-${box.id}`);
@@ -815,6 +830,8 @@ function changeAlertLevel(target, status, message) {
 
   // Public API - expose functions that need to be called from HTML
   return {
+    boxHover,
+    boxOut,
     boxClick,
     closeDrawer,
     initDashboard,
@@ -825,6 +842,8 @@ function changeAlertLevel(target, status, message) {
 })();
 
 // Make functions available globally for HTML inline event handlers
+window.boxHover = Dashboard.boxHover;
+window.boxOut = Dashboard.boxOut;
 window.boxClick = Dashboard.boxClick;
 window.closeDrawer = Dashboard.closeDrawer;
 window.initDashboard = Dashboard.initDashboard;
