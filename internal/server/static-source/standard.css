@@ -188,12 +188,10 @@ div#status-bar {
     color: var(--text-primary);
     display: flex;
     float: none;
-    flex-wrap: nowrap;
     gap: 12px;
-    height: 32px;
     justify-content: space-between;
     margin: 8px;
-    padding: 3px 18px;
+    padding: 10px 18px;
     position: sticky;
     top: 8px;
     z-index: 20;
@@ -243,6 +241,23 @@ div#status-bar.stale .message {
     flex: 1;
     gap: 6px;
     justify-content: flex-start;
+    min-width: 0;
+}
+
+.status-center .tooltip {
+    color: var(--text-primary);
+    font-size: 100%;
+    font-weight: 600;
+    left: 50%;
+    margin: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    text-overflow: ellipsis;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    z-index: 1;
 }
 
 div#status-bar .lastUpdated {
@@ -250,7 +265,7 @@ div#status-bar .lastUpdated {
     font-size: 90%;
     margin: 0;
     position: static;
-    white-space: normal;
+    white-space: nowrap;
 }
 
 .status-tools {
@@ -1000,14 +1015,6 @@ body.drawer-open #big-box {
 @media (max-width: 700px) {
     body.drawer-open .boxes-grid {
         overflow: hidden;
-    }
-}
-
-@media (max-width: 600px) {
-    div#status-bar {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 8px 18px;
     }
 }
 
