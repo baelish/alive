@@ -8,6 +8,8 @@ const Dashboard = (function() {
   const MAX_LOG_ENTRIES = 30;
   const KEEPALIVE_TIMEOUT = 5000;
   const DRAWER_REOPEN_TIMEOUT = 1000;
+  const STATUS_FILTER_STORAGE_KEY = "alive.statusFilters";
+  const statusFilters = { green: true, grey: true, amber: true, red: true };
 
   // Cached DOM references
   const elements = {
@@ -133,12 +135,68 @@ const Dashboard = (function() {
     };
   }
 
-  // Initialize the dashboard drawer
+  function applyStatusFilters() {
+    Object.keys(statusFilters).forEach(status => {
+      elements.boxesGrid.classList.toggle(`hide-${status}`, !statusFilters[status]);
+      document.querySelector(`.status-filter[data-status="${status}"]`).setAttribute("aria-pressed", String(statusFilters[status]));
+    });
+    closeFilteredDrawer();
+    try {
+      sessionStorage.setItem(STATUS_FILTER_STORAGE_KEY, JSON.stringify(statusFilters));
+    } catch (error) {
+      // Filtering still works when browser storage is unavailable.
+    }
+  }
+
+  function closeFilteredDrawer() {
+    const box = activeBoxId !== null && document.getElementById(activeBoxId);
+    if (box && window.getComputedStyle(box).display === "none") {
+      closeDrawer();
+    }
+  }
+
+  // Initialize the dashboard filters and drawer
   function initDashboard() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STATUS_FILTER_STORAGE_KEY));
+      Object.keys(statusFilters).forEach(status => {
+        if (saved && typeof saved[status] === "boolean") {
+          statusFilters[status] = saved[status];
+        }
+      });
+    } catch (error) {
+      // Invalid or unavailable storage leaves every status visible.
+    }
+    applyStatusFilters();
+
+    document.querySelectorAll(".status-filter").forEach(button => {
+      button.addEventListener("click", () => {
+        const status = button.dataset.status;
+        statusFilters[status] = !statusFilters[status];
+        applyStatusFilters();
+      });
+    });
+
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") {
         closeDrawer();
+        return;
       }
+      if (event.ctrlKey || event.altKey || event.metaKey || event.isComposing || event.repeat ||
+          event.target.matches("input, textarea, select") || event.target.isContentEditable) return;
+
+      const key = event.key.toLowerCase();
+      const status = { g: "green", e: "grey", a: "amber", r: "red" }[key];
+      if (status) {
+        statusFilters[status] = !statusFilters[status];
+      } else if (key === "l") {
+        const showAll = !Object.values(statusFilters).every(Boolean);
+        Object.keys(statusFilters).forEach(status => { statusFilters[status] = showAll; });
+      } else {
+        return;
+      }
+      event.preventDefault();
+      applyStatusFilters();
     });
 
     const resizeHandle = document.getElementById("drawer-resize-handle");
@@ -239,7 +297,9 @@ function resizeDrawerToViewport() {
 // Box click
 function boxClick(id) {
   let detail = document.getElementById("box-detail-" + id);
-  if (detail === null) {
+  const box = document.getElementById(id);
+  if (detail === null || box === null || window.getComputedStyle(box).display === "none") {
+    if (activeBoxId === id) closeDrawer();
     return;
   }
 
@@ -438,6 +498,7 @@ function deleteBox(id) {
 
     if (targetBox) {
       changeAlertLevel(targetBox, event.status, event.lastMessage);
+      closeFilteredDrawer();
     }
 
     const detail = document.getElementById(`box-detail-${event.id}`);

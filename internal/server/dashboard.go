@@ -31,7 +31,7 @@ const dashboard = `
 	<body onresize='rightSizeBigBox("dashboard");' onload='rightSizeBigBox("dashboard"); keepalive(); initDashboard();'>
 		<input type="hidden" id="refreshed" value="no">
 		<div id='big-box' class='big-box'>
-			{{ template "statusBar" . }}
+			{{ template "statusBar" true }}
 			<div class="dashboard-viewport">
 				<div id="boxes-grid" class="boxes-grid">{{ template "boxGrid" . }}</div>
 				<div id="drawer-backdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
@@ -53,7 +53,7 @@ const infoPage = `
 	<body onresize='rightSizeBigBox();' onload='rightSizeBigBox(); keepalive();'>
 	<input type="hidden" id="refreshed" value="no">
 		<div id='big-box' class='big-box'>
-		    {{ template "statusBar" . }}
+		    {{ template "statusBar" false }}
 		    {{ template "boxInfo" . }}
 		</div>
 	</body>
@@ -72,9 +72,16 @@ const generic = `
 {{ define "statusBar" }}
 <div id='status-bar' class='status fullwidth box'>
   <p class='title'>Status</p>
-	<p class='tooltip' id='tooltip' display="none"></p>
-	<span class='status-center'><p class='message' display="none"></p></span>
-<p class='lastUpdated'></p>
+	<span class='status-center'><p class='message' display="none"></p><p class='tooltip' id='tooltip' display="none"></p></span>
+	<div class='status-tools'>
+		{{ if . }}<div class='status-filters' role='group' aria-label='Filter boxes by status'>
+			<button type='button' class='status-filter green' data-status='green' aria-label='Green boxes' aria-pressed='true' aria-keyshortcuts='g' title='Toggle green boxes (G)'></button>
+			<button type='button' class='status-filter grey' data-status='grey' aria-label='Grey boxes' aria-pressed='true' aria-keyshortcuts='e' title='Toggle grey boxes (E)'></button>
+			<button type='button' class='status-filter amber' data-status='amber' aria-label='Amber boxes' aria-pressed='true' aria-keyshortcuts='a' title='Toggle amber boxes (A)'></button>
+			<button type='button' class='status-filter red' data-status='red' aria-label='Red boxes, including no update' aria-pressed='true' aria-keyshortcuts='r' title='Toggle red boxes, including no update (R)'></button>
+		</div>{{ end }}
+		<p class='lastUpdated'></p>
+	</div>
 </div>
 {{ end }}`
 
