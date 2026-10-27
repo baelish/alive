@@ -1028,6 +1028,16 @@ p.expireAfter {
     display: none;
 }
 
+/* Keep the original box-name hover message in the status bar. */
+.tooltip {
+    bottom: 1px;
+    font-size: 100%;
+    margin-block-end: auto;
+    margin-block-start: auto;
+    position: absolute;
+    width: 100%;
+}
+
 /* Standalone box page - apply hover/selected style */
 .info.box {
     background: var(--status-main);

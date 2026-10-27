@@ -72,6 +72,7 @@ const generic = `
 {{ define "statusBar" }}
 <div id='status-bar' class='status fullwidth box'>
   <p class='title'>Status</p>
+	<p class='tooltip' id='tooltip' display="none"></p>
 	<span class='status-center'><p class='message' display="none"></p></span>
 	<div class='status-tools'>
 		{{ if . }}<div class='status-filters' role='group' aria-label='Filter boxes by status'>
@@ -93,7 +94,7 @@ const boxGrid = `
 {{ end }}
 
 {{ define "box" }}
-<div onclick='boxClick(this.id)' id='{{ .ID }}' title='{{ .Name }}' data-sort-name='{{ .Name }}' class='{{ .Status }} {{ .Size }} box'>
+<div onclick='boxClick(this.id)' onmouseover='boxHover("{{ .Name }}")' onmouseout='boxOut()' id='{{ .ID }}' title='{{ .Name }}' data-sort-name='{{ .Name }}' class='{{ .Status }} {{ .Size }} box'>
     <p class='title'>{{ if .DisplayName }}{{ .DisplayName }}{{ else }}{{ .Name }}{{ end }}</p>
 	<p class='box-id'>{{ .ID }}</p>
     <p class='maxTBU'>{{ .MaxTBU }}</p>
