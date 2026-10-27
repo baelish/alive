@@ -76,7 +76,11 @@ func Start() {
 	go runAPI(ctx)
 
 	go runKeepalives(ctx)
-	go maintenanceRoutine(ctx)
+	maintenanceDone := make(chan struct{})
+	go func() {
+		defer close(maintenanceDone)
+		maintenanceRoutine(ctx)
+	}()
 
 	if options.ParentUrl != "" {
 		go parentUpdater(ctx)
@@ -89,6 +93,7 @@ func Start() {
 	for {
 		select {
 		case <-ctx.Done():
+			<-maintenanceDone
 			return
 		case <-time.After(1 * time.Second):
 		}
