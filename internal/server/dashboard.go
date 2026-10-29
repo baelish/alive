@@ -73,7 +73,7 @@ const generic = `
 <div id='status-bar' class='status fullwidth box'>
   <p class='title'>Status</p>
 	<p class='tooltip' id='tooltip' display="none"></p>
-	<span class='status-center'><p class='message' display="none"></p></span>
+  <span class='status-center'><button class='message' type='button' aria-label='Live status. Double-click or press Enter to change the background color.'></button></span>
 <p class='lastUpdated'></p>
 </div>
 {{ end }}`

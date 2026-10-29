@@ -26,6 +26,7 @@ const Dashboard = (function() {
   let resizeStartX = 0;
   let resizeStartWidth = 0;
   let dashboardStale = false;
+  let backgroundAccent = 0;
   let pendingDrawerReopenId = null;
   let lastKa;
   let ka;
@@ -135,6 +136,17 @@ const Dashboard = (function() {
 
   // Initialize the dashboard drawer
   function initDashboard() {
+    const liveStatus = elements.statusBar && elements.statusBar.querySelector(".message");
+    if (liveStatus) {
+      const rainbow = [0, 30, 55, 120, 180, 215, 275];
+      const changeBackground = () => {
+        const hue = rainbow[backgroundAccent];
+        backgroundAccent = (backgroundAccent + 1) % rainbow.length;
+        document.documentElement.style.setProperty("--page-bg", `hsl(${hue} 35% 90%)`);
+      };
+      liveStatus.addEventListener("click", changeBackground);
+    }
+
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") {
         closeDrawer();
