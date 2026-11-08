@@ -214,6 +214,11 @@ div#status-bar .message {
     font-weight: 600;
     gap: 8px;
     margin: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
 }
 
 /* Status indicator dot */
