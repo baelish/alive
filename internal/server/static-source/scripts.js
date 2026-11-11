@@ -30,6 +30,12 @@ const Dashboard = (function() {
   let dashboardStale = false;
   let backgroundAccent = 0;
   let pendingDrawerReopenId = null;
+  // The drawer is fetched from the server when a box is clicked. While it loads
+  // drawerLoadingId is that box, and drawerMissedEvents records whether an
+  // update for it arrived meanwhile (the fetched copy may then be out of date).
+  let drawerRequest = 0;
+  let drawerLoadingId = null;
+  let drawerMissedEvents = false;
   let lastKa;
   let ka;
 
@@ -350,14 +356,10 @@ const Dashboard = (function() {
     const sizeOrder = ["xlarge", "dlarge", "large", "dmedium", "medium", "dsmall", "small", "dmicro", "micro", "dot"];
     const boxElements = [];
 
-    // Collect all box elements (every other element, since templates are interleaved)
-    for (let i = 0; i < grid.children.length; i += 2) {
-      const boxElement = grid.children[i];
-      const detailElement = grid.children[i + 1];
-      if (boxElement && boxElement.classList.contains("box")) {
+    for (const boxElement of grid.children) {
+      if (boxElement.classList.contains("box")) {
         boxElements.push({
           box: boxElement,
-          detail: detailElement,
           rank: boxSizeRank(boxElement, sizeOrder),
           name: boxElement.dataset.sortName || ""
         });
@@ -375,9 +377,6 @@ const Dashboard = (function() {
     // Re-append in sorted order
     boxElements.forEach(item => {
       grid.appendChild(item.box);
-      if (item.detail) {
-        grid.appendChild(item.detail);
-      }
     });
   }
 
@@ -402,9 +401,8 @@ function resizeDrawerToViewport() {
 
 // Box click
 function boxClick(id) {
-  let detail = document.getElementById("box-detail-" + id);
   const box = document.getElementById(id);
-  if (detail === null || box === null || window.getComputedStyle(box).display === "none") {
+  if (box === null || window.getComputedStyle(box).display === "none") {
     if (activeBoxId === id) closeDrawer();
     return;
   }
@@ -418,7 +416,7 @@ function boxClick(id) {
 
   activeBoxId = id;
   document.getElementById(id).classList.add("selected");
-  document.getElementById("drawer-content").innerHTML = detail.innerHTML;
+  loadDrawer(id);
   document.getElementById("side-drawer-panel").classList.add("is-open");
   document.getElementById("side-drawer-panel").setAttribute("aria-hidden", "false");
   document.getElementById("drawer-backdrop").classList.add("is-visible");
@@ -427,7 +425,50 @@ function boxClick(id) {
   sortAllBoxes();
 }
 
+// Fetch the drawer for a box. The HTML is rendered and escaped by the server's
+// drawerInfo template. If an update for the box arrives while it loads, the
+// copy may be missing it, so fetch again (up to three times in all).
+async function loadDrawer(id) {
+  const request = ++drawerRequest;
+  const content = document.getElementById("drawer-content");
+  drawerLoadingId = id;
+  if (content.dataset.boxId !== id) {
+    content.dataset.boxId = id;
+    content.innerHTML = '<p class="drawer-loading">Loading…</p>';
+  }
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    drawerMissedEvents = false;
+    let html;
+    try {
+      const response = await fetch(`/box/${encodeURIComponent(id)}/drawer`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      html = await response.text();
+    } catch (error) {
+      if (request === drawerRequest) {
+        drawerLoadingId = null;
+        content.innerHTML = '<p class="drawer-loading">Could not load details.</p>';
+      }
+      return;
+    }
+    if (request !== drawerRequest || activeBoxId !== id) return;
+    if (drawerMissedEvents && attempt < 2) continue;
+
+    const activeTab = content.querySelector(".drawer-tab.active");
+    const tabName = activeTab && activeTab.textContent.trim() === "Events" ? "events" : null;
+    content.innerHTML = html;
+    drawerLoadingId = null;
+    if (tabName) {
+      const eventsTab = Array.from(content.querySelectorAll(".drawer-tab")).find(tab => tab.textContent.trim() === "Events");
+      if (eventsTab) eventsTab.click();
+    }
+    return;
+  }
+}
+
 function closeDrawer() {
+  drawerRequest++;
+  drawerLoadingId = null;
   if (activeBoxId !== null) {
     let target = document.getElementById(activeBoxId);
     if (target !== null) {
@@ -436,6 +477,7 @@ function closeDrawer() {
   }
   activeBoxId = null;
   document.getElementById("drawer-content").innerHTML = "";
+  delete document.getElementById("drawer-content").dataset.boxId;
   document.getElementById("side-drawer-panel").classList.remove("is-open");
   document.getElementById("side-drawer-panel").setAttribute("aria-hidden", "true");
   document.getElementById("drawer-backdrop").classList.remove("is-visible");
@@ -454,7 +496,12 @@ function clearDashboardBoxes() {
   let drawerContent = document.getElementById("drawer-content");
   let drawerPanel = document.getElementById("side-drawer-panel");
   let drawerBackdrop = document.getElementById("drawer-backdrop");
-  if (drawerContent !== null) drawerContent.innerHTML = "";
+  drawerRequest++;
+  drawerLoadingId = null;
+  if (drawerContent !== null) {
+    drawerContent.innerHTML = "";
+    delete drawerContent.dataset.boxId;
+  }
   if (drawerPanel !== null) drawerPanel.classList.remove("is-open");
   if (drawerBackdrop !== null) drawerBackdrop.classList.remove("is-visible");
   document.body.classList.remove("drawer-open");
@@ -469,8 +516,8 @@ function clearDashboardBoxes() {
       <div onclick='boxClick(this.id)' onmouseover='boxHover(this.dataset.sortName)' onmouseout='boxOut()' id='${escapeHtml(box.id)}' data-sort-name='${escapeHtml(box.name)}' class='${escapeHtml(box.status)} ${escapeHtml(box.size)} box'>
         <p class='title'>${escapeHtml(title)}</p>
         <div class='stat'><span class='stat-value'></span></div>
-        <p class='maxTBU'>${box.maxTBU || ''}</p>
-        <p class='expireAfter'>${box.expireAfter || ''}</p>
+        <p class='maxTBU'>${escapeHtml(box.maxTBU || '')}</p>
+        <p class='expireAfter'>${escapeHtml(box.expireAfter || '')}</p>
       </div>
     `;
 
@@ -489,60 +536,14 @@ function clearDashboardBoxes() {
 
     setBoxStat(newBox, box.stat);
 
-    const oldDetail = document.getElementById(`box-detail-${box.id}`);
-    if (oldDetail) {
-      oldDetail.remove();
+    placeBoxInSizeOrder(newBox);
+    if (pendingDrawerReopenId === box.id) {
+      pendingDrawerReopenId = null;
+      boxClick(box.id);
     }
-
-  const detail = document.createElement("template");
-  detail.id = `box-detail-${box.id}`;
-  const maxTBU = hasMetadataValue(box.maxTBU) ? `<dt class="drawer-max-tbu-label">Max TBU</dt><dd class="drawer-max-tbu">${metadataIcon("activity", "Max TBU")}<span class="drawer-metadata-value">${box.maxTBU}</span></dd>` : '';
-  const expireAfter = hasMetadataValue(box.expireAfter) ? `<dt class="drawer-expire-after-label">Expires after</dt><dd class="drawer-expire-after">${metadataIcon("trash-2", "Expires after")}<span class="drawer-metadata-value">${box.expireAfter}</span></dd>` : '';
-  // Latest update shows only timing fields supplied with that message.
-  const latestMessage = box.messages && box.messages.length > 0 ? box.messages[0] : null;
-  const latestMaxTBU = latestMessage ? latestMessage.maxTBU : null;
-  const latestExpireAfter = latestMessage ? latestMessage.expireAfter : null;
-  const maxTBUIndicator = hasMetadataValue(latestMaxTBU) ? `<span class="event-indicator" aria-label="Max TBU: ${latestMaxTBU}" title="Max TBU: ${latestMaxTBU}"><svg class="event-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg><span>${latestMaxTBU}</span></span>` : '';
-  const expireAfterIndicator = hasMetadataValue(latestExpireAfter) ? `<span class="event-indicator" aria-label="Expires after: ${latestExpireAfter}" title="Expires after: ${latestExpireAfter}"><svg class="event-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg><span>${latestExpireAfter}</span></span>` : '';
-  const links = box.links && box.links.length ? '<div class="drawer-section drawer-links"><h3>Links</h3>' + box.links.map(link => {
-    return `<a href="${escapeHtml(safeUrl(link.url))}" target="_blank" rel="noopener noreferrer"><svg class="external-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg><span>${escapeHtml(link.name)}</span></a><br />`;
-  }).join("") + '</div>' : '';
-  detail.innerHTML =
-    '<div class="drawer-header-wrapper ' + escapeHtml(box.status) + '"><div class="drawer-header"><h2 class="drawer-title">' +
-    escapeHtml(title) +
-    '</h2><div class="drawer-actions"><a class="drawer-open-page" href="/box/' + encodeURIComponent(box.id) + '" target="_blank" rel="noopener noreferrer" aria-label="Open full box page" title="Open full box page"><svg class="drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg></a><button class="drawer-close" type="button" aria-label="Close details" onclick="closeDrawer()"><svg class="drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></svg></button></div></div></div>' +
-    '<div class="drawer-tabs"><button class="drawer-tab active" onclick="switchDrawerTab(event, \'overview\')">Overview</button><button class="drawer-tab" onclick="switchDrawerTab(event, \'events\')">Events</button></div>' +
-    '<div class="drawer-content-area"><div id="drawer-tab-overview" class="drawer-tab-content active">' +
-    '<div class="drawer-section drawer-metadata"><h3>Status Details</h3><dl class="drawer-meta"><dt>Name</dt><dd><span class="drawer-metadata-value drawer-name"></span></dd><dt>ID</dt><dd><span class="drawer-metadata-value">' +
-    escapeHtml(box.id) +
-    '</span></dd><dt>Size</dt><dd><span class="drawer-metadata-value">' + escapeHtml(box.size) + '</span></dd>' +
-    maxTBU + expireAfter +
-    '</dl></div>' + links + '<div class="drawer-section drawer-latest-update"><h3>Latest update</h3><div class="event-log-card ' + escapeHtml(box.status) + '"><div class="event-top"><strong class="event-status">' + escapeHtml(box.status) + '</strong><div class="event-leading">' + maxTBUIndicator + expireAfterIndicator + '</div></div><div class="event-message">' +
-    escapeHtml(box.lastMessage) +
-    '</div><small>' + escapeHtml(box.lastUpdate) +
-    '</small></div></div></div>' +
-    '<div id="drawer-tab-events" class="drawer-tab-content"><div class="drawer-section drawer-events"><h3>Event log</h3><div class="event-log"></div></div></div></div>';
-  const drawerName = detail.content.querySelector(".drawer-name");
-  if (drawerName) drawerName.textContent = box.name;
-  setDrawerStat(detail.content, box.stat);
-  const eventLog = detail.content.querySelector(".event-log");
-  if (eventLog && box.messages) {
-    box.messages.forEach(message => {
-      const card = createEventCard(message.status, message.message, message.timeStamp);
-      addEventIndicator(card, "activity", "Max TBU", message.maxTBU);
-      addEventIndicator(card, "trash-2", "Expires after", message.expireAfter);
-      eventLog.append(card);
-    });
   }
-  newBox.after(detail);
-  placeBoxInSizeOrder(newBox, detail);
-  if (pendingDrawerReopenId === box.id) {
-    pendingDrawerReopenId = null;
-    boxClick(box.id);
-  }
-}
 
-function placeBoxInSizeOrder(boxElement, detailElement) {
+function placeBoxInSizeOrder(boxElement) {
   let grid = document.getElementById("boxes-grid");
   let sizeOrder = ["xlarge", "dlarge", "large", "dmedium", "medium", "dsmall", "small", "dmicro", "micro", "dot"];
   let boxRank = boxSizeRank(boxElement, sizeOrder);
@@ -551,13 +552,12 @@ function placeBoxInSizeOrder(boxElement, detailElement) {
   }
 
   boxElement.remove();
-  detailElement.remove();
 
   let low = 0;
-  let high = Math.floor(grid.children.length / 2);
+  let high = grid.children.length;
   while (low < high) {
     let middle = Math.floor((low + high) / 2);
-    let candidate = grid.children[middle * 2];
+    let candidate = grid.children[middle];
     let candidateRank = boxSizeRank(candidate, sizeOrder);
     if (candidateRank < boxRank ||
       (candidateRank === boxRank && candidate.dataset.sortName.localeCompare(boxElement.dataset.sortName) < 0)) {
@@ -567,12 +567,11 @@ function placeBoxInSizeOrder(boxElement, detailElement) {
     }
   }
 
-  let candidate = grid.children[low * 2];
+  let candidate = grid.children[low];
   if (candidate !== undefined) {
     grid.insertBefore(boxElement, candidate);
-    grid.insertBefore(detailElement, candidate);
   } else {
-    grid.append(boxElement, detailElement);
+    grid.append(boxElement);
   }
 }
 
@@ -585,10 +584,6 @@ function deleteBox(id) {
   let target = document.getElementById(id);
   if (target !== null) {
     target.parentNode.removeChild(target);
-  }
-  let detail = document.getElementById("box-detail-" + id);
-  if (detail !== null) {
-    detail.remove();
   }
   if (activeBoxId === id) {
     pendingDrawerReopenId = id;
@@ -610,13 +605,12 @@ function deleteBox(id) {
       closeFilteredDrawer();
     }
 
-    const detail = document.getElementById(`box-detail-${event.id}`);
-    if (detail) {
-      updateDetailContent(detail.content, event);
-    }
-
     if (activeBoxId === event.id && elements.drawerContent) {
-      updateDetailContent(elements.drawerContent, event);
+      if (drawerLoadingId === event.id) {
+        drawerMissedEvents = true;
+      } else {
+        updateDetailContent(elements.drawerContent, event);
+      }
     }
 
     if (!targetBox) return;
@@ -894,16 +888,6 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-// Only allow http(s) and relative links, so a link cannot run script.
-function safeUrl(url) {
-  try {
-    const parsed = new URL(String(url), window.location.href);
-    return parsed.protocol === "http:" || parsed.protocol === "https:" ? String(url) : "#";
-  } catch (error) {
-    return "#";
-  }
 }
 
 // Set the stat shown in a dashboard tile or on the full box page

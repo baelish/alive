@@ -107,7 +107,6 @@ const boxGrid = `
     <p class='maxTBU'>{{ .MaxTBU }}</p>
     <p class='expireAfter'>{{ .ExpireAfter }}</p>
 </div>
-<template id='box-detail-{{ .ID }}'>{{ template "drawerInfo" . }}</template>
 {{ end }}`
 
 const drawerInfo = `
@@ -247,6 +246,25 @@ func handleBox(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleBoxDrawer returns the details drawer for one box as an HTML fragment.
+// The dashboard loads it when a box is clicked rather than embedding a drawer
+// for every box in the page, which made large dashboards slow to load.
+func handleBoxDrawer(w http.ResponseWriter, r *http.Request) {
+	id := boxIDParam(r)
+	box, err := boxStore.GetByID(id)
+	if err != nil {
+		http.Error(w, "Box not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	if err := templates.ExecuteTemplate(w, TemplateDrawerInfo, box); err != nil {
+		logger.Error("failed to execute drawer template", zap.String("id", id), zap.Error(err))
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
 func runDashboard(ctx context.Context) {
 	if options.Debug {
 		logger.Info("Starting Dashboard")
@@ -260,6 +278,7 @@ func runDashboard(ctx context.Context) {
 	// Setup routes
 	r := chi.NewRouter()
 	r.Get("/box/{id}", handleBox)
+	r.Get("/box/{id}/drawer", handleBoxDrawer)
 	http.Handle("/box/", r)
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/health", handleStatus)
