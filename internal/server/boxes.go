@@ -349,11 +349,14 @@ func maintenanceRoutine(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			logger.Info("Saving data file before exit")
-			for range 3 {
-				err = saveBoxFile()
-				if err != nil {
-					logger.Error(err.Error())
+			// Retry only on failure, every save rotates the backups.
+			for attempt := range 3 {
+				if err = saveBoxFile(); err == nil {
+					logger.Info("Saved data file")
+					return
 				}
+				logger.Error("failed to save data file", zap.Int("attempt", attempt+1), zap.Error(err))
+				time.Sleep(200 * time.Millisecond)
 			}
 
 			return
