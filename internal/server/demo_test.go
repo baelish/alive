@@ -94,6 +94,54 @@ func TestCreateMissingDemoBox(t *testing.T) {
 	}
 }
 
+func TestDemoInitials(t *testing.T) {
+	tests := map[string]string{
+		"Siberian Tiger":              "ST",
+		"Badger":                      "BAD",
+		"Elk":                         "ELK",
+		"Ox":                          "OX",
+		"Big-horned sheep":            "BHS",
+		"Devi Fish (Giant Sting ray)": "DFG",
+		"Bob-Cat":                     "BC",
+		"X-ray fish":                  "XRF",
+		"Bird of paradise":            "BOP",
+		"":                            "",
+	}
+	for name, want := range tests {
+		if got := demoInitials(name); got != want {
+			t.Errorf("demoInitials(%q) = %q, want %q", name, got, want)
+		}
+	}
+
+	// Every demo animal gives 2-3 capital letters.
+	valid := regexp.MustCompile(`^[A-Z]{2,3}$`)
+	for _, name := range animals {
+		if got := demoInitials(name); !valid.MatchString(got) {
+			t.Errorf("demoInitials(%q) = %q, want 2-3 capital letters", name, got)
+		}
+	}
+}
+
+func TestSeedDemoMicroDisplayNames(t *testing.T) {
+	originalBoxes := boxStore.GetAll()
+	defer func() {
+		boxStore.mu.Lock()
+		boxStore.boxes = originalBoxes
+		boxStore.mu.Unlock()
+	}()
+	resetBoxStore()
+
+	seedDemoBoxes()
+	for _, b := range boxStore.GetAll() {
+		if b.Size == api.Micro && b.DisplayName != demoInitials(b.Name) {
+			t.Errorf("micro box %q has display name %q, want %q", b.Name, b.DisplayName, demoInitials(b.Name))
+		}
+		if b.Size != api.Micro && b.DisplayName != "" {
+			t.Errorf("%s box %q has display name %q, want none", b.Size, b.Name, b.DisplayName)
+		}
+	}
+}
+
 func TestNextStatKeepsFormat(t *testing.T) {
 	fraction := regexp.MustCompile(`^(\d+)/10$`)
 	tests := []struct {

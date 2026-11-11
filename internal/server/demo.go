@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/baelish/alive/api"
 )
@@ -467,10 +468,35 @@ func clamp(v, lo, hi int) int {
 	return min(max(v, lo), hi)
 }
 
+// demoInitials turns a name into 2-3 capital letters for boxes too small for
+// the full name: the initials of up to three words ("Siberian Tiger" -> "ST"),
+// or the first three letters of a single word ("Badger" -> "BAD").
+func demoInitials(name string) string {
+	words := strings.FieldsFunc(name, func(r rune) bool {
+		return !unicode.IsLetter(r)
+	})
+	if len(words) == 0 {
+		return ""
+	}
+	if len(words) == 1 {
+		letters := []rune(words[0])
+		return strings.ToUpper(string(letters[:min(3, len(letters))]))
+	}
+
+	var initials []rune
+	for _, w := range words[:min(3, len(words))] {
+		initials = append(initials, unicode.ToUpper([]rune(w)[0]))
+	}
+	return string(initials)
+}
+
 func createDemoBox(size api.BoxSize, withStat bool) {
 	var newBox api.Box
 	newBox.Name = animals[rand.Intn(len(animals))]
 	newBox.Size = size
+	if size == api.Micro {
+		newBox.DisplayName = demoInitials(newBox.Name)
+	}
 	info := map[string]string{}
 	info["foo"] = "bar"
 	info["boo"] = "hoo"
