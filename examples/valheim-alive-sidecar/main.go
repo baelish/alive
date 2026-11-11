@@ -121,6 +121,9 @@ func checkAndUpdate(c *client.Client, boxID, metricsURL string) {
 
 	var status api.Status
 	var message string
+	// The stat shows players online on the dashboard tile, it is cleared
+	// whenever the server is not up.
+	var stat string
 
 	if scrapeErr != nil {
 		status = api.Red
@@ -130,10 +133,11 @@ func checkAndUpdate(c *client.Client, boxID, metricsURL string) {
 		message = fmt.Sprintf("metric %q not found", statusMetric)
 	} else {
 		status = api.Green
-		message = fmt.Sprintf("%d Online", int(metrics[playerMetric]))
+		stat = fmt.Sprintf("%d", int(metrics[playerMetric]))
+		message = stat + " Online"
 	}
 
-	if err := c.CreateEvent(api.Event{ID: boxID, Status: status, Message: message}); err != nil {
+	if err := c.CreateEvent(api.Event{ID: boxID, Status: status, Message: message, Stat: &stat}); err != nil {
 		logger.Error("failed to post event", zap.Error(err))
 	}
 }
