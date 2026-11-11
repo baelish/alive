@@ -701,6 +701,11 @@ div#status-bar {
     width: 100%;
 }
 
+.drawer-loading {
+    color: var(--text-secondary);
+    padding: 16px;
+}
+
 #boxes-grid > template {
     display: none;
 }
