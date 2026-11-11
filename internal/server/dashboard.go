@@ -128,6 +128,7 @@ const drawerInfo = `
 			<h3>Status Details</h3>
 			{{ if .Description }}<p class="drawer-description">{{ .Description }}</p>{{ end }}
 			<dl class="drawer-meta">
+				<dt>Name</dt><dd><span class="drawer-metadata-value drawer-name">{{ .Name }}</span></dd>
 				<dt>ID</dt><dd><span class="drawer-metadata-value">{{ .ID }}</span></dd>
 				<dt>Size</dt><dd><span class="drawer-metadata-value">{{ .Size }}</span></dd>
 				{{ if .Stat }}<dt class="drawer-stat-label">Stat</dt><dd class="drawer-stat"><span class="drawer-metadata-value">{{ .Stat }}</span></dd>{{ end }}
