@@ -373,7 +373,7 @@ function clearDashboardBoxes() {
     const divContent = `
       <div onclick='boxClick(this.id)' onmouseover='boxHover("${box.name}")' onmouseout='boxOut()' id='${box.id}' class='${box.status} ${box.size} box'>
         <p class='title'>${title}</p>
-        <p class='box-id'>${box.id}</p>
+        <div class='stat'><span class='stat-value'></span></div>
         <p class='maxTBU'>${box.maxTBU || ''}</p>
         <p class='expireAfter'>${box.expireAfter || ''}</p>
       </div>
@@ -391,6 +391,8 @@ function clearDashboardBoxes() {
 
     const newBox = document.getElementById(box.id);
     if (!newBox) return;
+
+    setBoxStat(newBox, box.stat);
 
     newBox.dataset.sortName = box.name;
 
@@ -427,6 +429,7 @@ function clearDashboardBoxes() {
     '</div><small>' + box.lastUpdate +
     '</small></div></div></div>' +
     '<div id="drawer-tab-events" class="drawer-tab-content"><div class="drawer-section drawer-events"><h3>Event log</h3><div class="event-log"></div></div></div></div>';
+  setDrawerStat(detail.content, box.stat);
   const eventLog = detail.content.querySelector(".event-log");
   if (eventLog && box.messages) {
     box.messages.forEach(message => {
@@ -523,6 +526,10 @@ function deleteBox(id) {
 
     if (!targetBox) return;
 
+  if (event.stat !== undefined && event.stat !== null) {
+    setBoxStat(targetBox, event.stat);
+  }
+
   if (hasMetadataValue(event.maxTBU)) {
     const t = targetBox.getElementsByClassName("maxTBU")[0];
     if (t) {
@@ -615,6 +622,11 @@ function deleteBox(id) {
     }
     if (message) message.textContent = event.lastMessage;
     if (updated) updated.textContent = myTime();
+
+    // An omitted stat leaves the current one unchanged, "" clears it.
+    if (event.stat != null) {
+      setDrawerStat(content, event.stat);
+    }
 
     // Omitted timing fields leave the box's current settings unchanged.
     if (event.maxTBU != null) {
@@ -777,6 +789,57 @@ function pad(n, width, z) {
   z = z || "0";
   n = n + "";
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
+// Set the stat shown in a dashboard tile or on the full box page
+// (textContent, so it is not parsed as HTML)
+function setBoxStat(boxElement, stat) {
+  const statValue = boxElement.querySelector(".stat-value");
+  if (statValue) statValue.textContent = stat || "";
+
+  const infoRow = boxElement.querySelector(".info-stat");
+  if (infoRow) {
+    const infoValue = infoRow.querySelector(".info-stat-value");
+    if (infoValue) infoValue.textContent = stat || "";
+    infoRow.style.display = stat ? "table-row" : "none";
+  }
+}
+
+// Add, update or remove the Stat row (placed after Size) in a box's details
+function setDrawerStat(content, stat) {
+  let label = content.querySelector(".drawer-stat-label");
+  let value = content.querySelector(".drawer-stat");
+
+  if (!stat) {
+    if (label) label.remove();
+    if (value) value.remove();
+    return;
+  }
+
+  if (!label || !value) {
+    const metadata = content.querySelector(".drawer-meta");
+    if (!metadata) return;
+
+    label = document.createElement("dt");
+    label.className = "drawer-stat-label";
+    label.textContent = "Stat";
+
+    value = document.createElement("dd");
+    value.className = "drawer-stat";
+    const valueText = document.createElement("span");
+    valueText.className = "drawer-metadata-value";
+    value.append(valueText);
+
+    const sizeLabel = Array.from(metadata.querySelectorAll("dt")).find(dt => dt.textContent === "Size");
+    const sizeValue = sizeLabel ? sizeLabel.nextElementSibling : null;
+    if (sizeValue) {
+      sizeValue.after(label, value);
+    } else {
+      metadata.append(label, value);
+    }
+  }
+
+  value.querySelector(".drawer-metadata-value").textContent = stat;
 }
 
 // Change alert level of a box

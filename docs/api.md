@@ -48,6 +48,7 @@ Fields accepted when creating or replacing a box:
 | `maxTBU` | duration | No | Mark `noUpdate` when no update arrives within this duration. |
 | `expireAfter` | duration | No | Delete the box after this duration without an update. |
 | `lastMessage` | string | No | Initial status message. |
+| `stat` | string | No | Short value (for example `3/10`) shown in the body of the tile, below the name, and in the box details. Not shown on `dot`, `micro` or `dmicro` tiles. |
 | `links` | array of `{ "name": string, "url": string }` | No | Links shown in box details. |
 | `info` | object of string values | No | Additional details shown in the dashboard. |
 | `messages` | array of message objects | No | Existing event history; normally omit when creating a box. |
@@ -141,10 +142,11 @@ curl -i -X POST http://localhost:8081/api/v1/boxes/my-service/events \
   }'
 ```
 
-The event body accepts `status`, `lastMessage`, `maxTBU`, and `expireAfter`.
-The URL supplies the box ID; any `id` in the body is ignored. Omitted timing
-fields leave the current box settings unchanged. Supplying `"0s"` clears that
-setting. The `201 Created` response contains the event with its `type` set to
+The event body accepts `status`, `lastMessage`, `stat`, `maxTBU`, and
+`expireAfter`. The URL supplies the box ID; any `id` in the body is ignored.
+Omitted timing fields leave the current box settings unchanged. Supplying `"0s"`
+clears that setting. An omitted `stat` leaves the current stat unchanged and
+`""` clears it. The `201 Created` response contains the event with its `type` set to
 `updateBox`.
 
 Example event response:

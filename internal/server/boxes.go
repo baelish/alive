@@ -367,6 +367,9 @@ func update(event api.Event) error {
 	// Update box in store (thread-safe)
 	err := boxStore.Update(event.ID, func(box *api.Box) {
 		box.LastMessage = event.Message
+		if event.Stat != nil {
+			box.Stat = *event.Stat
+		}
 
 		// Create message with metadata only if provided in event
 		newMessage := api.Message{

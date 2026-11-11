@@ -95,7 +95,7 @@ const boxGrid = `
 {{ define "box" }}
 <div onclick='boxClick(this.id)' onmouseover='boxHover("{{ .Name }}")' onmouseout='boxOut()' id='{{ .ID }}' data-sort-name='{{ .Name }}' class='{{ .Status }} {{ .Size }} box'>
     <p class='title'>{{ if .DisplayName }}{{ .DisplayName }}{{ else }}{{ .Name }}{{ end }}</p>
-	<p class='box-id'>{{ .ID }}</p>
+	<div class='stat'><span class='stat-value'>{{ .Stat }}</span></div>
     <p class='maxTBU'>{{ .MaxTBU }}</p>
     <p class='expireAfter'>{{ .ExpireAfter }}</p>
 </div>
@@ -122,6 +122,7 @@ const drawerInfo = `
 			<dl class="drawer-meta">
 				<dt>ID</dt><dd><span class="drawer-metadata-value">{{ .ID }}</span></dd>
 				<dt>Size</dt><dd><span class="drawer-metadata-value">{{ .Size }}</span></dd>
+				{{ if .Stat }}<dt class="drawer-stat-label">Stat</dt><dd class="drawer-stat"><span class="drawer-metadata-value">{{ .Stat }}</span></dd>{{ end }}
 				{{ if .MaxTBU }}<dt class="drawer-max-tbu-label">Max TBU</dt><dd class="drawer-max-tbu"><svg class="metadata-icon" viewBox="0 0 24 24" aria-label="Max TBU"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg><span class="drawer-metadata-value">{{ .MaxTBU }}</span></dd>{{ end }}
 				{{ if .ExpireAfter }}<dt class="drawer-expire-after-label">Expires after</dt><dd class="drawer-expire-after"><svg class="metadata-icon" viewBox="0 0 24 24" aria-label="Expires after"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg><span class="drawer-metadata-value">{{ .ExpireAfter }}</span></dd>{{ end }}
 			</dl>
@@ -148,6 +149,7 @@ const boxInfo = `
   <tr><th>ID:</th><td>{{ .ID }}</td></tr>
   <tr><th>Status:</th><td>{{ .Status }}</td></tr>
   <tr><th>Size:</th><td>{{ .Size }}</td></tr>
+  <tr class="info-stat" {{ if not .Stat }}style="display: none;"{{ end }}><th>Stat:</th><td class="info-stat-value">{{ .Stat }}</td></tr>
   {{ if .Info }}<tr><th>Info:</th><td><table>{{ range $key, $value := .Info }}<tr><th>{{ $key }}:</th><td>{{ $value }}</td></tr>{{ end }}</table></td></tr>{{ end }}
   <tr><th>Last message:</th><td class="message">{{ .LastMessage }}</td></tr>
   <tr><th>Last updated:</th><td class="lastUpdated">{{ .LastUpdate.Format "2006-01-02T15:04:05.000Z07:00" }}</td></tr>
