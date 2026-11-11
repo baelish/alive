@@ -153,6 +153,12 @@ p.message {
 
 /* stat class: fills the space below the title */
 #boxes-grid > .box {
+    /* Every tile has a fixed size and nothing inside it affects the rest of
+       the page, so the browser can skip laying out other tiles (or the
+       grid) when one changes. The grid still positions the tiles, so they
+       move as usual when the drawer opens. Only grid tiles: the status bar
+       also has the box class and its filter menu must overflow it. */
+    contain: strict;
     display: flex;
     flex-direction: column;
 }
