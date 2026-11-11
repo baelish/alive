@@ -225,7 +225,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleBox(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := boxIDParam(r)
 	if id == "" {
 		http.Error(w, "Box ID is required", http.StatusBadRequest)
 		return

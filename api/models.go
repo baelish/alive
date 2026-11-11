@@ -4,9 +4,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 )
+
+// validID matches box IDs: 1-64 letters, digits, hyphens or underscores. They
+// are used unencoded in URLs and as HTML element IDs.
+var validID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
+
+// ValidID reports whether id can be used as a box ID.
+func ValidID(id string) bool {
+	return validID.MatchString(id)
+}
+
+// ErrInvalidID is returned when a box ID contains anything other than 1-64
+// letters, digits, hyphens or underscores.
+var ErrInvalidID = errors.New("box ID must be 1-64 letters, digits, hyphens or underscores")
 
 // Error response for api calls
 type ErrorResponse struct {

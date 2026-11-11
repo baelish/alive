@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 )
@@ -582,4 +583,20 @@ func compareDurationPtr(got, want *Duration) bool {
 		return *got == *want
 	}
 	return false
+}
+
+func TestValidID(t *testing.T) {
+	valid := []string{"a", "abc123", "mc-empires", "valheim-my_world", "K5jot2YwNj", "_-", strings.Repeat("a", 64)}
+	for _, id := range valid {
+		if !ValidID(id) {
+			t.Errorf("ValidID(%q) = false, want true", id)
+		}
+	}
+
+	invalid := []string{"", "has space", "a/b", "a.b", "<b>x</b>", "x'\"", "ünïcode", "🚀", strings.Repeat("a", 65)}
+	for _, id := range invalid {
+		if ValidID(id) {
+			t.Errorf("ValidID(%q) = true, want false", id)
+		}
+	}
 }

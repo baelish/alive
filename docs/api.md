@@ -38,7 +38,7 @@ Fields accepted when creating or replacing a box:
 
 | Field | Type | Required | Meaning |
 | :--- | :--- | :---: | :--- |
-| `id` | string | No for create; yes for `PUT` | Unique identifier. Create generates one if omitted. |
+| `id` | string | No for create; yes for `PUT` | Unique identifier of 1-64 letters, digits, `-` or `_`; any other ID returns `400 Bad Request`. Create generates one if omitted. |
 | `name` | string | No | Box name. |
 | `displayName` | string | No | Optional tile label. |
 | `description` | string | No | Description shown in the box details. |

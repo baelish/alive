@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/baelish/alive/api"
@@ -51,7 +52,7 @@ func apiGetBoxes(w http.ResponseWriter, _ *http.Request) {
 }
 
 func apiGetBox(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := boxIDParam(r)
 
 	// Get box from store (thread-safe)
 	box, err := boxStore.GetByID(id)
@@ -75,7 +76,7 @@ func apiCreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event.ID = chi.URLParam(r, "id")
+	event.ID = boxIDParam(r)
 	event.Type = "updateBox"
 	logger.Debug("update event details", logStructDetails(event)...)
 	err = update(event)
@@ -101,6 +102,12 @@ func apiCreateBox(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&newBox)
 	if err != nil {
 		handleApiErrorResponse(w, http.StatusBadRequest, err, "could not decode data received", true, false)
+
+		return
+	}
+
+	if newBox.ID != "" && !api.ValidID(newBox.ID) {
+		handleApiErrorResponse(w, http.StatusBadRequest, api.ErrInvalidID, "invalid box ID", true, true)
 
 		return
 	}
@@ -134,6 +141,11 @@ func apiReplaceBox(w http.ResponseWriter, r *http.Request) {
 		// Create a custom error for missing ID
 		missingIDErr := errors.New("missing ID when requesting a box replacement")
 		handleApiErrorResponse(w, http.StatusBadRequest, missingIDErr, "cannot replace a box without an ID", true, false)
+		return
+	}
+
+	if !api.ValidID(newBox.ID) {
+		handleApiErrorResponse(w, http.StatusBadRequest, api.ErrInvalidID, "invalid box ID", true, true)
 		return
 	}
 
@@ -175,7 +187,7 @@ func apiStatus(w http.ResponseWriter, _ *http.Request) {
 }
 
 func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := boxIDParam(r)
 
 	if found, _ := deleteBox(id, true); found {
 		w.WriteHeader(http.StatusNoContent)
@@ -188,6 +200,17 @@ func apiDeleteBox(w http.ResponseWriter, r *http.Request) {
 		logger.Error(err.Error())
 	}
 
+}
+
+// boxIDParam returns the {id} URL parameter, decoded. chi returns it still
+// percent-encoded when the path contains encoded characters, so without this
+// a box stored with such an ID before IDs were restricted could not be found.
+func boxIDParam(r *http.Request) string {
+	id := chi.URLParam(r, "id")
+	if decoded, err := url.PathUnescape(id); err == nil {
+		return decoded
+	}
+	return id
 }
 
 func DeprecatedRoute(msg string) func(http.HandlerFunc) http.HandlerFunc {

@@ -185,6 +185,9 @@ func addBox(box api.Box) (id string, err error) {
 	t := time.Now()
 
 	if box.ID != "" {
+		if !api.ValidID(box.ID) {
+			return "", fmt.Errorf("%w: %q", api.ErrInvalidID, box.ID)
+		}
 		if boxStore.Exists(box.ID) {
 			err = fmt.Errorf("a box already exists with that ID: %s", box.ID)
 			return "", err
