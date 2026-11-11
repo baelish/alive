@@ -515,7 +515,7 @@ function clearDashboardBoxes() {
     '</h2><div class="drawer-actions"><a class="drawer-open-page" href="/box/' + encodeURIComponent(box.id) + '" target="_blank" rel="noopener noreferrer" aria-label="Open full box page" title="Open full box page"><svg class="drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg></a><button class="drawer-close" type="button" aria-label="Close details" onclick="closeDrawer()"><svg class="drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></svg></button></div></div></div>' +
     '<div class="drawer-tabs"><button class="drawer-tab active" onclick="switchDrawerTab(event, \'overview\')">Overview</button><button class="drawer-tab" onclick="switchDrawerTab(event, \'events\')">Events</button></div>' +
     '<div class="drawer-content-area"><div id="drawer-tab-overview" class="drawer-tab-content active">' +
-    '<div class="drawer-section drawer-metadata"><h3>Status Details</h3><dl class="drawer-meta"><dt>ID</dt><dd><span class="drawer-metadata-value">' +
+    '<div class="drawer-section drawer-metadata"><h3>Status Details</h3><dl class="drawer-meta"><dt>Name</dt><dd><span class="drawer-metadata-value drawer-name"></span></dd><dt>ID</dt><dd><span class="drawer-metadata-value">' +
     box.id +
     '</span></dd><dt>Size</dt><dd><span class="drawer-metadata-value">' + box.size + '</span></dd>' +
     maxTBU + expireAfter +
@@ -524,6 +524,8 @@ function clearDashboardBoxes() {
     '</div><small>' + box.lastUpdate +
     '</small></div></div></div>' +
     '<div id="drawer-tab-events" class="drawer-tab-content"><div class="drawer-section drawer-events"><h3>Event log</h3><div class="event-log"></div></div></div></div>';
+  const drawerName = detail.content.querySelector(".drawer-name");
+  if (drawerName) drawerName.textContent = box.name;
   setDrawerStat(detail.content, box.stat);
   const eventLog = detail.content.querySelector(".event-log");
   if (eventLog && box.messages) {
