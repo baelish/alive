@@ -323,76 +323,160 @@ div#status-bar .lastUpdated {
     min-width: 0;
 }
 
-.status-filters {
-    display: flex;
-    flex-shrink: 0;
-    gap: 6px;
-}
-
 .status-tools .lastUpdated {
     min-width: 0;
     overflow-wrap: anywhere;
 }
 
-.status-filter {
-    background: var(--unknown-light);
-    border: 2px solid var(--status-main);
-    border-radius: 999px;
-    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.12);
-    box-sizing: border-box;
+/* status filter menu (cog in the status bar) */
+div#status-bar {
+    overflow: visible;
+}
+
+.filter-menu {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.filter-toggle {
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text-secondary);
     cursor: pointer;
-    height: 22px;
+    display: inline-flex;
+    height: 30px;
+    justify-content: center;
     padding: 0;
     position: relative;
-    transition: box-shadow 180ms ease;
-    width: 36px;
+    transition: background-color 180ms ease, color 180ms ease;
+    width: 30px;
 }
 
-.status-filter::before {
-    background: repeating-linear-gradient(
-        135deg,
-        var(--status-light) 0%,
-        var(--status-light) 33.33%,
-        var(--status-main) 33.33%,
-        var(--status-main) 66.66%,
-        var(--status-dark) 66.66%,
-        var(--status-dark) 100%
-    );
-    content: "";
-    border-radius: inherit;
-    bottom: 0;
-    left: 0;
-    position: absolute;
-    pointer-events: none;
-    top: 0;
-    transition: width 400ms ease-in-out;
-    width: 0;
+.filter-toggle svg {
+    fill: none;
+    height: 18px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    width: 18px;
 }
 
-.status-filter[aria-pressed="true"] {
-    border-color: var(--status-dark);
+.filter-toggle:hover,
+.filter-toggle[aria-expanded="true"],
+.filter-toggle.filtering {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--text-primary);
 }
 
-.status-filter[aria-pressed="true"]::before {
-    width: 100%;
-}
-
-.status-filter[aria-pressed="false"] {
-    background: transparent;
-    border-color: var(--status-main);
-}
-
-.status-filter[aria-pressed="false"]::before {
-    width: 0;
-}
-
-.status-filter:hover {
-    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.2), 0 2px 6px rgba(15, 23, 42, 0.2);
-}
-
-.status-filter:focus-visible {
+.filter-toggle:focus-visible,
+.filter-chip:focus-visible {
     outline: 2px solid var(--text-primary);
     outline-offset: 2px;
+}
+
+/* shown on the cog while some statuses are hidden */
+.filter-active-dot {
+    background: var(--text-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--surface-white);
+    display: none;
+    height: 7px;
+    position: absolute;
+    right: 3px;
+    top: 3px;
+    width: 7px;
+}
+
+.filter-toggle.filtering .filter-active-dot {
+    display: block;
+}
+
+.filter-popover {
+    background: var(--surface-white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    font-weight: normal;
+    max-width: calc(100vw - 32px);
+    padding: 12px;
+    position: absolute;
+    right: 0;
+    text-align: left;
+    top: calc(100% + 10px);
+    width: 280px;
+    z-index: 30;
+}
+
+.filter-popover[hidden] {
+    display: none;
+}
+
+.filter-heading {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.filter-chip {
+    align-items: center;
+    background: var(--surface-white);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 13px;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.filter-chip:hover {
+    border-color: var(--text-muted);
+}
+
+.filter-chip[aria-pressed="true"] {
+    background: rgba(24, 49, 83, 0.07);
+    border-color: var(--text-primary);
+    font-weight: 600;
+}
+
+.filter-dot {
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 8px;
+    width: 8px;
+}
+
+.filter-chip[data-status="green"] .filter-dot { background: var(--pass); }
+.filter-chip[data-status="grey"] .filter-dot { background: var(--unknown); }
+.filter-chip[data-status="amber"] .filter-dot { background: var(--warning); }
+.filter-chip[data-status="red"] .filter-dot { background: var(--failed); }
+
+.filter-count {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    font-weight: normal;
+}
+
+.filter-hint {
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin: 10px 0 0;
 }
 
 
