@@ -3,7 +3,7 @@
 ## Overview
 
 The dashboard uses a CSS Grid layout with tetris-style packing to efficiently display boxes of varying sizes
-without vertical gaps. All box dimensions are calculated to tile perfectly on a 32px base grid with 6px gaps.
+without vertical gaps. All box dimensions are calculated to tile perfectly on a 13px base grid with 6px gaps.
 
 ## Why Grid Instead of Flexbox?
 
@@ -23,26 +23,27 @@ without vertical gaps. All box dimensions are calculated to tile perfectly on a 
 
 ## Size Calculation Formula
 
-All box sizes follow this formula to align perfectly to the 32px grid:
+All box sizes follow this formula to align perfectly to the 13px grid:
 
 ```text
-Box size = (N × 32px) + ((N-1) × 6px)
+Box size = (N × 13px) + ((N-1) × 6px)
 ```
 
 Where:
 
 - `N` = number of grid cells (columns or rows)
-- `32px` = base grid cell size
+- `13px` = base grid cell size
 - `6px` = gap between boxes
 
 ### Examples
 
 ```text
-micro:  (1 × 32) + (0 × 6) = 32px
-small:  (2 × 32) + (1 × 6) = 70px
-medium: (4 × 32) + (3 × 6) = 146px
-large:  (8 × 32) + (7 × 6) = 298px
-xlarge: (16 × 32) + (15 × 6) = 602px
+dot:    (1 × 13) + (0 × 6) = 13px
+micro:  (2 × 13) + (1 × 6) = 32px
+small:  (4 × 13) + (3 × 6) = 70px
+medium: (8 × 13) + (7 × 6) = 146px
+large:  (16 × 13) + (15 × 6) = 298px
+xlarge: (32 × 13) + (31 × 6) = 602px
 ```
 
 ## Box Sizes Reference
@@ -51,11 +52,16 @@ xlarge: (16 × 32) + (15 × 6) = 602px
 
 | Size    | Cells | Width×Height | Grid Span   |
 |---------|-------|--------------|-------------|
-| micro   | 1×1   | 32×32px      | 1 col × 1 row |
-| small   | 2×2   | 70×70px      | 2 col × 2 row |
-| medium  | 4×4   | 146×146px    | 4 col × 4 row |
-| large   | 8×8   | 298×298px    | 8 col × 8 row |
-| xlarge  | 16×16 | 602×602px    | 16 col × 16 row |
+| dot     | 1×1   | 13×13px      | 1 col × 1 row |
+| micro   | 2×2   | 32×32px      | 2 col × 2 row |
+| small   | 4×4   | 70×70px      | 4 col × 4 row |
+| medium  | 8×8   | 146×146px    | 8 col × 8 row |
+| large   | 16×16 | 298×298px    | 16 col × 16 row |
+| xlarge  | 32×32 | 602×602px    | 32 col × 32 row |
+
+A `dot` is a solid block of its status colour with no name or stat; four dots
+fit in the space of one `micro`. Hovering shows the name in the status bar and
+clicking opens the details as for any other box.
 
 ### Double-Width Boxes
 
@@ -63,17 +69,17 @@ Double boxes span 2× width but have single height:
 
 | Size     | Cells  | Width×Height | Grid Span     |
 |----------|--------|--------------|---------------|
-| dmicro   | 2×1    | 70×32px      | 2 col × 1 row |
-| dsmall   | 4×2    | 146×70px     | 4 col × 2 row |
-| dmedium  | 8×4    | 298×146px    | 8 col × 4 row |
-| dlarge   | 16×8   | 602×298px    | 16 col × 8 row |
+| dmicro   | 4×2    | 70×32px      | 4 col × 2 row |
+| dsmall   | 8×4    | 146×70px     | 8 col × 4 row |
+| dmedium  | 16×8   | 298×146px    | 16 col × 8 row |
+| dlarge   | 32×16  | 602×298px    | 32 col × 16 row |
 
 ## Perfect Tetris Packing Examples
 
 ### Example 1: Medium Box Equivalence
 
 ```text
-1 medium box (4×4 cells) = 4 small boxes (2×2 each) in a 2×2 grid
+1 medium box (8×8 cells) = 4 small boxes (4×4 each) in a 2×2 grid
 1 medium box = 2 small boxes side-by-side (horizontally)
 1 medium box = 2 small boxes stacked (vertically)
 ```
@@ -90,8 +96,9 @@ Double boxes span 2× width but have single height:
 ### Example 3: Large Box Grid
 
 ```text
-1 large box (8×8 cells) = 4 medium boxes (4×4 each) in 2×2 grid
-1 large box = 64 micro boxes (1×1 each) in 8×8 grid
+1 large box (16×16 cells) = 4 medium boxes (8×8 each) in 2×2 grid
+1 large box = 64 micro boxes (2×2 each) in 8×8 grid
+1 micro box (2×2 cells) = 4 dot boxes (1×1 each) in 2×2 grid
 ```
 
 ## Grid Configuration
@@ -103,8 +110,8 @@ Double boxes span 2× width but have single height:
     display: grid;
     gap: 6px;
     grid-auto-flow: dense;           /* Enable tetris packing */
-    grid-auto-rows: 32px;            /* Row height = base cell */
-    grid-template-columns: repeat(auto-fill, 32px); /* Column width = base cell */
+    grid-auto-rows: 13px;            /* Row height = base cell */
+    grid-template-columns: repeat(auto-fill, 13px 13px); /* Columns in pairs */
 }
 ```
 
@@ -117,6 +124,11 @@ The `grid-auto-flow: dense` property:
 - Earlier boxes in DOM get priority placement
 - Later boxes backfill available gaps
 
+Columns are added in pairs so the column count is always even. Every size
+except `dot` spans an even number of cells, so those boxes always start on an
+even column and dots fill the remaining micro sized gaps four at a time, rather
+than trickling down a single odd column at the right hand edge.
+
 ## Viewport Calculations
 
 ### Maximum Boxes Per Row
@@ -125,22 +137,23 @@ For a viewport width `W`:
 
 ```text
 Available width = W - drawer_width - 16px (padding)
-Grid columns = floor(Available_width / 38)
-               (38 = 32px cell + 6px gap average)
+Grid columns = floor((Available_width + 6) / 19), rounded down to even
+               (19 = 13px cell + 6px gap)
 ```
 
 Example with 1900px viewport (no drawer):
 
 ```text
 Available: 1900 - 0 - 16 = 1884px
-Columns: floor(1884 / 38) ≈ 49 columns
+Columns: floor(1890 / 19) = 99, rounded down to 98 columns
 
 Max per row:
-- xlarge: 49 ÷ 16 = 3 boxes
-- large: 49 ÷ 8 = 6 boxes  
-- medium: 49 ÷ 4 = 12 boxes
-- small: 49 ÷ 2 = 24 boxes
-- micro: 49 ÷ 1 = 49 boxes
+- xlarge: 98 ÷ 32 = 3 boxes
+- large: 98 ÷ 16 = 6 boxes
+- medium: 98 ÷ 8 = 12 boxes
+- small: 98 ÷ 4 = 24 boxes
+- micro: 98 ÷ 2 = 49 boxes
+- dot: 98 ÷ 1 = 98 boxes
 ```
 
 ### With Drawer Open
@@ -149,22 +162,22 @@ When drawer opens (~400px wide):
 
 ```text
 Available: 1900 - 400 - 16 = 1484px
-Columns: floor(1484 / 38) ≈ 39 columns
+Columns: floor(1490 / 19) = 78 columns
 
 Max per row:
-- xlarge: 39 ÷ 16 = 2 boxes
-- small: 39 ÷ 2 = 19 boxes
+- xlarge: 78 ÷ 32 = 2 boxes
+- small: 78 ÷ 4 = 19 boxes
 ```
 
 ## Alignment Guarantees
 
 ### Horizontal Alignment
 
-All boxes align horizontally because all widths are multiples of (32px + 6px gap).
+All boxes align horizontally because all widths are multiples of (13px + 6px gap), less one gap.
 
 ### Vertical Alignment  
 
-All boxes align vertically because all heights are multiples of (32px + 6px gap).
+All boxes align vertically because all heights are multiples of (13px + 6px gap), less one gap.
 
 ### Status Bar Alignment
 
@@ -175,7 +188,9 @@ Status bar has `margin: 8px` to match boxes-grid `padding: 0 8px`, ensuring perf
 The doubling pattern ensures consistent scaling:
 
 ```text
-micro (32)
+dot (13)
+  ↓ ×2 + gap
+micro (32) = 2×13 + 6
   ↓ ×2 + gap
 small (70) = 2×32 + 6
   ↓ ×2 + gap  
@@ -192,19 +207,19 @@ Each size is exactly twice the previous size plus one gap.
 
 ### Why These Specific Sizes?
 
-1. **32px base**: Common divisor that works well at typical screen resolutions
+1. **13px base**: Small enough for a `dot` while keeping `micro` at 32px (2×13 + 6)
 2. **6px gap**: Visible but not excessive spacing between boxes
-3. **Powers of 2**: Each size doubles the grid cells (1, 2, 4, 8, 16)
+3. **Powers of 2**: Each size doubles the grid cells (1, 2, 4, 8, 16, 32)
 4. **Perfect tiling**: Any combination of same-level boxes fills space exactly
 
 ### Modifying Sizes
 
 If you need to change box sizes, follow these rules:
 
-1. **Choose a base cell size** (e.g., 32px)
+1. **Choose a base cell size** (e.g., 13px)
 2. **Choose a gap size** (e.g., 6px)
 3. **Use formula**: `Size = (N × base) + ((N-1) × gap)`
-4. **Use powers of 2 for N**: 1, 2, 4, 8, 16 for perfect doubling
+4. **Use powers of 2 for N**: 1, 2, 4, 8, 16, 32 for perfect doubling
 5. **Update grid CSS**:
 
    ```css
@@ -231,8 +246,8 @@ Each box size specifies its grid span:
 
 ```css
 .small {
-    grid-column: span 2;  /* Occupies 2 columns */
-    grid-row: span 2;     /* Occupies 2 rows */
+    grid-column: span 4;  /* Occupies 4 columns */
+    grid-row: span 4;     /* Occupies 4 rows */
     height: 70px;
     width: 70px;
 }
@@ -263,8 +278,8 @@ This ensures larger boxes place first, leaving gaps for smaller boxes to fill vi
 
 **Check:**
 
-1. All box sizes follow the formula: `(N × 32) + ((N-1) × 6)`
-2. Grid cell size matches: `grid-auto-rows: 32px`
+1. All box sizes follow the formula: `(N × 13) + ((N-1) × 6)`
+2. Grid cell size matches: `grid-auto-rows: 13px`
 3. Gap matches: `gap: 6px`
 4. Grid spans match cell count: `grid-column: span N`
 
@@ -313,12 +328,12 @@ Current implementation is fully responsive via `auto-fill` columns. To add break
 ```css
 @media (max-width: 1200px) {
     .boxes-grid {
-        grid-template-columns: repeat(auto-fill, 32px);
+        grid-template-columns: repeat(auto-fill, 13px 13px);
     }
     .xlarge {
         /* Optionally reduce xlarge to large at smaller screens */
-        grid-column: span 8;
-        grid-row: span 8;
+        grid-column: span 16;
+        grid-row: span 16;
     }
 }
 ```

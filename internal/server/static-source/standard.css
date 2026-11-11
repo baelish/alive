@@ -194,7 +194,7 @@ p.message {
 }
 
 /* micro and dmicro boxes only have room for the name, dot boxes have room
-   for nothing */
+   for nothing (see the dot box rules below) */
 .dmicro .stat,
 .micro .stat,
 .dot .stat {
@@ -430,11 +430,13 @@ div#status-bar .lastUpdated {
 }
 
 
-/* box size classes */
+/* box size classes
+   The grid uses 13px cells with a 6px gap, so N cells span (N*13)+((N-1)*6)px.
+   A dot is 1 cell, a micro is 2x2 cells (32px), so 4 dots fit where 1 micro does. */
 .xlarge {
     font-size:1.5em;
-    grid-column: span 16;
-    grid-row: span 16;
+    grid-column: span 32;
+    grid-row: span 32;
     height:602px;
     overflow: hidden;
     width:602px;
@@ -442,8 +444,8 @@ div#status-bar .lastUpdated {
 
 .dlarge {
     font-size:1.125em;
-    grid-column: span 16;
-    grid-row: span 8;
+    grid-column: span 32;
+    grid-row: span 16;
     height:298px;
     overflow: hidden;
     width:602px;
@@ -451,8 +453,8 @@ div#status-bar .lastUpdated {
 
 .large {
     font-size:1.125em;
-    grid-column: span 8;
-    grid-row: span 8;
+    grid-column: span 16;
+    grid-row: span 16;
     height:298px;
     overflow: hidden;
     width:298px;
@@ -460,8 +462,8 @@ div#status-bar .lastUpdated {
 
 .dmedium {
     font-size:0.9em;
-    grid-column: span 8;
-    grid-row: span 4;
+    grid-column: span 16;
+    grid-row: span 8;
     height:146px;
     overflow: hidden;
     width:298px;
@@ -469,8 +471,8 @@ div#status-bar .lastUpdated {
 
 .medium {
     font-size:0.9em;
-    grid-column: span 4;
-    grid-row: span 4;
+    grid-column: span 8;
+    grid-row: span 8;
     height:146px;
     overflow: hidden;
     width:146px;
@@ -478,8 +480,8 @@ div#status-bar .lastUpdated {
 
 .dsmall {
     font-size:0.7em;
-    grid-column: span 4;
-    grid-row: span 2;
+    grid-column: span 8;
+    grid-row: span 4;
     height:70px;
     overflow: hidden;
     width:146px;
@@ -487,8 +489,8 @@ div#status-bar .lastUpdated {
 
 .small {
     font-size:0.7em;
-    grid-column: span 2;
-    grid-row: span 2;
+    grid-column: span 4;
+    grid-row: span 4;
     height:70px;
     overflow: hidden;
     width:70px;
@@ -496,8 +498,8 @@ div#status-bar .lastUpdated {
 
 .dmicro {
     font-size:0.65em;
-    grid-column: span 2;
-    grid-row: span 1;
+    grid-column: span 4;
+    grid-row: span 2;
     height:32px;
     overflow: hidden;
     width:70px;
@@ -505,8 +507,8 @@ div#status-bar .lastUpdated {
 
 .micro {
     font-size:0.65em;
-    grid-column: span 1;
-    grid-row: span 1;
+    grid-column: span 2;
+    grid-row: span 2;
     height:32px;
     overflow: hidden;
     width:32px;
@@ -516,9 +518,25 @@ div#status-bar .lastUpdated {
     font-size: 0.5em;
     grid-column: span 1;
     grid-row: span 1;
-    height: 32px;
+    height: 13px;
     overflow: hidden;
-    width: 32px;
+    width: 13px;
+}
+
+/* dot boxes are solid blocks of their status colour with no text */
+#boxes-grid > .dot.box {
+    background: var(--status-main);
+    border-color: var(--status-main);
+    border-radius: 3px;
+    padding: 0;
+}
+
+#boxes-grid > .dot.box::before {
+    display: none;
+}
+
+#boxes-grid > .dot.box > * {
+    display: none;
 }
 
 .status {
@@ -590,8 +608,10 @@ div#status-bar .lastUpdated {
     display: grid;
     gap: var(--box-gap);
     grid-auto-flow: dense;
-    grid-auto-rows: 32px;
-    grid-template-columns: repeat(auto-fill, 32px);
+    grid-auto-rows: 13px;
+    /* Columns come in pairs so every box except a dot starts on an even
+       column, leaving dots to fill micro sized gaps four at a time. */
+    grid-template-columns: repeat(auto-fill, 13px 13px);
     padding: 0 8px;
     transition: width 220ms ease;
     width: 100%;
