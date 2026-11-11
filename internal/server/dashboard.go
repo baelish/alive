@@ -74,13 +74,21 @@ const generic = `
   <p class='title'>Status</p>
   <span class='status-center'><button class='message' type='button' aria-label='Live status. Double-click or press Enter to change the background color.'></button><p class='tooltip' id='tooltip' display="none"></p></span>
 	<div class='status-tools'>
-		{{ if . }}<div class='status-filters' role='group' aria-label='Filter boxes by status'>
-			<button type='button' class='status-filter green' data-status='green' aria-label='Green boxes' aria-pressed='true' aria-keyshortcuts='g' title='Toggle green boxes (G)'></button>
-			<button type='button' class='status-filter grey' data-status='grey' aria-label='Grey boxes' aria-pressed='true' aria-keyshortcuts='e' title='Toggle grey boxes (E)'></button>
-			<button type='button' class='status-filter amber' data-status='amber' aria-label='Amber boxes' aria-pressed='true' aria-keyshortcuts='a' title='Toggle amber boxes (A)'></button>
-			<button type='button' class='status-filter red' data-status='red' aria-label='Red boxes, including no update' aria-pressed='true' aria-keyshortcuts='r' title='Toggle red boxes, including no update (R)'></button>
-		</div>{{ end }}
 		<p class='lastUpdated'></p>
+		{{ if . }}<div class='filter-menu'>
+			<button type='button' id='filter-toggle' class='filter-toggle' aria-haspopup='true' aria-expanded='false' aria-controls='filter-popover' aria-label='Filter boxes by status' title='Filter boxes by status'><svg viewBox='0 0 24 24' aria-hidden='true'><circle cx='12' cy='12' r='3'></circle><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'></path></svg><span class='filter-active-dot' aria-hidden='true'></span></button>
+			<div id='filter-popover' class='filter-popover' role='group' aria-label='Show boxes by status' hidden>
+				<p class='filter-heading'>Show</p>
+				<div class='filter-chips'>
+					<button type='button' class='filter-chip' data-status='all' aria-pressed='true' aria-keyshortcuts='l' title='Show all boxes (L)'>All</button>
+					<button type='button' class='filter-chip' data-status='green' aria-pressed='false' aria-keyshortcuts='g' title='Show green boxes (G)'><span class='filter-dot' aria-hidden='true'></span>Green<span class='filter-count'></span></button>
+					<button type='button' class='filter-chip' data-status='grey' aria-pressed='false' aria-keyshortcuts='e' title='Show grey boxes (E)'><span class='filter-dot' aria-hidden='true'></span>Grey<span class='filter-count'></span></button>
+					<button type='button' class='filter-chip' data-status='amber' aria-pressed='false' aria-keyshortcuts='a' title='Show amber boxes (A)'><span class='filter-dot' aria-hidden='true'></span>Amber<span class='filter-count'></span></button>
+					<button type='button' class='filter-chip' data-status='red' aria-pressed='false' aria-keyshortcuts='r' title='Show red boxes, including no update (R)'><span class='filter-dot' aria-hidden='true'></span>Red<span class='filter-count'></span></button>
+				</div>
+				<p class='filter-hint'>Click to show one status. Ctrl or Shift-click to combine.</p>
+			</div>
+		</div>{{ end }}
 	</div>
 </div>
 {{ end }}`

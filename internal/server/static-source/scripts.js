@@ -136,17 +136,84 @@ const Dashboard = (function() {
     };
   }
 
+  function isFiltering() {
+    return !Object.values(statusFilters).every(Boolean);
+  }
+
+  function showAllStatuses() {
+    Object.keys(statusFilters).forEach(status => { statusFilters[status] = true; });
+  }
+
+  // Click shows only that status (clicking the only one shown again shows
+  // everything). Combine adds or removes it from the statuses being shown.
+  function selectStatusFilter(status, combine) {
+    const onlyThis = isFiltering() && Object.keys(statusFilters).every(s => statusFilters[s] === (s === status));
+    if (combine && isFiltering()) {
+      statusFilters[status] = !statusFilters[status];
+      if (!Object.values(statusFilters).some(Boolean)) showAllStatuses();
+    } else if (onlyThis) {
+      showAllStatuses();
+    } else {
+      Object.keys(statusFilters).forEach(s => { statusFilters[s] = s === status; });
+    }
+  }
+
   function applyStatusFilters() {
+    const filtering = isFiltering();
     Object.keys(statusFilters).forEach(status => {
       elements.boxesGrid.classList.toggle(`hide-${status}`, !statusFilters[status]);
-      document.querySelector(`.status-filter[data-status="${status}"]`).setAttribute("aria-pressed", String(statusFilters[status]));
+      const chip = document.querySelector(`.filter-chip[data-status="${status}"]`);
+      if (chip) chip.setAttribute("aria-pressed", String(filtering && statusFilters[status]));
     });
+    const allChip = document.querySelector('.filter-chip[data-status="all"]');
+    if (allChip) allChip.setAttribute("aria-pressed", String(!filtering));
+
+    const toggle = document.getElementById("filter-toggle");
+    if (toggle) {
+      toggle.classList.toggle("filtering", filtering);
+      const shown = Object.keys(statusFilters).filter(s => statusFilters[s]);
+      const label = filtering
+        ? `Filter boxes by status (showing ${shown.join(", ")})`
+        : "Filter boxes by status";
+      toggle.title = label;
+      toggle.setAttribute("aria-label", label);
+    }
+
     closeFilteredDrawer();
     try {
       sessionStorage.setItem(STATUS_FILTER_STORAGE_KEY, JSON.stringify(statusFilters));
     } catch (error) {
       // Filtering still works when browser storage is unavailable.
     }
+  }
+
+  // Number of boxes of each status, shown on the filter chips.
+  function updateFilterCounts() {
+    const grid = elements.boxesGrid;
+    if (!grid) return;
+    const counts = {
+      green: grid.querySelectorAll(":scope > .box.green").length,
+      grey: grid.querySelectorAll(":scope > .box.grey").length,
+      amber: grid.querySelectorAll(":scope > .box.amber").length,
+      red: grid.querySelectorAll(":scope > .box.red, :scope > .box.noUpdate").length
+    };
+    Object.keys(counts).forEach(status => {
+      const count = document.querySelector(`.filter-chip[data-status="${status}"] .filter-count`);
+      if (count) count.textContent = counts[status];
+    });
+  }
+
+  function setFilterMenuOpen(open) {
+    const toggle = document.getElementById("filter-toggle");
+    const popover = document.getElementById("filter-popover");
+    if (!toggle || !popover) return;
+    popover.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+  }
+
+  function filterMenuOpen() {
+    const popover = document.getElementById("filter-popover");
+    return popover !== null && !popover.hidden;
   }
 
   function closeFilteredDrawer() {
@@ -180,16 +247,45 @@ const Dashboard = (function() {
     }
     applyStatusFilters();
 
-    document.querySelectorAll(".status-filter").forEach(button => {
-      button.addEventListener("click", () => {
+    document.querySelectorAll(".filter-chip").forEach(button => {
+      button.addEventListener("click", event => {
         const status = button.dataset.status;
-        statusFilters[status] = !statusFilters[status];
+        if (status === "all") {
+          showAllStatuses();
+        } else {
+          selectStatusFilter(status, event.ctrlKey || event.metaKey || event.shiftKey);
+        }
         applyStatusFilters();
       });
     });
 
+    const filterToggle = document.getElementById("filter-toggle");
+    if (filterToggle) {
+      filterToggle.addEventListener("click", () => setFilterMenuOpen(!filterMenuOpen()));
+      document.addEventListener("click", event => {
+        if (filterMenuOpen() && !event.target.closest(".filter-menu")) setFilterMenuOpen(false);
+      });
+    }
+
+    updateFilterCounts();
+    if (elements.boxesGrid) {
+      let countsPending = false;
+      new MutationObserver(() => {
+        if (countsPending) return;
+        countsPending = true;
+        requestAnimationFrame(() => {
+          countsPending = false;
+          updateFilterCounts();
+        });
+      }).observe(elements.boxesGrid, { childList: true, subtree: true, attributeFilter: ["class"] });
+    }
+
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") {
+        if (filterMenuOpen()) {
+          setFilterMenuOpen(false);
+          return;
+        }
         closeDrawer();
         return;
       }
@@ -199,10 +295,9 @@ const Dashboard = (function() {
       const key = event.key.toLowerCase();
       const status = { g: "green", e: "grey", a: "amber", r: "red" }[key];
       if (status) {
-        statusFilters[status] = !statusFilters[status];
+        selectStatusFilter(status, event.shiftKey);
       } else if (key === "l") {
-        const showAll = !Object.values(statusFilters).every(Boolean);
-        Object.keys(statusFilters).forEach(status => { statusFilters[status] = showAll; });
+        showAllStatuses();
       } else {
         return;
       }
