@@ -101,7 +101,7 @@ const boxGrid = `
 {{ end }}
 
 {{ define "box" }}
-<div onclick='boxClick(this.id)' onmouseover='boxHover("{{ .Name }}")' onmouseout='boxOut()' id='{{ .ID }}' data-sort-name='{{ .Name }}' class='{{ .Status }} {{ .Size }} box'>
+<div onclick='boxClick(this.id)' onmouseover='boxHover(this.dataset.sortName)' onmouseout='boxOut()' id='{{ .ID }}' data-sort-name='{{ .Name }}' class='{{ .Status }} {{ .Size }} box'>
     <p class='title'>{{ if .DisplayName }}{{ .DisplayName }}{{ else }}{{ .Name }}{{ end }}</p>
 	<div class='stat'><span class='stat-value'>{{ .Stat }}</span></div>
     <p class='maxTBU'>{{ .MaxTBU }}</p>
