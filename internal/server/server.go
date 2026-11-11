@@ -76,7 +76,14 @@ func Start() {
 	go runAPI(ctx)
 
 	go runKeepalives(ctx)
-	go maintenanceRoutine(ctx)
+
+	// The maintenance routine saves the data file when ctx is cancelled, wait
+	// for that before returning so the process does not exit part way through.
+	maintenanceDone := make(chan struct{})
+	go func() {
+		defer close(maintenanceDone)
+		maintenanceRoutine(ctx)
+	}()
 
 	if options.ParentUrl != "" {
 		go parentUpdater(ctx)
@@ -86,11 +93,14 @@ func Start() {
 		go runDemo(ctx)
 	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(1 * time.Second):
-		}
+	<-ctx.Done()
+	logger.Info("Shutting down, waiting for the data file to be saved")
+	select {
+	case <-maintenanceDone:
+	case <-time.After(shutdownSaveTimeout):
+		logger.Error("timed out waiting for the data file to be saved", zap.Duration("timeout", shutdownSaveTimeout))
 	}
 }
+
+// shutdownSaveTimeout is how long shutdown waits for the final data file save.
+const shutdownSaveTimeout = 10 * time.Second

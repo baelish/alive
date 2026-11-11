@@ -68,7 +68,9 @@ func getBoxesFromDataFile() {
 	boxStore.mu.Unlock()
 }
 
-// Write json
+// saveBoxFile writes all boxes to the data file, keeping up to nine backups.
+// The new data is written to a temporary file and renamed over the data file,
+// so a crash or kill part way through never leaves it missing or truncated.
 func saveBoxFile() error {
 	// Get all boxes from store (thread-safe)
 	boxes := boxStore.GetAll()
@@ -77,38 +79,49 @@ func saveBoxFile() error {
 		return err
 	}
 
-	if _, err := os.Stat(boxFile + ".bak9"); err == nil {
-		err = os.Remove(boxFile + ".bak9")
-		if err != nil {
-			logger.Error(err.Error())
-		}
-	} else if errors.Is(err, os.ErrNotExist) {
-	} else {
+	tmpFile := boxFile + ".tmp"
+	if err := writeFileSynced(tmpFile, byteValue); err != nil {
+		os.Remove(tmpFile)
+		return err
+	}
+
+	if err := os.Remove(boxFile + ".bak9"); err != nil && !errors.Is(err, os.ErrNotExist) {
 		logger.Error(err.Error())
 	}
 
 	for i := 8; i > 0; i-- {
 		s := strconv.Itoa(i)
 		t := strconv.Itoa(i + 1)
-		if _, err := os.Stat(boxFile + ".bak" + s); err == nil {
-			os.Rename(boxFile+".bak"+s, boxFile+".bak"+t)
-		} else if errors.Is(err, os.ErrNotExist) {
-		} else {
+		if err := os.Rename(boxFile+".bak"+s, boxFile+".bak"+t); err != nil && !errors.Is(err, os.ErrNotExist) {
 			logger.Error(err.Error())
 		}
 	}
 
-	if _, err := os.Stat(boxFile); err == nil {
-		os.Rename(boxFile, boxFile+".bak1")
-	} else if errors.Is(err, os.ErrNotExist) {
-	} else {
-		logger.Error(err.Error())
+	// Keep the current data file as the newest backup. A hard link leaves the
+	// data file in place until the rename below replaces it in one step.
+	if err := os.Link(boxFile, boxFile+".bak1"); err != nil && !errors.Is(err, os.ErrNotExist) {
+		logger.Warn("could not link backup, falling back to rename", zap.Error(err))
+		if err := os.Rename(boxFile, boxFile+".bak1"); err != nil && !errors.Is(err, os.ErrNotExist) {
+			logger.Error(err.Error())
+		}
 	}
 
-	err = os.WriteFile(boxFile, byteValue, 0644)
+	return os.Rename(tmpFile, boxFile)
+}
+
+// writeFileSynced writes data to name and flushes it to disk before closing.
+func writeFileSynced(name string, data []byte) error {
+	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
-
-	return nil
+	if _, err := f.Write(data); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	return f.Close()
 }
