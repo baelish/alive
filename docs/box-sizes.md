@@ -309,6 +309,32 @@ This ensures larger boxes place first, leaving gaps for smaller boxes to fill vi
 - Dense packing: Minimal overhead for small to medium box counts (<500 boxes)
 - Overall: Negligible performance difference for typical dashboard usage
 
+**Containment (`contain: strict` on grid tiles):**
+
+Every tile has a fixed size, so `#boxes-grid > .box` uses `contain: strict` to tell the browser
+nothing inside a tile affects the grid. Without it Firefox re-places the whole grid whenever a
+tile's colour or stat changes: at 1200 boxes that took about 1 second per update and the dashboard
+ran at under 1 frame per second with 10 updates/s. With it, updates cost well under a millisecond
+and it holds 60 fps. Chrome did not need it but is unaffected. The status bar also has the `box`
+class and must not be contained, since its filter menu overflows it.
+
+**Known cost of the 13px grid in Firefox:**
+
+Containment cannot help when the grid itself changes: adding, removing or replacing a box, or
+opening and closing the details drawer (which changes the grid's width), make the browser place
+every tile again. Firefox's dense placement gets slower with the number of grid cells, and the 13px
+grid has four times as many cells as the previous 32px grid. Measured in Firefox at 1200 boxes
+(1600px wide):
+
+| Grid | Add or remove a box |
+|------|---------------------|
+| 32px cells (before `dot` was made smaller) | ~0.3s |
+| 13px cells (current) | ~1.6s |
+
+Chrome is not noticeably affected. This was accepted to keep `dot` boxes a quarter of a `micro`;
+if large dashboards in Firefox matter more, grouping four dots into one `micro` sized element on a
+32px grid would bring this back to ~0.3s.
+
 ## Future Extensions
 
 ### Adding New Box Sizes
