@@ -34,6 +34,7 @@ type Event struct {
 	Box         *Box      `json:"box,omitempty"`
 	Status      Status    `json:"status,omitempty"`
 	Message     string    `json:"lastMessage,omitempty"`
+	Stat        *string   `json:"stat,omitempty"` // nil leaves the box stat unchanged, "" clears it
 	ExpireAfter *Duration `json:"expireAfter"`
 	MaxTBU      *Duration `json:"maxTBU"`
 	Type        string    `json:"type"`
@@ -233,6 +234,7 @@ type Box struct {
 	Messages    []Message          `json:"messages"`
 	LastUpdate  time.Time          `json:"lastUpdate"`
 	LastMessage string             `json:"lastMessage"`
+	Stat        string             `json:"stat,omitempty"` // short value shown in the tile body (not on dot, micro or dmicro boxes)
 	Links       []Links            `json:"links"`
 }
 

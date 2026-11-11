@@ -151,14 +151,54 @@ p.message {
     display: none;
 }
 
-.box-id {
-    color: var(--text-secondary);
-    font-size: 60%;
-    margin: 0.5em 3px 0;
+/* stat class: fills the space below the title */
+#boxes-grid > .box {
+    display: flex;
+    flex-direction: column;
+}
+
+#boxes-grid > .box > .title {
+    flex: none;
+    margin-block: 0;
+}
+
+.stat {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
+    padding: 0 3px 3px;
+    pointer-events: none;
+}
+
+.stat:has(.stat-value:empty) {
+    display: none;
+}
+
+.stat-value {
+    color: var(--text-primary);
+    font-size: 220%;
+    font-weight: 600;
+    line-height: 1;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     transition: color 180ms ease;
     white-space: nowrap;
+}
+
+.small .stat-value,
+.dsmall .stat-value {
+    font-size: 160%;
+}
+
+/* micro and dmicro boxes only have room for the name, dot boxes have room
+   for nothing */
+.dmicro .stat,
+.micro .stat,
+.dot .stat {
+    display: none;
 }
 
 #boxes-grid .dot .title {
@@ -533,7 +573,7 @@ div#status-bar .lastUpdated {
 }
 
 .box:hover .title,
-.box:hover .box-id,
+.box:hover .stat-value,
 .box:hover .message,
 .box:hover .lastUpdated {
     color: #FFFFFF;
@@ -685,7 +725,7 @@ body.drawer-open #big-box {
 }
 
 .box.selected .title,
-.box.selected .box-id,
+.box.selected .stat-value,
 .box.selected .message,
 .box.selected .lastUpdated {
     color: #FFFFFF;

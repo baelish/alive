@@ -382,6 +382,22 @@ var animals = [...]string{
 
 func ptr[T any](v T) *T { return &v }
 
+// randomStat returns a short value in one of a few formats to show off the box
+// stat field.
+func randomStat() string {
+	switch rand.Intn(4) {
+	case 0:
+		max := rand.Intn(20) + 1
+		return fmt.Sprintf("%d/%d", rand.Intn(max+1), max)
+	case 1:
+		return fmt.Sprintf("%d%%", rand.Intn(101))
+	case 2:
+		return fmt.Sprintf("%dms", rand.Intn(500)+1)
+	default:
+		return fmt.Sprintf("%.1fk", rand.Float64()*100)
+	}
+}
+
 func createRandomBox() {
 	var newBox api.Box
 	newBox.Name = animals[rand.Intn(len(animals))]
@@ -391,6 +407,10 @@ func createRandomBox() {
 	info["boo"] = "hoo"
 	newBox.Info = &info
 	newBox.Status = api.Grey
+	// Roughly half of the demo boxes get a stat.
+	if rand.Intn(2) == 0 {
+		newBox.Stat = randomStat()
+	}
 	addBox(newBox)
 }
 
@@ -402,7 +422,7 @@ func runDemo(ctx context.Context) {
 	const (
 		minDemoBoxes = 10
 		maxDemoBoxes = 60
-		pause        = 1000 * time.Millisecond
+		pause        = 300 * time.Millisecond
 	)
 	// Generate a constant stream of events that get pushed
 	// into the Broker's messages channel and are then broadcast
@@ -423,6 +443,8 @@ func runDemo(ctx context.Context) {
 		if max < 1 {
 			max = 1
 		}
+		// event is reused between iterations, only change a stat when asked to.
+		event.Stat = nil
 		switch e := rand.Intn(100); {
 		case e < 5: // Create a box
 			if boxCount < maxDemoBoxes {
@@ -489,6 +511,9 @@ func runDemo(ctx context.Context) {
 				event.ID = id
 				event.Status = api.Green
 				event.Message = fmt.Sprintf("the time is %s", ft)
+				if allBoxes[x].Stat != "" {
+					event.Stat = ptr(randomStat())
+				}
 				update(event)
 			}
 
