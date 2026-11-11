@@ -136,32 +136,36 @@ func ensureBox(c *client.Client, id, name string, size api.BoxSize, maxTBU *api.
 }
 
 func checkAndUpdate(c *client.Client, boxID, rconURL string, rconPass string, settings serverSettings) {
-	status, message := getStatus(rconURL, rconPass, settings.MaxPlayers)
-	if err := c.CreateEvent(api.Event{ID: boxID, Status: status, Message: message}); err != nil {
+	status, stat, message := getStatus(rconURL, rconPass, settings.MaxPlayers)
+	if err := c.CreateEvent(api.Event{ID: boxID, Status: status, Message: message, Stat: &stat}); err != nil {
 		logger.Error("failed to post event", zap.Error(err))
 	}
 }
 
-func getStatus(rconURL, rconPass string, maxPlayers int) (api.Status, string) {
+// getStatus returns the box status, the stat shown on the dashboard tile
+// (players online, empty when the count is unknown) and the event message.
+func getStatus(rconURL, rconPass string, maxPlayers int) (status api.Status, stat, message string) {
 	conn, err := rcon.Dial(rconURL, rconPass)
 	if err != nil {
-		return api.Red, fmt.Sprintf("connect to rcon failed: %v", err)
+		return api.Red, "", fmt.Sprintf("connect to rcon failed: %v", err)
 	}
 	defer conn.Close()
 
 	response, err := conn.Execute("/c rcon.print(#game.connected_players)")
 	if err != nil {
-		return api.Red, fmt.Sprintf("failed to get player count: %v", err)
+		return api.Red, "", fmt.Sprintf("failed to get player count: %v", err)
 	}
 
 	playerCount, err := strconv.Atoi(strings.TrimSpace(response))
 	if err != nil {
-		return api.Amber, fmt.Sprintf("invalid player count:%s (%v)", response, err)
+		return api.Amber, "", fmt.Sprintf("invalid player count:%s (%v)", response, err)
 	}
 
 	if maxPlayers > 0 {
-		return api.Green, fmt.Sprintf("%d/%d Online", playerCount, maxPlayers)
+		stat = fmt.Sprintf("%d/%d", playerCount, maxPlayers)
+	} else {
+		stat = fmt.Sprintf("%d", playerCount)
 	}
 
-	return api.Green, fmt.Sprintf("%d Online", playerCount)
+	return api.Green, stat, stat + " Online"
 }

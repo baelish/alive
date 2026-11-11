@@ -117,6 +117,9 @@ func checkAndUpdate(c *client.Client, boxID, metricsURL string) {
 
 	var status api.Status
 	var message string
+	// The stat shows players online on the dashboard tile, it is cleared
+	// whenever the server is not healthy.
+	var stat string
 
 	if scrapeErr != nil {
 		status = api.Red
@@ -137,14 +140,19 @@ func checkAndUpdate(c *client.Client, boxID, metricsURL string) {
 			if !maxFound {
 				logger.Warn("metric not found", zap.String("maxOnlineMetric", maxOnlineMetric))
 			}
-			message = fmt.Sprintf("%d/%d Online", int(online), int(maxOnline))
+			if maxFound {
+				stat = fmt.Sprintf("%d/%d", int(online), int(maxOnline))
+			} else {
+				stat = fmt.Sprintf("%d", int(online))
+			}
+			message = stat + " Online"
 		default:
 			status = api.Red
 			message = "Unhealthy"
 		}
 	}
 
-	if err := c.CreateEvent(api.Event{ID: boxID, Status: status, Message: message}); err != nil {
+	if err := c.CreateEvent(api.Event{ID: boxID, Status: status, Message: message, Stat: &stat}); err != nil {
 		logger.Error("failed to post event", zap.Error(err))
 	}
 }
